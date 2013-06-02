@@ -46,8 +46,11 @@ class local_bioauth_locallib_testcase extends advanced_testcase {
     }
     
     public function test_dspace_within() {
-        $fspace = $this->getDataGenerator()->get_plugin_generator('local_bioauth')->create_fspace(3, 2, 4);
-        
+        $fspace = $this->getDataGenerator()->get_plugin_generator('local_bioauth')->create_fspace(3, 3, 2);
         print_r($fspace);
+        
+        $w_dspace = dspace_within($fspace);
+        print_r($w_dspace);
+        
     }
 }

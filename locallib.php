@@ -69,14 +69,18 @@ function abs_diff($arr1, $arr2) {
 }
 
 
-function dspace_within($fspace, $user) {
-    $idx_combinations = new Combinations(range(0, count($fspace[$user])));
-    $dspace = array();
-    foreach ($idx_combinations as $idx) {
-        $dspace[] = difference($fspace[$idx[0]], $fspace[$idx[1]]);
+function dspace_within($fspace) {
+    $w_dspace = array();
+    foreach ($fspace as $user => $samples) {
+        $idx_combinations = new Combinations(array_keys($fspace[$user]), 2);
+        $user_dspace = array();
+        foreach ($idx_combinations as $idx) {
+            $user_dspace[] = abs_diff($fspace[$user][$idx[0]], $fspace[$user][$idx[1]]);
+        }
+        $w_dspace[$user] = $user_dspace;
     }
     
-    return $dspace;
+    return $w_dspace;
 }
 
 /**

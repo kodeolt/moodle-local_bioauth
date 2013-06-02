@@ -26,7 +26,6 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/local/bioauth/lib.php');
-require_once($CFG->dirroot . '/local/bioauth/settingslib.php');
 
 $pagetitle = get_string('modulename', 'local_bioauth');
 

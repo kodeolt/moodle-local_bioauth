@@ -25,21 +25,20 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-
 defined('MOODLE_INTERNAL') || die();
 
-require_once('/local/bioauth/lib.php');
+global $CFG;
+require_once ($CFG -> dirroot . '/local/bioauth/lib.php');
 
 /**
  * Subtract and square two numbers (Used in euclidean_distance)
  *
  * @param array $n
  * @param array $n
- * @return (n - m)**2 
+ * @return (n - m)**2
  */
-function subtract_and_square($n, $m)
-{
-  return(pow($n - $m, 2));
+function subtract_and_square($n, $m) {
+    return (pow($n - $m, 2));
 }
 
 /**
@@ -47,22 +46,92 @@ function subtract_and_square($n, $m)
  *
  * @param array $p
  * @param array $q
- * @return the Euclidean distance between $p and $q 
+ * @return the Euclidean distance between $p and $q
  */
-function euclidean_distance($p, $q)
-{
-  $numargs = func_num_args();
-  if ($numargs != 2)
-  {
-    die("You must supply 2, and only 2, coordinates, no more, no less.\n");
-  }
-  else if (sizeof($p) != sizeof($q))
-  {
-    die("Coordinates do not have the same number of elements.\n");
-  }
-  else
-  {
-    $c = array_map("subtract_and_square", $p, $q);
-    return pow(array_sum($c), .5);
-  }
+function euclidean_distance($p, $q) {
+    $numargs = func_num_args();
+    if ($numargs != 2) {
+        die("You must supply 2, and only 2, coordinates, no more, no less.\n");
+    } else if (sizeof($p) != sizeof($q)) {
+        die("Coordinates do not have the same number of elements.\n");
+    } else {
+        $c = array_map("subtract_and_square", $p, $q);
+        return pow(array_sum($c), .5);
+    }
+}
+
+function combinations($batch, $elements, $i) {
+    if ($i >= count($elements)) {
+        return $batch;
+    } else {
+        foreach ($elements[$i] as $element) {
+            combinations(array_merge($batch, $element), $elements, $i + 1);
+        }
+    }
+}
+
+
+/**
+ * Combinations iterator, modified from the one found on
+ * http://stackoverflow.com/questions/3742506/php-array-combinations
+ * 
+ */
+class Combinations implements Iterator {
+    protected $c = null;
+    protected $s = null;
+    protected $n = 0;
+    protected $k = 0;
+    protected $pos = 0;
+
+    function __construct($s, $k) {
+        if (is_array($s)) {
+            $this -> s = array_values($s);
+            $this -> n = count($this -> s);
+        } else {
+            $this -> s = (string)$s;
+            $this -> n = strlen($this -> s);
+        }
+        $this -> k = $k;
+        $this -> rewind();
+    }
+
+    function key() {
+        return $this -> pos;
+    }
+
+    function current() {
+        $r = array();
+        for ($i = 0; $i < $this -> k; $i++)
+            $r[] = $this -> s[$this -> c[$i]];
+        return is_array($this -> s) ? $r : implode('', $r);
+    }
+
+    function next() {
+        if ($this -> _next())
+            $this -> pos++;
+        else
+            $this -> pos = -1;
+    }
+
+    function rewind() {
+        $this -> c = range(0, $this -> k);
+        $this -> pos = 0;
+    }
+
+    function valid() {
+        return $this -> pos >= 0;
+    }
+
+    protected function _next() {
+        $i = $this -> k - 1;
+        while ($i >= 0 && $this -> c[$i] == $this -> n - $this -> k + $i)
+            $i--;
+        if ($i < 0)
+            return false;
+        $this -> c[$i]++;
+        while ($i++ < $this -> k - 1)
+            $this -> c[$i] = $this -> c[$i - 1] + 1;
+        return true;
+    }
+
 }

@@ -23,17 +23,11 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
  */
 
-
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
-require_once($CFG->dirroot . '/local/bioauth/lib.php');
+require_once ($CFG -> dirroot . '/local/bioauth/lib.php');
 
-
-/**
- * @copyright  Vinnie Monaco
- * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- */
 class local_bioauth_lib_testcase extends basic_testcase {
-    
+
 }

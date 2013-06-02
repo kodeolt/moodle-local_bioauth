@@ -28,14 +28,9 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 require_once($CFG->dirroot . '/local/bioauth/locallib.php');
+require_once($CFG->dirroot . '/local/bioauth/tests/generator/lib.php');
 
 
-/**
- * Unit tests for (some of) local/bioauth/locallib.php.
- *
- * @copyright  Vinnie Monaco
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
 class local_bioauth_locallib_testcase extends basic_testcase {
     public function test_euclidean_distance() {
         $u = array(0, 0);
@@ -43,5 +38,10 @@ class local_bioauth_locallib_testcase extends basic_testcase {
         $this->assertEquals(euclidean_distance($u, $v), 5);
     }
     
-    
+    public function test_combinations() {
+        $c = new Combinations(array(1, 2, 3), 2);
+        $this->assertContains(array(1,2), $c);
+        $this->assertContains(array(1,3), $c);
+        $this->assertContains(array(2,3), $c);
+    }
 }

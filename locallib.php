@@ -60,16 +60,24 @@ function euclidean_distance($p, $q) {
     }
 }
 
-function combinations($batch, $elements, $i) {
-    if ($i >= count($elements)) {
-        return $batch;
-    } else {
-        foreach ($elements[$i] as $element) {
-            combinations(array_merge($batch, $element), $elements, $i + 1);
-        }
-    }
+function abs_diff($arr1, $arr2) {
+  $ret = array();
+  foreach ($arr1 as $key => $value) {
+    $ret[$key] = abs($arr2[$key]-$arr1[$key]);
+  }
+  return $ret;
 }
 
+
+function dspace_within($fspace, $user) {
+    $idx_combinations = new Combinations(range(0, count($fspace[$user])));
+    $dspace = array();
+    foreach ($idx_combinations as $idx) {
+        $dspace[] = difference($fspace[$idx[0]], $fspace[$idx[1]]);
+    }
+    
+    return $dspace;
+}
 
 /**
  * Combinations iterator, modified from the one found on

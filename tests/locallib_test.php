@@ -31,7 +31,7 @@ require_once($CFG->dirroot . '/local/bioauth/locallib.php');
 require_once($CFG->dirroot . '/local/bioauth/tests/generator/lib.php');
 
 
-class local_bioauth_locallib_testcase extends basic_testcase {
+class local_bioauth_locallib_testcase extends advanced_testcase {
     public function test_euclidean_distance() {
         $u = array(0, 0);
         $v = array(3, 4);
@@ -43,5 +43,11 @@ class local_bioauth_locallib_testcase extends basic_testcase {
         $this->assertContains(array(1,2), $c);
         $this->assertContains(array(1,3), $c);
         $this->assertContains(array(2,3), $c);
+    }
+    
+    public function test_dspace_within() {
+        $fspace = $this->getDataGenerator()->get_plugin_generator('local_bioauth')->create_fspace(3, 2, 4);
+        
+        print_r($fspace);
     }
 }

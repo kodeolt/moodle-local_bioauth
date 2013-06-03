@@ -91,4 +91,11 @@ class local_bioauth_locallib_testcase extends advanced_testcase {
         $c = sorted_distances($fspace, $query_sample, 0);
         print_r($c);
     }
+    
+    public function test_linear_weighted_decisions() {
+        $neighbors = array('w', 'w', 'b', 'w', 'b', 'b', 'b', 'b', 'b', 'b');
+        
+        $decisions = linear_weighted_decisions($neighbors, 5);
+        print_r($decisions);
+    }
 }

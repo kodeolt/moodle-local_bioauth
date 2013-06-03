@@ -61,6 +61,23 @@ function abs_diff($arr1, $arr2) {
   return $ret;
 }
 
+function linear_weighted_decisions(&$neighbors, $k) {
+    
+    $decisions = array();
+    
+    $w = 0;
+    for ($i = 0; $i < $k; $i++) {
+        if ('w' == $neighbors[$i])
+            $w += $k-$i;
+    }
+    
+    for ($m = 0; $m < ($k*($k+1))/2; $m++) {
+        $decisions[$m] = ($w >= $m) ? 'w' : 'b';
+    }
+    
+    return $decisions;
+}
+
 function sorted_distances(&$fspace, &$query_sample, $query_user) {
     
     $w_dspace = create_user_dspace_within($fspace, $query_user);

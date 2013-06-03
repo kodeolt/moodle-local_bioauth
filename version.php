@@ -30,7 +30,3 @@ $plugin->cron      = 0;
 $plugin->component = 'local_bioauth';
 $plugin->maturity  = MATURITY_UNSTABLE;
 $plugin->release   = '0.1.0';
- 
-$plugin->dependencies = array(
-    'mod_quiz' => ANY_VERSION,
-);

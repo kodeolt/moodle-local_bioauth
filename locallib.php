@@ -54,11 +54,75 @@ function euclidean_distance(&$a) {
 }
 
 function abs_diff($arr1, $arr2) {
-  $ret = array();
-  foreach ($arr1 as $key => $value) {
-    $ret[$key] = abs($arr2[$key]-$arr1[$key]);
-  }
-  return $ret;
+    $ret = array();
+    foreach ($arr1 as $key => $value) {
+        $ret[$key] = abs($arr2[$key]-$arr1[$key]);
+    }
+    return $ret;
+}
+
+function average($arr)
+{
+    if (!count($arr)) return 0;
+
+    $sum = 0;
+    for ($i = 0; $i < count($arr); $i++)
+    {
+        $sum += $arr[$i];
+    }
+
+    return $sum / count($arr);
+}
+
+function variance($arr)
+{
+    if (!count($arr)) return 0;
+
+    $mean = average($arr);
+
+    $sos = 0;    // Sum of squares
+    for ($i = 0; $i < count($arr); $i++)
+    {
+        $sos += ($arr[$i] - $mean) * ($arr[$i] - $mean);
+    }
+
+    return $sos / (count($arr)-1);  // denominator = n-1; i.e. estimating based on sample 
+                                    // n-1 is also what MS Excel takes by default in the
+                                    // VAR function
+}
+
+function random_normal($mean, $std) {
+    
+    do {
+        $x1 = 2.0*(mt_rand()/mt_getrandmax()) - 1.0;
+        $x2 = 2.0*(mt_rand()/mt_getrandmax()) - 1.0;
+        $w = $x1*$x1 + $x2*$x2;
+    } while ($w >= 1.0);
+
+    $w = sqrt( (-2.0*log($w))/$w);
+    $y1 = $x1 * $w;
+    $y2 = $x2 * $w;
+    
+    return array($y1,$y2);
+}
+
+function n_random_normal($n, $mean, $std) {
+    $a = array();
+    
+    for ($i = 0; $i < ($n-1)/2; $i++) {
+        list($n1, $n2) = random_normal($mean, $std);
+        $a[] = $n1;
+        $a[] = $n2;
+    }
+    
+    // Handle even/odd n since random normal come in pairs
+    list($n1, $n2) = random_normal($mean, $std);
+    $a[] = $n1;
+    if (0 == $n % 2) {
+        $a[] = $n2;
+    }
+    
+    return $a;
 }
 
 function linear_weighted_decisions(&$neighbors, $k) {

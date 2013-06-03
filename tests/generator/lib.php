@@ -36,6 +36,15 @@ class local_bioauth_generator extends testing_module_generator {
         require_once("$CFG->dirroot/local/bioauth/locallib.php");
     }
     
+    
+    public function create_sample($n_features) {
+        $sample = array();
+        for ($feature_idx = 0; $feature_idx < $n_features; $feature_idx++) {
+            $sample[$feature_idx] = mt_rand() / mt_getrandmax();
+        }
+        return $sample;
+    }
+    
     public function create_fspace($n_users, $n_user_samples, $n_features) {
         mt_srand(1234);
         
@@ -43,11 +52,7 @@ class local_bioauth_generator extends testing_module_generator {
         for ($user_idx = 0; $user_idx < $n_users; $user_idx++) {
             $samples = array();
             for ($sample_idx = 0; $sample_idx < $n_user_samples; $sample_idx++) {
-                $sample = array($n_features);
-                for ($feature_idx = 0; $feature_idx < $n_features; $feature_idx++) {
-                    $sample[$feature_idx] = mt_rand() / mt_getrandmax();
-                }
-                $samples[$sample_idx] = $sample;
+                $samples[] = $this->create_sample($n_features);
             }
             $fspace[$user_idx] = $samples;
         }

@@ -69,19 +69,51 @@ function abs_diff($arr1, $arr2) {
 }
 
 
-function dspace_within($fspace) {
-    $w_dspace = array();
+function create_dspace_within(&$fspace) {
+    $dspace_within = array();
     foreach ($fspace as $user => $samples) {
-        $idx_combinations = new Combinations(array_keys($fspace[$user]), 2);
+        $sample_combinations = new Combinations(array_keys($samples), 2);
         $user_dspace = array();
-        foreach ($idx_combinations as $idx) {
-            $user_dspace[] = abs_diff($fspace[$user][$idx[0]], $fspace[$user][$idx[1]]);
+        
+        foreach ($sample_combinations as $idx) {
+            $user_dspace[] = abs_diff($samples[$idx[0]], $samples[$idx[1]]);
         }
-        $w_dspace[$user] = $user_dspace;
+        $dspace_within[$user] = $user_dspace;
     }
     
-    return $w_dspace;
+    return $dspace_within;
 }
+
+function create_dspace_between(&$fspace) {
+    $dspace_between = array();
+    
+    $user_product = new Product(array(array_keys($fspace), array_keys($fspace)));
+    foreach ($user_product as $users) {
+        if ($users[0] == $users[1])
+            continue;
+            
+        $user_dspace = array();
+        foreach ($fspace[$users[0]] as $sample) {
+            foreach ($fspace[$users[1]] as $diff_sample) {
+                $user_dspace[] = abs_diff($sample, $diff_sample);
+            }
+        }
+        $dspace_between[$users[0]] = $user_dspace;
+    }
+    
+    return $dspace_between;
+}
+
+function create_dspace_query(&$fspace, $reference_user, $query_sample) {
+    $dspace_query = array();
+    
+    foreach ($fspace[$reference_user] as $reference_sample) {
+        $dspace_query[] = abs_diff($reference_sample, $query_sample);
+    }
+    
+    return $dspace_query;
+}
+
 
 /**
  * Combinations iterator, modified from the one found on
@@ -143,6 +175,82 @@ class Combinations implements Iterator {
         $this -> c[$i]++;
         while ($i++ < $this -> k - 1)
             $this -> c[$i] = $this -> c[$i - 1] + 1;
+        return true;
+    }
+
+}
+
+/**
+ * Cartesian product iterator
+ * 
+ */
+class Product implements Iterator {
+    protected $c = null;
+    protected $s = null;
+    protected $n = 0;
+    protected $k = 0;
+    protected $pos = 0;
+    protected $indices = null;
+    protected $dimensions = null;
+    
+    function __construct($s) {
+        if (is_array($s)) {
+            $this->s = array_values($s);
+        } else {
+            throw new Exception('Must provide a multidimensional array.');
+        }
+        $this->n = 1;
+        foreach ($this->s as $p) {
+            $this->n *= count($p);
+        }
+        $this->k = count($this->s);
+        $this->indices = array();
+        $this->dimensions = array();
+        
+        $this->rewind();
+    }
+
+    function key() {
+        return $this->pos;
+    }
+
+    function current() {
+        $r = array();
+        foreach ($this->indices as $idx => &$pos) {
+            $r[] = $this->s[$idx][$pos];
+        }
+        return $r;
+    }
+
+    function next() {
+        if ($this -> _next())
+            $this -> pos++;
+        else
+            $this -> pos = -1;
+    }
+
+    function rewind() {
+        for ($i = 0; $i < $this->k; $i++) {
+            $this->indices[$i] = 0;
+            $this->dimensions[$i] = count($this->s[$i]);
+        }
+    }
+
+    function valid() {
+        return $this -> pos >= 0;
+    }
+
+    protected function _next() {
+        
+        if ($this->pos + 1 >= $this->n)
+            return false;
+        
+        foreach ($this->indices as $idx => &$pos) {
+            if (! 0 == ($pos = ($pos + 1) % $this->dimensions[$idx])) {
+                break;
+            }
+        }
+        
         return true;
     }
 

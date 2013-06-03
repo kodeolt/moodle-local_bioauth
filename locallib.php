@@ -50,6 +50,7 @@ function subtract_and_square($n, $m) {
  */
 function euclidean_distance(&$a) {
     $c = array_map("subtract_and_square", $a[0], $a[1]);
+    
     return pow(array_sum($c), .5);
 }
 
@@ -58,41 +59,30 @@ function abs_diff($arr1, $arr2) {
     foreach ($arr1 as $key => $value) {
         $ret[$key] = abs($arr2[$key]-$arr1[$key]);
     }
+    
     return $ret;
 }
 
-function average($arr)
+function average(&$arr)
 {
-    if (!count($arr)) return 0;
-
-    $sum = 0;
-    for ($i = 0; $i < count($arr); $i++)
-    {
-        $sum += $arr[$i];
-    }
-
-    return $sum / count($arr);
+    if (count($arr) < 1)
+        return 0;
+    
+    return (double)array_sum($arr) / count($arr);
 }
 
-function variance($arr)
+function variance(&$arr)
 {
-    if (!count($arr)) return 0;
+    if (count($arr) < 2)
+        return 0;
 
     $mean = average($arr);
-
-    $sos = 0;    // Sum of squares
-    for ($i = 0; $i < count($arr); $i++)
-    {
-        $sos += ($arr[$i] - $mean) * ($arr[$i] - $mean);
-    }
-
-    return $sos / (count($arr)-1);  // denominator = n-1; i.e. estimating based on sample 
-                                    // n-1 is also what MS Excel takes by default in the
-                                    // VAR function
+    $square_diffs = array_map(function ($x) use (&$mean) {return pow($x-$mean,2); }, $arr);
+    
+    return array_sum($square_diffs) / (count($arr)-1);
 }
 
 function random_normal($mean, $std) {
-    
     do {
         $x1 = 2.0*(mt_rand()/mt_getrandmax()) - 1.0;
         $x2 = 2.0*(mt_rand()/mt_getrandmax()) - 1.0;
@@ -126,7 +116,6 @@ function n_random_normal($n, $mean, $std) {
 }
 
 function linear_weighted_decisions(&$neighbors, $k) {
-    
     $decisions = array();
     
     $w = 0;
@@ -143,7 +132,6 @@ function linear_weighted_decisions(&$neighbors, $k) {
 }
 
 function sorted_distances(&$fspace, &$query_sample, $query_user) {
-    
     $w_dspace = create_user_dspace_within($fspace, $query_user);
     $b_dspace = create_user_dspace_between($fspace, $query_user);
     $q_dspace = create_dspace_query($fspace, $query_user, $query_sample);

@@ -33,11 +33,6 @@ require_once($CFG->dirroot . '/local/bioauth/tests/generator/lib.php');
 
 class local_bioauth_locallib_testcase extends advanced_testcase {
     
-    public function assertInRange($expected, $actual, $error, $message='') {
-        self::assertThat(abs($expected-$actual)<= $error, self::isTrue(), 'Hello');
-    }
-    
-    
     public function test_euclidean_distance() {
         $a = array(array(0, 0), array(3, 4));
         $this->assertEquals(euclidean_distance($a), 5);

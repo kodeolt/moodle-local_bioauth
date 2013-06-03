@@ -48,16 +48,9 @@ function subtract_and_square($n, $m) {
  * @param array $q
  * @return the Euclidean distance between $p and $q
  */
-function euclidean_distance($p, $q) {
-    $numargs = func_num_args();
-    if ($numargs != 2) {
-        die("You must supply 2, and only 2, coordinates, no more, no less.\n");
-    } else if (sizeof($p) != sizeof($q)) {
-        die("Coordinates do not have the same number of elements.\n");
-    } else {
-        $c = array_map("subtract_and_square", $p, $q);
-        return pow(array_sum($c), .5);
-    }
+function euclidean_distance(&$a) {
+    $c = array_map("subtract_and_square", $a[0], $a[1]);
+    return pow(array_sum($c), .5);
 }
 
 function abs_diff($arr1, $arr2) {
@@ -68,15 +61,62 @@ function abs_diff($arr1, $arr2) {
   return $ret;
 }
 
+function sorted_distances(&$fspace, &$query_sample, $query_user) {
+    
+    $w_dspace = create_user_dspace_within($fspace, $query_user);
+    $b_dspace = create_user_dspace_between($fspace, $query_user);
+    $q_dspace = create_dspace_query($fspace, $query_user, $query_sample);
+    
+    $a = array($w_dspace, $q_dspace);
+    $w_product = iterator_to_array(new Product($a));
+    $w_distances = array_map('euclidean_distance', $w_product);
+    
+    $a = array($b_dspace, $q_dspace);
+    $b_product = iterator_to_array(new Product($a));
+    $b_distances = array_map('euclidean_distance', $b_product);
+    
+    $w_labels = array_fill(0, count($w_distances), 'w');
+    $b_labels = array_fill(0, count($b_distances), 'b');
+    
+    $distance_labels = array_merge($w_labels, $b_labels);
+    $distances = array_merge($w_distances, $b_distances);
+    
+    array_multisort($distances, SORT_ASC, $distance_labels);
+    
+    return $distance_labels;
+}
+
+function create_user_dspace_within(&$fspace, $user) {
+    $dspace = array();
+    $samples = $fspace[$user];
+    $sample_combinations = new Combinations($samples, 2);
+    foreach ($sample_combinations as $samples) {
+            $dspace[] = abs_diff($samples[0], $samples[1]);
+    }
+    return $dspace;
+}
+
+function create_user_dspace_between(&$fspace, $user) {
+    
+    $dspace = array();
+    foreach ($fspace[$user] as $sample) {
+        foreach (array_keys($fspace) as $diff_user) {
+            foreach ($fspace[$diff_user] as $diff_sample) {
+                $dspace[] = abs_diff($sample, $diff_sample);
+            }
+        }
+    }
+    return $dspace;
+}
 
 function create_dspace_within(&$fspace) {
     $dspace_within = array();
     foreach ($fspace as $user => $samples) {
-        $sample_combinations = new Combinations(array_keys($samples), 2);
+        $sample_combinations = new Combinations($samples, 2);
         $user_dspace = array();
         
         foreach ($sample_combinations as $idx) {
-            $user_dspace[] = abs_diff($samples[$idx[0]], $samples[$idx[1]]);
+            $user_dspace[] = abs_diff($samples[0], $samples[1]);
         }
         $dspace_within[$user] = $user_dspace;
     }
@@ -86,8 +126,8 @@ function create_dspace_within(&$fspace) {
 
 function create_dspace_between(&$fspace) {
     $dspace_between = array();
-    
-    $user_product = new Product(array(array_keys($fspace), array_keys($fspace)));
+    $a = array(array_keys($fspace), array_keys($fspace));
+    $user_product = new Product($a);
     foreach ($user_product as $users) {
         if ($users[0] == $users[1])
             continue;
@@ -127,7 +167,7 @@ class Combinations implements Iterator {
     protected $k = 0;
     protected $pos = 0;
 
-    function __construct($s, $k) {
+    function __construct(&$s, $k) {
         if (is_array($s)) {
             $this -> s = array_values($s);
             $this -> n = count($this -> s);
@@ -193,7 +233,7 @@ class Product implements Iterator {
     protected $indices = null;
     protected $dimensions = null;
     
-    function __construct($s) {
+    function __construct(&$s) {
         if (is_array($s)) {
             $this->s = array_values($s);
         } else {

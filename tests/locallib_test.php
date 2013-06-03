@@ -33,20 +33,21 @@ require_once($CFG->dirroot . '/local/bioauth/tests/generator/lib.php');
 
 class local_bioauth_locallib_testcase extends advanced_testcase {
     public function test_euclidean_distance() {
-        $u = array(0, 0);
-        $v = array(3, 4);
-        $this->assertEquals(euclidean_distance($u, $v), 5);
+        $a = array(array(0, 0), array(3, 4));
+        $this->assertEquals(euclidean_distance($a), 5);
     }
     
     public function test_combinations() {
-        $c = iterator_to_array(new Combinations(array(1, 2, 3), 2));
+        $a = array(1,2,3);
+        $c = iterator_to_array(new Combinations($a, 2));
         $this->assertContains(array(1,2), $c);
         $this->assertContains(array(1,3), $c);
         $this->assertContains(array(2,3), $c);
     }
     
     public function test_product() {
-        $p = iterator_to_array(new Product(array(array(1,2), array(3, 4, 5))));
+        $a = array(array(1,2), array(3, 4, 5));
+        $p = iterator_to_array(new Product($a));
         $this->assertContains(array(1,3), $p);
         $this->assertContains(array(2,3), $p);
         $this->assertContains(array(1,4), $p);
@@ -55,7 +56,7 @@ class local_bioauth_locallib_testcase extends advanced_testcase {
         $this->assertContains(array(2,5), $p);
     }
     
-    public function test_dspace_within() {
+    public function test_dspace() {
         $n_users = 3;
         $n_user_samples = 5;
         $n_features = 2;
@@ -76,5 +77,18 @@ class local_bioauth_locallib_testcase extends advanced_testcase {
         $query_sample = $datagen->create_sample($n_features);
         $q_dspace = create_dspace_query($fspace, 0, $query_sample);
         print_r($q_dspace);
+    }
+    
+    public function test_binary_classification() {
+        $n_users = 3;
+        $n_user_samples = 3;
+        $n_features = 2;
+        
+        $datagen = $this->getDataGenerator()->get_plugin_generator('local_bioauth');
+        $fspace = $datagen->create_fspace($n_users, $n_user_samples, $n_features);
+        $query_sample = $datagen->create_sample($n_features);
+        
+        $c = sorted_distances($fspace, $query_sample, 0);
+        print_r($c);
     }
 }

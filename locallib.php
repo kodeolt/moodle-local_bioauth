@@ -90,8 +90,8 @@ function random_normal($mean, $std) {
     } while ($w >= 1.0);
 
     $w = sqrt( (-2.0*log($w))/$w);
-    $y1 = $x1 * $w;
-    $y2 = $x2 * $w;
+    $y1 = $std*$x1*$w + $mean;
+    $y2 = $std*$x2*$w + $mean;
     
     return array($y1,$y2);
 }
@@ -110,6 +110,15 @@ function n_random_normal($n, $mean, $std) {
     $a[] = $n1;
     if (0 == $n % 2) {
         $a[] = $n2;
+    }
+    
+    return $a;
+}
+
+function n_random($n) {
+    $a = array();
+    for ($i = 0; $i < $n; $i++) {
+        $a[] = mt_rand() / mt_getrandmax();
     }
     
     return $a;
@@ -152,7 +161,7 @@ function sorted_distances(&$fspace, &$query_sample, $query_user) {
     
     array_multisort($distances, SORT_ASC, $distance_labels);
     
-    return $distance_labels;
+    return array($distances, $distance_labels);
 }
 
 function create_user_dspace_within(&$fspace, $user) {
@@ -170,8 +179,10 @@ function create_user_dspace_between(&$fspace, $user) {
     $dspace = array();
     foreach ($fspace[$user] as $sample) {
         foreach (array_keys($fspace) as $diff_user) {
-            foreach ($fspace[$diff_user] as $diff_sample) {
-                $dspace[] = abs_diff($sample, $diff_sample);
+            if ($user != $diff_user) {
+                foreach ($fspace[$diff_user] as $diff_sample) {
+                    $dspace[] = abs_diff($sample, $diff_sample);
+                }
             }
         }
     }

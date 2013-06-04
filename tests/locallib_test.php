@@ -61,21 +61,22 @@ class local_bioauth_locallib_testcase extends advanced_testcase {
         $n_users = 3;
         $n_user_samples = 5;
         $n_features = 2;
+        $query_user = 0;
         
         $datagen = $this->getDataGenerator()->get_plugin_generator('local_bioauth');
         
-        $fspace = $datagen->create_fspace($n_users, $n_user_samples, $n_features);
+        list($fspace, $user_means, $user_stds) = $datagen->create_fspace($n_users, $n_user_samples, $n_features);
         print_r($fspace);
         
         // (m-1)*m/2 for each user
-        $w_dspace = create_dspace_within($fspace);
+        $w_dspace = create_user_dspace_within($fspace, $query_user);
         print_r($w_dspace);
         
         // (n-1)*m*m for each user
-        $b_dspace = create_dspace_between($fspace);
-        // print_r($b_dspace);
+        $b_dspace = create_user_dspace_between($fspace, $query_user);
+        print_r($b_dspace);
         
-        $query_sample = $datagen->create_sample($n_features);
+        $query_sample = $datagen->create_random_normal_sample($n_features, $user_means[$query_user], $user_stds[$query_user]);
         $q_dspace = create_dspace_query($fspace, 0, $query_sample);
         print_r($q_dspace);
     }
@@ -84,13 +85,17 @@ class local_bioauth_locallib_testcase extends advanced_testcase {
         $n_users = 3;
         $n_user_samples = 3;
         $n_features = 2;
+        $query_user = 0;
         
         $datagen = $this->getDataGenerator()->get_plugin_generator('local_bioauth');
-        $fspace = $datagen->create_fspace($n_users, $n_user_samples, $n_features);
-        $query_sample = $datagen->create_sample($n_features);
+        list($fspace, $user_means, $user_stds) = $datagen->create_fspace($n_users, $n_user_samples, $n_features);
         
-        $c = sorted_distances($fspace, $query_sample, 0);
-        print_r($c);
+        $query_sample = $datagen->create_random_normal_sample($n_features, $user_means[$query_user], $user_stds[$query_user]);
+        
+        list($dists, $labels) = sorted_distances($fspace, $query_sample, 0);
+        // print_r($labels);
+        // print_r($dists);
+        print_r(array_combine($dists, $labels));
     }
     
     public function test_linear_weighted_decisions() {

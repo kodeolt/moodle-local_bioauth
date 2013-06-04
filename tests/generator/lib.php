@@ -37,10 +37,19 @@ class local_bioauth_generator extends testing_module_generator {
     }
     
     
-    public function create_sample($n_features) {
+    public function create_random_normal_sample($n_features, $means, $stds) {
         $sample = array();
         for ($feature_idx = 0; $feature_idx < $n_features; $feature_idx++) {
-            $sample[$feature_idx] = mt_rand() / mt_getrandmax();
+            list($x1, $x2) = random_normal($means[$feature_idx], $stds[$feature_idx]);
+            $sample[$feature_idx] = $x1;
+        }
+        return $sample;
+    }
+    
+    public function create_random_sample($n_features) {
+        $sample = array();
+        for ($feature_idx = 0; $feature_idx < $n_features; $feature_idx++) {
+                $sample[$feature_idx] = mt_rand()/mt_getrandmax();
         }
         return $sample;
     }
@@ -49,14 +58,20 @@ class local_bioauth_generator extends testing_module_generator {
         mt_srand(1234);
         
         $fspace = array();
+        $user_means = array();
+        $user_stds = array();
         for ($user_idx = 0; $user_idx < $n_users; $user_idx++) {
+            $means = n_random($n_features);
+            $stds = array_fill(0, $n_features, 0.1);
             $samples = array();
             for ($sample_idx = 0; $sample_idx < $n_user_samples; $sample_idx++) {
-                $samples[] = $this->create_sample($n_features);
+                $samples[] = $this->create_random_normal_sample($n_features, $means, $stds);
             }
             $fspace[$user_idx] = $samples;
+            $user_means[$user_idx] = $means;
+            $user_stds[$user_idx] = $stds;
         }
         
-        return $fspace;
+        return array($fspace, $user_means, $user_stds);
     }
 }

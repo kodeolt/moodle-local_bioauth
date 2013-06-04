@@ -124,7 +124,29 @@ function n_random($n) {
     return $a;
 }
 
-function error_rates($nn, $m_max) {
+/**
+ * 
+ */
+function classify($reference_fspace, $query_fspace, $k) {
+    
+    $nn = array();
+    foreach ($reference_fspace as $reference_user => $reference_samples) {
+        $nn[$reference_user] = array();
+        foreach ($query_fspace as $query_user => $query_samples) {
+            $nn[$reference_user][$query_user] = array();
+            foreach ($query_samples as $query_sample_idx => $query_sample) {
+                list($distances, $distance_labels) = sorted_distances($reference_fspace, $query_sample, $reference_user);
+                $nn[$reference_user][$query_user][$query_sample_idx] = linear_weighted_decisions($distance_labels, $k);
+            }
+        }
+    }
+    
+    
+    
+    return $nn;
+}
+
+function error_rates($nn) {
     
     // False acceptance and false rejection rates for the population
     $frr = array();
@@ -136,28 +158,36 @@ function error_rates($nn, $m_max) {
     $fp_counts = array();
     $cn_counts = array();
     
+    list($ref) = $nn;
+    list($query) = $ref;
+    list($labels) = $query;
+    $m_max = count($labels);
+    
     for ($m = 0; $m < $m_max; $m++) {
         $fn = 0;
         $cp = 0;
         $fp = 0;
         $cn = 0;
         
-        foreach ($nn as $users => $decisions) {
-            list($reference_user, $query_user) = $users;
-            
-            // Same user, an error would increase the FRR
-            if ($reference_user == $query_user) {
-                if ('w' == $decisions[$m])
-                    $cp += 1;
-                else
-                    $fn += 1;
-            } else { // Different users, error would increase the FAR
-                if ('w' == $decisions[$m])
-                    $fp += 1;
-                else
-                    $cn += 1;
+        foreach ($nn as $reference_user => $query_nn) {
+            foreach ($query_nn as $query_user => $classifications) {
+                foreach ($classifications as $classification) {
+                
+                     // Same user, an error would increase the FRR
+                    if ($reference_user == $query_user) {
+                        if ('w' == $classification[$m])
+                            $cp += 1;
+                        else
+                            $fn += 1;
+                    } else { // Different users, error would increase the FAR
+                        if ('w' == $classification[$m])
+                            $fp += 1;
+                        else
+                            $cn += 1;
+                    }
+                }
             }
-        } 
+        }
         
         $fn_counts[$m] = $fn;
         $cp_counts[$m] = $cp;

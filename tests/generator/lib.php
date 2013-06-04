@@ -72,4 +72,17 @@ class local_bioauth_generator extends testing_module_generator {
         
         return array($fspace, $user_means, $user_stds);
     }
+    
+    public function create_fspace_from_stats($n_users, $n_user_samples, $user_means, $user_stds) {
+        $fspace = array();
+        foreach ($user_means as $user => $feature_means) {
+            $samples = array();
+            for ($sample_idx = 0; $sample_idx < $n_user_samples; $sample_idx++) {
+                $samples[] = $this->create_random_normal_sample(count($feature_means), $feature_means, $user_stds[$user]);
+            }
+            $fspace[$user] = $samples;
+        }
+        
+        return $fspace;
+    }
 }

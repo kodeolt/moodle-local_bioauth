@@ -29,7 +29,7 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->dirroot . '/local/bioauth/locallib.php');
 require_once($CFG->dirroot . '/local/bioauth/tests/generator/lib.php');
-
+require_once($CFG->dirroot . '/lib/graphlib.php');
 
 class local_bioauth_locallib_testcase extends advanced_testcase {
     
@@ -120,4 +120,28 @@ class local_bioauth_locallib_testcase extends advanced_testcase {
         $this->assertLessThan(abs($expected_mean - $actual_mean), $epsilon);
         $this->assertLessThan(abs($expected_std - $actual_std), $epsilon);
     }
+    
+    public function test_classify() {
+        $n_users = 3;
+        $n_reference_samples = 5;
+        $n_query_samples = 3;
+        $n_features = 2;
+        $user_spread = 0.1;
+        $k = 9;
+        
+        $datagen = $this->getDataGenerator()->get_plugin_generator('local_bioauth');
+        
+        list($reference_fspace, $user_means, $user_stds) = $datagen->create_fspace($n_users, $n_reference_samples, $n_features, $user_spread);
+        $query_fspace = $datagen->create_fspace_from_stats($n_users, $n_query_samples, $user_means, $user_stds);
+        
+        $nn = classify($reference_fspace, $query_fspace, $k);
+        
+        print_r($nn);
+        
+        list($far, $frr, $fn_counts, $cp_counts, $fp_counts, $cn_counts) = error_rates($nn);
+        
+        print_r($far);
+        print_r($frr);
+    }
+    
 }

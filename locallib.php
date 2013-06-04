@@ -124,6 +124,60 @@ function n_random($n) {
     return $a;
 }
 
+function error_rates($nn, $m_max) {
+    
+    // False acceptance and false rejection rates for the population
+    $frr = array();
+    $far = array();
+    
+    // Frequency of the outcome of each decision while varying the model parameter, m
+    $fn_counts = array();
+    $cp_counts = array();
+    $fp_counts = array();
+    $cn_counts = array();
+    
+    for ($m = 0; $m < $m_max; $m++) {
+        $fn = 0;
+        $cp = 0;
+        $fp = 0;
+        $cn = 0;
+        
+        foreach ($nn as $users => $decisions) {
+            list($reference_user, $query_user) = $users;
+            
+            // Same user, an error would increase the FRR
+            if ($reference_user == $query_user) {
+                if ('w' == $decisions[$m])
+                    $cp += 1;
+                else
+                    $fn += 1;
+            } else { // Different users, error would increase the FAR
+                if ('w' == $decisions[$m])
+                    $fp += 1;
+                else
+                    $cn += 1;
+            }
+        } 
+        
+        $fn_counts[$m] = $fn;
+        $cp_counts[$m] = $cp;
+        $fp_counts[$m] = $fp;
+        $cn_counts[$m] = $cn;
+        
+        if (0 == $fp)
+            $far[$m] = 0;
+        else
+            $far[$m] = $fp/($fp+$cn);
+        
+        if (0 == $fn)
+            $frr[$m] = 0;
+        else
+            $frr[$m] = $fn/($fn+$cp);
+    }
+    
+    return array($far, $frr, $fn_counts, $cp_counts, $fp_counts, $cn_counts);
+}
+
 function linear_weighted_decisions(&$neighbors, $k) {
     $decisions = array();
     
@@ -145,12 +199,10 @@ function sorted_distances(&$fspace, &$query_sample, $query_user) {
     $b_dspace = create_user_dspace_between($fspace, $query_user);
     $q_dspace = create_dspace_query($fspace, $query_user, $query_sample);
     
-    $a = array($w_dspace, $q_dspace);
-    $w_product = iterator_to_array(new Product($a));
+    $w_product = iterator_to_array(new Product(array(&$w_dspace, &$q_dspace)));
     $w_distances = array_map('euclidean_distance', $w_product);
     
-    $a = array($b_dspace, $q_dspace);
-    $b_product = iterator_to_array(new Product($a));
+    $b_product = iterator_to_array(new Product(array(&$b_dspace, &$q_dspace)));
     $b_distances = array_map('euclidean_distance', $b_product);
     
     $w_labels = array_fill(0, count($w_distances), 'w');
@@ -167,7 +219,7 @@ function sorted_distances(&$fspace, &$query_sample, $query_user) {
 function create_user_dspace_within(&$fspace, $user) {
     $dspace = array();
     $samples = $fspace[$user];
-    $sample_combinations = new Combinations($samples, 2);
+    $sample_combinations = new Combinations(&$samples, 2);
     foreach ($sample_combinations as $samples) {
             $dspace[] = abs_diff($samples[0], $samples[1]);
     }
@@ -175,7 +227,6 @@ function create_user_dspace_within(&$fspace, $user) {
 }
 
 function create_user_dspace_between(&$fspace, $user) {
-    
     $dspace = array();
     foreach ($fspace[$user] as $sample) {
         foreach (array_keys($fspace) as $diff_user) {
@@ -192,7 +243,7 @@ function create_user_dspace_between(&$fspace, $user) {
 function create_dspace_within(&$fspace) {
     $dspace_within = array();
     foreach ($fspace as $user => $samples) {
-        $sample_combinations = new Combinations($samples, 2);
+        $sample_combinations = new Combinations(&$samples, 2);
         $user_dspace = array();
         
         foreach ($sample_combinations as $idx) {
@@ -206,8 +257,7 @@ function create_dspace_within(&$fspace) {
 
 function create_dspace_between(&$fspace) {
     $dspace_between = array();
-    $a = array(array_keys($fspace), array_keys($fspace));
-    $user_product = new Product($a);
+    $user_product = new Product(array(array_keys($fspace), array_keys($fspace)));
     foreach ($user_product as $users) {
         if ($users[0] == $users[1])
             continue;
@@ -247,54 +297,54 @@ class Combinations implements Iterator {
     protected $k = 0;
     protected $pos = 0;
 
-    function __construct(&$s, $k) {
+    function __construct($s, $k) {
         if (is_array($s)) {
-            $this -> s = array_values($s);
-            $this -> n = count($this -> s);
+            $this->s = array_values($s);
+            $this->n = count($this->s);
         } else {
-            $this -> s = (string)$s;
-            $this -> n = strlen($this -> s);
+            $this->s = (string)$s;
+            $this->n = strlen($this->s);
         }
-        $this -> k = $k;
-        $this -> rewind();
+        $this->k = $k;
+        $this->rewind();
     }
 
     function key() {
-        return $this -> pos;
+        return $this->pos;
     }
 
     function current() {
         $r = array();
-        for ($i = 0; $i < $this -> k; $i++)
-            $r[] = $this -> s[$this -> c[$i]];
-        return is_array($this -> s) ? $r : implode('', $r);
+        for ($i = 0; $i < $this->k; $i++)
+            $r[] = $this->s[$this->c[$i]];
+        return is_array($this->s) ? $r : implode('', $r);
     }
 
     function next() {
-        if ($this -> _next())
-            $this -> pos++;
+        if ($this->_next())
+            $this->pos++;
         else
-            $this -> pos = -1;
+            $this->pos = -1;
     }
 
     function rewind() {
-        $this -> c = range(0, $this -> k);
-        $this -> pos = 0;
+        $this->c = range(0, $this->k);
+        $this->pos = 0;
     }
 
     function valid() {
-        return $this -> pos >= 0;
+        return $this->pos >= 0;
     }
 
     protected function _next() {
-        $i = $this -> k - 1;
-        while ($i >= 0 && $this -> c[$i] == $this -> n - $this -> k + $i)
+        $i = $this->k - 1;
+        while ($i >= 0 && $this->c[$i] == $this->n - $this->k + $i)
             $i--;
         if ($i < 0)
             return false;
-        $this -> c[$i]++;
-        while ($i++ < $this -> k - 1)
-            $this -> c[$i] = $this -> c[$i - 1] + 1;
+        $this->c[$i]++;
+        while ($i++ < $this->k - 1)
+            $this->c[$i] = $this->c[$i - 1] + 1;
         return true;
     }
 
@@ -313,7 +363,7 @@ class Product implements Iterator {
     protected $indices = null;
     protected $dimensions = null;
     
-    function __construct(&$s) {
+    function __construct($s) {
         if (is_array($s)) {
             $this->s = array_values($s);
         } else {
@@ -343,10 +393,10 @@ class Product implements Iterator {
     }
 
     function next() {
-        if ($this -> _next())
-            $this -> pos++;
+        if ($this->_next())
+            $this->pos++;
         else
-            $this -> pos = -1;
+            $this->pos = -1;
     }
 
     function rewind() {
@@ -357,7 +407,7 @@ class Product implements Iterator {
     }
 
     function valid() {
-        return $this -> pos >= 0;
+        return $this->pos >= 0;
     }
 
     protected function _next() {

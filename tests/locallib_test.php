@@ -144,4 +144,14 @@ class local_bioauth_locallib_testcase extends advanced_testcase {
         print_r($frr);
     }
     
+    public function test_default_array() {
+        $da = new DefaultArray(0);
+        $da['one'] += 1;
+        
+        $this->assertEquals($da[0], 0);
+        $this->assertEquals($da['zero'], 0);
+        $this->assertEquals($da['one'], 1);
+        
+    }
+    
 }

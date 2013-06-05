@@ -50,68 +50,68 @@ function subtract_and_square($n, $m) {
  */
 function euclidean_distance(&$a) {
     $c = array_map("subtract_and_square", $a[0], $a[1]);
-    
+
     return pow(array_sum($c), .5);
 }
 
 function abs_diff($arr1, $arr2) {
     $ret = array();
     foreach ($arr1 as $key => $value) {
-        $ret[$key] = abs($arr2[$key]-$arr1[$key]);
+        $ret[$key] = abs($arr2[$key] - $arr1[$key]);
     }
-    
+
     return $ret;
 }
 
-function average(&$arr)
-{
+function average(&$arr) {
     if (count($arr) < 1)
         return 0;
-    
+
     return (double)array_sum($arr) / count($arr);
 }
 
-function variance(&$arr)
-{
+function variance(&$arr) {
     if (count($arr) < 2)
         return 0;
 
     $mean = average($arr);
-    $square_diffs = array_map(function ($x) use (&$mean) {return pow($x-$mean,2); }, $arr);
-    
-    return array_sum($square_diffs) / (count($arr)-1);
+    $square_diffs = array_map(function($x) use (&$mean) {
+        return pow($x - $mean, 2);
+    }, $arr);
+
+    return array_sum($square_diffs) / (count($arr) - 1);
 }
 
 function random_normal($mean, $std) {
     do {
-        $x1 = 2.0*(mt_rand()/mt_getrandmax()) - 1.0;
-        $x2 = 2.0*(mt_rand()/mt_getrandmax()) - 1.0;
-        $w = $x1*$x1 + $x2*$x2;
+        $x1 = 2.0 * (mt_rand() / mt_getrandmax()) - 1.0;
+        $x2 = 2.0 * (mt_rand() / mt_getrandmax()) - 1.0;
+        $w = $x1 * $x1 + $x2 * $x2;
     } while ($w >= 1.0);
 
-    $w = sqrt( (-2.0*log($w))/$w);
-    $y1 = $std*$x1*$w + $mean;
-    $y2 = $std*$x2*$w + $mean;
-    
-    return array($y1,$y2);
+    $w = sqrt((-2.0 * log($w)) / $w);
+    $y1 = $std * $x1 * $w + $mean;
+    $y2 = $std * $x2 * $w + $mean;
+
+    return array($y1, $y2);
 }
 
 function n_random_normal($n, $mean, $std) {
     $a = array();
-    
-    for ($i = 0; $i < ($n-1)/2; $i++) {
+
+    for ($i = 0; $i < ($n - 1) / 2; $i++) {
         list($n1, $n2) = random_normal($mean, $std);
         $a[] = $n1;
         $a[] = $n2;
     }
-    
+
     // Handle even/odd n since random normal come in pairs
     list($n1, $n2) = random_normal($mean, $std);
     $a[] = $n1;
     if (0 == $n % 2) {
         $a[] = $n2;
     }
-    
+
     return $a;
 }
 
@@ -120,15 +120,15 @@ function n_random($n) {
     for ($i = 0; $i < $n; $i++) {
         $a[] = mt_rand() / mt_getrandmax();
     }
-    
+
     return $a;
 }
 
 /**
- * 
+ *
  */
 function classify($reference_fspace, $query_fspace, $k) {
-    
+
     $nn = array();
     foreach ($reference_fspace as $reference_user => $reference_samples) {
         $nn[$reference_user] = array();
@@ -140,46 +140,69 @@ function classify($reference_fspace, $query_fspace, $k) {
             }
         }
     }
-    
-    
-    
+
+    return $nn;
+}
+
+function classify_loo($fspace, $k) {
+    $nn = array();
+    $users_product = Product(array(array_keys($fspace), array_keys($fspace)));
+
+    foreach ($users_product as $users) {
+        list($reference_user, $query_user) = $users;
+
+        arr_get($nn, $reference_user, array());
+        $nn[$reference_user] = array();
+
+    }
+
+    foreach ($reference_fspace as $reference_user => $reference_samples) {
+        foreach ($query_fspace as $query_user => $query_samples) {
+            $nn[$reference_user][$query_user] = array();
+            foreach ($query_samples as $query_sample_idx => $query_sample) {
+                list($distances, $distance_labels) = sorted_distances($reference_fspace, $query_sample, $reference_user);
+                $nn[$reference_user][$query_user][$query_sample_idx] = linear_weighted_decisions($distance_labels, $k);
+            }
+        }
+    }
+
     return $nn;
 }
 
 function error_rates($nn) {
-    
+
     // False acceptance and false rejection rates for the population
     $frr = array();
     $far = array();
-    
+
     // Frequency of the outcome of each decision while varying the model parameter, m
     $fn_counts = array();
     $cp_counts = array();
     $fp_counts = array();
     $cn_counts = array();
-    
+
     list($ref) = $nn;
     list($query) = $ref;
     list($labels) = $query;
     $m_max = count($labels);
-    
+
     for ($m = 0; $m < $m_max; $m++) {
         $fn = 0;
         $cp = 0;
         $fp = 0;
         $cn = 0;
-        
+
         foreach ($nn as $reference_user => $query_nn) {
             foreach ($query_nn as $query_user => $classifications) {
                 foreach ($classifications as $classification) {
-                
-                     // Same user, an error would increase the FRR
+
+                    // Same user, an error would increase the FRR
                     if ($reference_user == $query_user) {
                         if ('w' == $classification[$m])
                             $cp += 1;
                         else
                             $fn += 1;
-                    } else { // Different users, error would increase the FAR
+                    } else {// Different users, error would increase the FAR
                         if ('w' == $classification[$m])
                             $fp += 1;
                         else
@@ -188,39 +211,39 @@ function error_rates($nn) {
                 }
             }
         }
-        
+
         $fn_counts[$m] = $fn;
         $cp_counts[$m] = $cp;
         $fp_counts[$m] = $fp;
         $cn_counts[$m] = $cn;
-        
+
         if (0 == $fp)
             $far[$m] = 0;
         else
-            $far[$m] = $fp/($fp+$cn);
-        
+            $far[$m] = $fp / ($fp + $cn);
+
         if (0 == $fn)
             $frr[$m] = 0;
         else
-            $frr[$m] = $fn/($fn+$cp);
+            $frr[$m] = $fn / ($fn + $cp);
     }
-    
+
     return array($far, $frr, $fn_counts, $cp_counts, $fp_counts, $cn_counts);
 }
 
 function linear_weighted_decisions(&$neighbors, $k) {
     $decisions = array();
-    
+
     $w = 0;
     for ($i = 0; $i < $k; $i++) {
         if ('w' == $neighbors[$i])
-            $w += $k-$i;
+            $w += $k - $i;
     }
-    
-    for ($m = 0; $m < ($k*($k+1))/2; $m++) {
+
+    for ($m = 0; $m < ($k * ($k + 1)) / 2; $m++) {
         $decisions[$m] = ($w >= $m) ? 'w' : 'b';
     }
-    
+
     return $decisions;
 }
 
@@ -228,21 +251,21 @@ function sorted_distances(&$fspace, &$query_sample, $query_user) {
     $w_dspace = create_user_dspace_within($fspace, $query_user);
     $b_dspace = create_user_dspace_between($fspace, $query_user);
     $q_dspace = create_dspace_query($fspace, $query_user, $query_sample);
-    
-    $w_product = iterator_to_array(new Product(array(&$w_dspace, &$q_dspace)));
+
+    $w_product = iterator_to_array(new Product( array(&$w_dspace, &$q_dspace)));
     $w_distances = array_map('euclidean_distance', $w_product);
-    
-    $b_product = iterator_to_array(new Product(array(&$b_dspace, &$q_dspace)));
+
+    $b_product = iterator_to_array(new Product( array(&$b_dspace, &$q_dspace)));
     $b_distances = array_map('euclidean_distance', $b_product);
-    
+
     $w_labels = array_fill(0, count($w_distances), 'w');
     $b_labels = array_fill(0, count($b_distances), 'b');
-    
+
     $distance_labels = array_merge($w_labels, $b_labels);
     $distances = array_merge($w_distances, $b_distances);
-    
+
     array_multisort($distances, SORT_ASC, $distance_labels);
-    
+
     return array($distances, $distance_labels);
 }
 
@@ -251,7 +274,7 @@ function create_user_dspace_within(&$fspace, $user) {
     $samples = $fspace[$user];
     $sample_combinations = new Combinations(&$samples, 2);
     foreach ($sample_combinations as $samples) {
-            $dspace[] = abs_diff($samples[0], $samples[1]);
+        $dspace[] = abs_diff($samples[0], $samples[1]);
     }
     return $dspace;
 }
@@ -275,23 +298,23 @@ function create_dspace_within(&$fspace) {
     foreach ($fspace as $user => $samples) {
         $sample_combinations = new Combinations(&$samples, 2);
         $user_dspace = array();
-        
+
         foreach ($sample_combinations as $idx) {
             $user_dspace[] = abs_diff($samples[0], $samples[1]);
         }
         $dspace_within[$user] = $user_dspace;
     }
-    
+
     return $dspace_within;
 }
 
 function create_dspace_between(&$fspace) {
     $dspace_between = array();
-    $user_product = new Product(array(array_keys($fspace), array_keys($fspace)));
+    $user_product = new Product( array(array_keys($fspace), array_keys($fspace)));
     foreach ($user_product as $users) {
         if ($users[0] == $users[1])
             continue;
-            
+
         $user_dspace = array();
         foreach ($fspace[$users[0]] as $sample) {
             foreach ($fspace[$users[1]] as $diff_sample) {
@@ -300,25 +323,49 @@ function create_dspace_between(&$fspace) {
         }
         $dspace_between[$users[0]] = $user_dspace;
     }
-    
+
     return $dspace_between;
 }
 
 function create_dspace_query(&$fspace, $reference_user, $query_sample) {
     $dspace_query = array();
-    
+
     foreach ($fspace[$reference_user] as $reference_sample) {
         $dspace_query[] = abs_diff($reference_sample, $query_sample);
     }
-    
+
     return $dspace_query;
 }
+/**
+ * 
+ */
+class DefaultArray extends ArrayObject {
 
+    protected $_default_value;
+
+    public function __construct($value = null) {
+        $this->_default_value = $value;
+    }
+
+    public function offsetExists($index) {
+        return true;
+    }
+
+    public function offsetGet($index) {
+        if (!parent::offsetExists($index)) {
+            if (is_object($this->_default_value))
+                parent::offsetSet($index, clone $this->_default_value);
+            else
+                parent::offsetSet($index, $this->_default_value);
+        }
+        return parent::offsetGet($index);
+    }
+}
 
 /**
  * Combinations iterator, modified from the one found on
  * http://stackoverflow.com/questions/3742506/php-array-combinations
- * 
+ *
  */
 class Combinations implements Iterator {
     protected $c = null;
@@ -329,52 +376,52 @@ class Combinations implements Iterator {
 
     function __construct($s, $k) {
         if (is_array($s)) {
-            $this->s = array_values($s);
-            $this->n = count($this->s);
+            $this -> s = array_values($s);
+            $this -> n = count($this -> s);
         } else {
-            $this->s = (string)$s;
-            $this->n = strlen($this->s);
+            $this -> s = (string)$s;
+            $this -> n = strlen($this -> s);
         }
-        $this->k = $k;
-        $this->rewind();
+        $this -> k = $k;
+        $this -> rewind();
     }
 
     function key() {
-        return $this->pos;
+        return $this -> pos;
     }
 
     function current() {
         $r = array();
-        for ($i = 0; $i < $this->k; $i++)
-            $r[] = $this->s[$this->c[$i]];
-        return is_array($this->s) ? $r : implode('', $r);
+        for ($i = 0; $i < $this -> k; $i++)
+            $r[] = $this -> s[$this -> c[$i]];
+        return is_array($this -> s) ? $r : implode('', $r);
     }
 
     function next() {
-        if ($this->_next())
-            $this->pos++;
+        if ($this -> _next())
+            $this -> pos++;
         else
-            $this->pos = -1;
+            $this -> pos = -1;
     }
 
     function rewind() {
-        $this->c = range(0, $this->k);
-        $this->pos = 0;
+        $this -> c = range(0, $this -> k);
+        $this -> pos = 0;
     }
 
     function valid() {
-        return $this->pos >= 0;
+        return $this -> pos >= 0;
     }
 
     protected function _next() {
-        $i = $this->k - 1;
-        while ($i >= 0 && $this->c[$i] == $this->n - $this->k + $i)
+        $i = $this -> k - 1;
+        while ($i >= 0 && $this -> c[$i] == $this -> n - $this -> k + $i)
             $i--;
         if ($i < 0)
             return false;
-        $this->c[$i]++;
-        while ($i++ < $this->k - 1)
-            $this->c[$i] = $this->c[$i - 1] + 1;
+        $this -> c[$i]++;
+        while ($i++ < $this -> k - 1)
+            $this -> c[$i] = $this -> c[$i - 1] + 1;
         return true;
     }
 
@@ -382,7 +429,7 @@ class Combinations implements Iterator {
 
 /**
  * Cartesian product iterator
- * 
+ *
  */
 class Product implements Iterator {
     protected $c = null;
@@ -392,65 +439,65 @@ class Product implements Iterator {
     protected $pos = 0;
     protected $indices = null;
     protected $dimensions = null;
-    
+
     function __construct($s) {
         if (is_array($s)) {
-            $this->s = array_values($s);
+            $this -> s = array_values($s);
         } else {
             throw new Exception('Must provide a multidimensional array.');
         }
-        $this->n = 1;
+        $this -> n = 1;
         foreach ($this->s as $p) {
-            $this->n *= count($p);
+            $this -> n *= count($p);
         }
-        $this->k = count($this->s);
-        $this->indices = array();
-        $this->dimensions = array();
-        
-        $this->rewind();
+        $this -> k = count($this -> s);
+        $this -> indices = array();
+        $this -> dimensions = array();
+
+        $this -> rewind();
     }
 
     function key() {
-        return $this->pos;
+        return $this -> pos;
     }
 
     function current() {
         $r = array();
         foreach ($this->indices as $idx => &$pos) {
-            $r[] = $this->s[$idx][$pos];
+            $r[] = $this -> s[$idx][$pos];
         }
         return $r;
     }
 
     function next() {
-        if ($this->_next())
-            $this->pos++;
+        if ($this -> _next())
+            $this -> pos++;
         else
-            $this->pos = -1;
+            $this -> pos = -1;
     }
 
     function rewind() {
-        for ($i = 0; $i < $this->k; $i++) {
-            $this->indices[$i] = 0;
-            $this->dimensions[$i] = count($this->s[$i]);
+        for ($i = 0; $i < $this -> k; $i++) {
+            $this -> indices[$i] = 0;
+            $this -> dimensions[$i] = count($this -> s[$i]);
         }
     }
 
     function valid() {
-        return $this->pos >= 0;
+        return $this -> pos >= 0;
     }
 
     protected function _next() {
-        
-        if ($this->pos + 1 >= $this->n)
+
+        if ($this -> pos + 1 >= $this -> n)
             return false;
-        
+
         foreach ($this->indices as $idx => &$pos) {
-            if (! 0 == ($pos = ($pos + 1) % $this->dimensions[$idx])) {
+            if (!0 == ($pos = ($pos + 1) % $this -> dimensions[$idx])) {
                 break;
             }
         }
-        
+
         return true;
     }
 

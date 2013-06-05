@@ -38,9 +38,30 @@ class local_bioauth_locallib_testcase extends advanced_testcase {
         $this->assertEquals(euclidean_distance($a), 5);
     }
     
+    public function test_default_array() {
+        $da = new DefaultArray(0);
+        $da['one'] += 1;
+        $this->assertEquals(0, $da[0]);
+        $this->assertEquals(0, $da['zero']);
+        $this->assertEquals(1, $da['one']);
+        
+        $string_da = new DefaultArray('tmp');
+        $this->assertEquals('tmp', $string_da['idx']);
+        
+        $nested_da = new DefaultArray(new DefaultArray('default'));
+        $this->assertEquals('default', $nested_da['idx1']['idx2']);
+        
+        $array_nested_da = new DefaultArray(new DefaultArray(new ArrayObject()));
+        $array_nested_da['idx1']['idx2']['idx3'] = 'value';
+        $this->assertInstanceOf('ArrayObject', $array_nested_da['idx1']['idx2']);
+        $this->assertEquals(1, count($array_nested_da['idx1']['idx2']));
+        $this->assertEquals('value', $array_nested_da['idx1']['idx2']['idx3']);
+    }
+    
     public function test_combinations() {
         $a = array(1,2,3);
         $c = iterator_to_array(new Combinations($a, 2));
+        
         $this->assertContains(array(1,2), $c);
         $this->assertContains(array(1,3), $c);
         $this->assertContains(array(2,3), $c);
@@ -49,6 +70,7 @@ class local_bioauth_locallib_testcase extends advanced_testcase {
     public function test_product() {
         $a = array(array(1,2), array(3, 4, 5));
         $p = iterator_to_array(new Product($a));
+        
         $this->assertContains(array(1,3), $p);
         $this->assertContains(array(2,3), $p);
         $this->assertContains(array(1,4), $p);
@@ -132,9 +154,9 @@ class local_bioauth_locallib_testcase extends advanced_testcase {
         $datagen = $this->getDataGenerator()->get_plugin_generator('local_bioauth');
         
         list($reference_fspace, $user_means, $user_stds) = $datagen->create_fspace($n_users, $n_reference_samples, $n_features, $user_spread);
-        $query_fspace = $datagen->create_fspace_from_stats($n_users, $n_query_samples, $user_means, $user_stds);
+        // $query_fspace = $datagen->create_fspace_from_stats($n_users, $n_query_samples, $user_means, $user_stds);
         
-        $nn = classify($reference_fspace, $query_fspace, $k);
+        $nn = classify_loo($reference_fspace, $k);
         
         print_r($nn);
         
@@ -144,14 +166,6 @@ class local_bioauth_locallib_testcase extends advanced_testcase {
         print_r($frr);
     }
     
-    public function test_default_array() {
-        $da = new DefaultArray(0);
-        $da['one'] += 1;
-        
-        $this->assertEquals($da[0], 0);
-        $this->assertEquals($da['zero'], 0);
-        $this->assertEquals($da['one'], 1);
-        
-    }
+    
     
 }

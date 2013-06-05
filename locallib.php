@@ -144,25 +144,15 @@ function classify($reference_fspace, $query_fspace, $k) {
     return $nn;
 }
 
-function classify_loo($fspace, $k) {
-    $nn = array();
-    $users_product = Product(array(array_keys($fspace), array_keys($fspace)));
+function classify_loo(&$fspace, $k) {
+    $nn = new DefaultArray(new DefaultArray(new ArrayObject()));
 
+    $users_product = new Product(array(array_keys($fspace), array_keys($fspace)));
     foreach ($users_product as $users) {
         list($reference_user, $query_user) = $users;
-
-        arr_get($nn, $reference_user, array());
-        $nn[$reference_user] = array();
-
-    }
-
-    foreach ($reference_fspace as $reference_user => $reference_samples) {
-        foreach ($query_fspace as $query_user => $query_samples) {
-            $nn[$reference_user][$query_user] = array();
-            foreach ($query_samples as $query_sample_idx => $query_sample) {
-                list($distances, $distance_labels) = sorted_distances($reference_fspace, $query_sample, $reference_user);
-                $nn[$reference_user][$query_user][$query_sample_idx] = linear_weighted_decisions($distance_labels, $k);
-            }
+        foreach ($fspace[$query_user] as $query_sample_idx => $query_sample) {
+            list($distances, $distance_labels) = sorted_distances_loo($fspace, $reference_user, $query_sample_idx);
+            $nn[$reference_user][$query_user][$query_sample_idx] = linear_weighted_decisions($distance_labels, $k);
         }
     }
 
@@ -245,6 +235,68 @@ function linear_weighted_decisions(&$neighbors, $k) {
     }
 
     return $decisions;
+}
+
+function create_user_dspace_within_loo(&$fspace, $user, $query_sample_idx) {
+    $dspace = array();
+    $samples = $fspace[$user];
+    $sample_combinations = new Combinations(array_keys($samples), 2);
+    foreach ($sample_combinations as $sample_idxs) {
+        if ($sample_idxs[0] != $query_sample_idx && $sample_idxs[1] != $query_sample_idx) {
+            $dspace[] = abs_diff($fspace[$user][$sample_idxs[0]], $fspace[$user][$sample_idxs[1]]);
+        }
+    }
+    return $dspace;
+}
+
+function create_user_dspace_between_loo(&$fspace, $user, $query_sample_idx) {
+    $dspace = array();
+    foreach ($fspace[$user] as $sample_idx => $sample) {
+        if ($sample_idx != $query_sample_idx) {
+            foreach (array_keys($fspace) as $diff_user) {
+                if ($user != $diff_user) {
+                    foreach ($fspace[$diff_user] as $diff_sample) {
+                        $dspace[] = abs_diff($sample, $diff_sample);
+                    }
+                }
+            }
+        }
+    }
+    return $dspace;
+}
+
+function create_dspace_query_loo(&$fspace, $reference_user, $query_sample_idx) {
+    $dspace_query = array();
+
+    foreach ($fspace[$reference_user] as $reference_sample_idx => $reference_sample) {
+        if ($reference_sample_idx != $query_sample_idx) {
+            $dspace_query[] = abs_diff($reference_sample, $fspace[$reference_user][$query_sample_idx]);
+        }
+    }
+
+    return $dspace_query;
+}
+
+function sorted_distances_loo(&$fspace, $reference_user, $query_sample_idx) {
+    $w_dspace = create_user_dspace_within_loo($fspace, $reference_user, $query_sample_idx);
+    $b_dspace = create_user_dspace_between_loo($fspace, $reference_user, $query_sample_idx);
+    $q_dspace = create_dspace_query_loo($fspace, $reference_user, $query_sample_idx);
+
+    $w_product = iterator_to_array(new Product( array(&$w_dspace, &$q_dspace)));
+    $w_distances = array_map('euclidean_distance', $w_product);
+
+    $b_product = iterator_to_array(new Product( array(&$b_dspace, &$q_dspace)));
+    $b_distances = array_map('euclidean_distance', $b_product);
+
+    $w_labels = array_fill(0, count($w_distances), 'w');
+    $b_labels = array_fill(0, count($b_distances), 'b');
+
+    $distance_labels = array_merge($w_labels, $b_labels);
+    $distances = array_merge($w_distances, $b_distances);
+
+    array_multisort($distances, SORT_ASC, $distance_labels);
+
+    return array($distances, $distance_labels);
 }
 
 function sorted_distances(&$fspace, &$query_sample, $query_user) {
@@ -336,15 +388,19 @@ function create_dspace_query(&$fspace, $reference_user, $query_sample) {
 
     return $dspace_query;
 }
+
 /**
- * 
+ * DefaultArray provides functionality similar to Python's defaultdict.
+ * A default value is initialized and inserted into the array for any key that
+ * does not already exist.
+ *
  */
 class DefaultArray extends ArrayObject {
 
     protected $_default_value;
 
     public function __construct($value = null) {
-        $this->_default_value = $value;
+        $this -> _default_value = $value;
     }
 
     public function offsetExists($index) {
@@ -360,6 +416,7 @@ class DefaultArray extends ArrayObject {
         }
         return parent::offsetGet($index);
     }
+
 }
 
 /**

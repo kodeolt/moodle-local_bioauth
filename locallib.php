@@ -29,103 +29,18 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 require_once ($CFG -> dirroot . '/local/bioauth/lib.php');
+require_once ($CFG -> dirroot . '/local/bioauth/mathlib.php');
+
 
 /**
- * Subtract and square two numbers (Used in euclidean_distance)
- *
- * @param array $n
- * @param array $n
- * @return (n - m)**2
- */
-function subtract_and_square($n, $m) {
-    return (pow($n - $m, 2));
-}
-
-/**
- * Compute the Euclidean distance between two vectors of arbitrary size.
- *
- * @param array $p
- * @param array $q
- * @return the Euclidean distance between $p and $q
- */
-function euclidean_distance(&$a) {
-    $c = array_map("subtract_and_square", $a[0], $a[1]);
-
-    return pow(array_sum($c), .5);
-}
-
-function abs_diff($arr1, $arr2) {
-    $ret = array();
-    foreach ($arr1 as $key => $value) {
-        $ret[$key] = abs($arr2[$key] - $arr1[$key]);
-    }
-
-    return $ret;
-}
-
-function average(&$arr) {
-    if (count($arr) < 1)
-        return 0;
-
-    return (double)array_sum($arr) / count($arr);
-}
-
-function variance(&$arr) {
-    if (count($arr) < 2)
-        return 0;
-
-    $mean = average($arr);
-    $square_diffs = array_map(function($x) use (&$mean) {
-        return pow($x - $mean, 2);
-    }, $arr);
-
-    return array_sum($square_diffs) / (count($arr) - 1);
-}
-
-function random_normal($mean, $std) {
-    do {
-        $x1 = 2.0 * (mt_rand() / mt_getrandmax()) - 1.0;
-        $x2 = 2.0 * (mt_rand() / mt_getrandmax()) - 1.0;
-        $w = $x1 * $x1 + $x2 * $x2;
-    } while ($w >= 1.0);
-
-    $w = sqrt((-2.0 * log($w)) / $w);
-    $y1 = $std * $x1 * $w + $mean;
-    $y2 = $std * $x2 * $w + $mean;
-
-    return array($y1, $y2);
-}
-
-function n_random_normal($n, $mean, $std) {
-    $a = array();
-
-    for ($i = 0; $i < ($n - 1) / 2; $i++) {
-        list($n1, $n2) = random_normal($mean, $std);
-        $a[] = $n1;
-        $a[] = $n2;
-    }
-
-    // Handle even/odd n since random normal come in pairs
-    list($n1, $n2) = random_normal($mean, $std);
-    $a[] = $n1;
-    if (0 == $n % 2) {
-        $a[] = $n2;
-    }
-
-    return $a;
-}
-
-function n_random($n) {
-    $a = array();
-    for ($i = 0; $i < $n; $i++) {
-        $a[] = mt_rand() / mt_getrandmax();
-    }
-
-    return $a;
-}
-
-/**
- *
+ * Classify all of the feature vectors in a query set with the supplied reference
+ * set. This is a closed-system: all users in the query set must be present in
+ * the reference set.
+ * 
+ * @param array $reference_fspace the reference feature space of a population
+ * @param array $query_fspace the query set to be authentication
+ * @return int $k the number of neighbors to use in the KNN binary classification
+ * 
  */
 function classify($reference_fspace, $query_fspace, $k) {
 
@@ -144,26 +59,45 @@ function classify($reference_fspace, $query_fspace, $k) {
     return $nn;
 }
 
+/**
+ * Perform a leave-one-out cross validation to evaluate the model performance 
+ * and get authentication results on every user.
+ * 
+ * @param array $fspace the feature space of a population
+ * @return int $k the number of neighbors to use in the KNN binary classification
+ * 
+ */
 function loo_cross_validation(&$fspace, $k) {
     $reference_users = array_keys($fspace);
     $query_users = array_keys($fspace);
     $nn = new DefaultArray(new DefaultArray(new ArrayObject()));
-    
+
     foreach ($query_users as $query_user) {
         $loo_fspace = $fspace;
         $query_samples = $loo_fspace[$query_user];
         foreach ($reference_users as $reference_user) {
             foreach ($query_samples as $query_sample_idx => $query_sample) {
-                $loo_fspace[$query_user] = array_slice($query_samples, 0, $query_sample_idx, true) + array_slice($query_samples, $query_sample_idx+1, NULL, true);
+                $loo_fspace[$query_user] = array_slice($query_samples, 0, $query_sample_idx, true) + array_slice($query_samples, $query_sample_idx + 1, NULL, true);
                 list($distances, $distance_labels) = sorted_distances($loo_fspace, $reference_user, $query_sample);
                 $nn[$reference_user][$query_user][$query_sample_idx] = linear_weighted_decisions($distance_labels, $k);
             }
         }
     }
-    
+
     return $nn;
 }
 
+/**
+ * Compute the population error rates for decisions made on a bunch of 
+ * reference/query combinations
+ * 
+ * This is one of the uglier functions here, will probably refactor at some point.
+ * 
+ * @param array $nn the array of reference/query decisions
+ * @return array the false rejection and false acceptance rates. Also the frequency
+ * of each classification outcome.
+ * 
+ */
 function error_rates($nn) {
 
     // False acceptance and false rejection rates for the population
@@ -176,28 +110,33 @@ function error_rates($nn) {
     $fp_counts = array();
     $cn_counts = array();
 
-    list($ref) = $nn;
-    list($query) = $ref;
-    list($labels) = $query;
-    $m_max = count($labels);
+    // Find the number of decisions, the maximum value of the model parameter m
+    list(list(list($decisions))) = $nn;
+    $m_max = count($decisions);
 
+    // For every reference/query combination and value of m,
+    // Count the frequency of each error type
     for ($m = 0; $m < $m_max; $m++) {
+        // false negative
         $fn = 0;
+        // correct positive
         $cp = 0;
+        // false positive
         $fp = 0;
+        // correct negative
         $cn = 0;
 
         foreach ($nn as $reference_user => $query_nn) {
             foreach ($query_nn as $query_user => $classifications) {
                 foreach ($classifications as $classification) {
-
-                    // Same user, an error would increase the FRR
                     if ($reference_user == $query_user) {
+                        // Same user, an error would increase the FRR
                         if ('w' == $classification[$m])
                             $cp += 1;
                         else
                             $fn += 1;
-                    } else {// Different users, error would increase the FAR
+                    } else {
+                        // Different users, error would increase the FAR
                         if ('w' == $classification[$m])
                             $fp += 1;
                         else
@@ -223,9 +162,19 @@ function error_rates($nn) {
             $frr[$m] = $fn / ($fn + $cp);
     }
 
-    return array($far, $frr, $fn_counts, $cp_counts, $fp_counts, $cn_counts);
+    return array($frr, $far, $fn_counts, $cp_counts, $fp_counts, $cn_counts);
 }
 
+/**
+ * Make a linear-weighted decision for a list of labeled neighbors.
+ *
+ * The model parameter varies from 0 to k*(k-1)/2 and a within/between decision
+ * is made for each value, based on the k neighbors observed.
+ *
+ * @param array $neighbors the labeled neighbors
+ * @param int $k the number of neighbors to use
+ * @return array the within/between decisions over all values of the model parameter
+ */
 function linear_weighted_decisions(&$neighbors, $k) {
     $decisions = array();
 
@@ -242,6 +191,19 @@ function linear_weighted_decisions(&$neighbors, $k) {
     return $decisions;
 }
 
+/**
+ * Compute and sort the distances between the query sample and the feature space.
+ *
+ * This maps the classification to a binary classification (authentication) by
+ * operating in a difference space. The differences between the query sample and
+ * the claimed user's samples are compared to the known within and between-class
+ * difference vectors.
+ *
+ * @param array $fspace the feature space
+ * @param key $reference_user the user to create the difference space for
+ * @param array $query_sample the query_sample which must be classified
+ * @return array the between-user difference space
+ */
 function sorted_distances(&$fspace, $reference_user, $query_sample) {
     $w_dspace = create_user_dspace_within($fspace, $reference_user);
     $b_dspace = create_user_dspace_between($fspace, $reference_user);
@@ -264,6 +226,35 @@ function sorted_distances(&$fspace, $reference_user, $query_sample) {
     return array($distances, $distance_labels);
 }
 
+/**
+ * Create the query difference space for a sample claimed to be a particular user.
+ *
+ * This takes the difference between the query sample and all of the user's
+ * enrolled samples
+ *
+ * @param array $fspace the feature space
+ * @param key $reference_user the claimed owner of the query sample
+ * @param array $query_sample the query_sample which must be classified
+ * @return array the query difference space
+ */
+function create_dspace_query(&$fspace, $reference_user, $query_sample) {
+    $dspace_query = array();
+
+    foreach ($fspace[$reference_user] as $reference_sample) {
+        $dspace_query[] = abs_diff($reference_sample, $query_sample);
+    }
+
+    return $dspace_query;
+}
+
+/**
+ * Create the within-user difference space for a particular user in feature
+ * space. This takes the differences between each of $user's feature vectors.
+ *
+ * @param array $fspace the feature space
+ * @param key $user the user to create the difference space for
+ * @return array the within-user difference space
+ */
 function create_user_dspace_within(&$fspace, $user) {
     $dspace = array();
     $samples = $fspace[$user];
@@ -274,6 +265,18 @@ function create_user_dspace_within(&$fspace, $user) {
     return $dspace;
 }
 
+/**
+ * Create the between-user difference space for a particular user in feature
+ * space. This takes the differences between $user's feature vectors and every
+ * other user's feature vectors.
+ *
+ * This would be equivalent to taking the between differenc space for the entire
+ * feature space and then only keeping the between difference vectors of $user
+ *
+ * @param array $fspace the feature space
+ * @param key $user the user to create the difference space for
+ * @return array the between-user difference space
+ */
 function create_user_dspace_between(&$fspace, $user) {
     $dspace = array();
     foreach ($fspace[$user] as $sample_idx => $sample) {
@@ -285,19 +288,16 @@ function create_user_dspace_between(&$fspace, $user) {
             }
         }
     }
+
     return $dspace;
 }
 
-function create_dspace_query(&$fspace, $reference_user, $query_sample) {
-    $dspace_query = array();
-
-    foreach ($fspace[$reference_user] as $reference_sample) {
-        $dspace_query[] = abs_diff($reference_sample, $query_sample);
-    }
-
-    return $dspace_query;
-}
-
+/**
+ * Create the within-user difference space for a feature space
+ *
+ * @param array $fspace the feature space
+ * @return array the within-user difference space
+ */
 function create_dspace_within(&$fspace) {
     $dspace_within = array();
     foreach ($fspace as $user => $samples) {
@@ -313,6 +313,12 @@ function create_dspace_within(&$fspace) {
     return $dspace_within;
 }
 
+/**
+ * Create the between-user difference space for a feature space
+ *
+ * @param array $fspace the feature space
+ * @return array the between-user difference space
+ */
 function create_dspace_between(&$fspace) {
     $dspace_between = array();
     $user_product = new Product( array(array_keys($fspace), array_keys($fspace)));
@@ -340,6 +346,9 @@ function create_dspace_between(&$fspace) {
  */
 class DefaultArray extends ArrayObject {
 
+    /**
+     * @var
+     */
     protected $_default_value;
 
     public function __construct($value = null) {
@@ -352,10 +361,10 @@ class DefaultArray extends ArrayObject {
 
     public function offsetGet($index) {
         if (!parent::offsetExists($index)) {
-            if (is_object($this->_default_value))
-                parent::offsetSet($index, clone $this->_default_value);
+            if (is_object($this -> _default_value))
+                parent::offsetSet($index, clone $this -> _default_value);
             else
-                parent::offsetSet($index, $this->_default_value);
+                parent::offsetSet($index, $this -> _default_value);
         }
         return parent::offsetGet($index);
     }
@@ -363,7 +372,9 @@ class DefaultArray extends ArrayObject {
 }
 
 /**
- * Combinations iterator, modified from the one found on
+ * An iterator on all of the combinations of elements in an array
+ *
+ * Modified implementation of the one found on
  * http://stackoverflow.com/questions/3742506/php-array-combinations
  *
  */
@@ -428,7 +439,10 @@ class Combinations implements Iterator {
 }
 
 /**
- * Cartesian product iterator
+ * An iterator on the Cartesion product of several arrays.
+ *
+ * Construct with a multidimensional array to get the Cartesian product of all
+ * the iterables contained in $s
  *
  */
 class Product implements Iterator {

@@ -143,10 +143,10 @@ class local_bioauth_locallib_testcase extends advanced_testcase {
         
         // print_r($nn);
         
-        list($far, $frr, $fn_counts, $cp_counts, $fp_counts, $cn_counts) = error_rates($nn);
+        list($frr, $far, $fn_counts, $cp_counts, $fp_counts, $cn_counts) = error_rates($nn);
         
-        print_r($far);
         print_r($frr);
+        print_r($far);
     }
     
     

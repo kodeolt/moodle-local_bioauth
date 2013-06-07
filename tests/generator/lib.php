@@ -54,6 +54,17 @@ class local_bioauth_generator extends testing_module_generator {
         return $sample;
     }
     
+    /**
+     * Generate a random feature space, where the users are uniformly spread and
+     * the features for each user are normally distributed.
+     * 
+     * @param int $n_users the number of users
+     * @param int $n_user_samples the number samples per user
+     * @param int $n_features the number features per sample
+     * @param int $user_spread the standard deviation of each feature within each user
+     * @return array the feature space and user means and standard deviations
+     * used to generate the feature space (so that more data may be generated)
+     */
     public function create_fspace($n_users, $n_user_samples, $n_features, $user_spread=0.1) {
         $fspace = array();
         $user_means = array();

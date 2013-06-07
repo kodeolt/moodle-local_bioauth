@@ -29,7 +29,6 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->dirroot . '/local/bioauth/locallib.php');
 require_once($CFG->dirroot . '/local/bioauth/tests/generator/lib.php');
-require_once($CFG->dirroot . '/lib/graphlib.php');
 
 class local_bioauth_locallib_testcase extends advanced_testcase {
     
@@ -57,28 +56,7 @@ class local_bioauth_locallib_testcase extends advanced_testcase {
         $this->assertEquals(1, count($array_nested_da['idx1']['idx2']));
         $this->assertEquals('value', $array_nested_da['idx1']['idx2']['idx3']);
     }
-    
-    public function test_combinations() {
-        $a = array(1,2,3);
-        $c = iterator_to_array(new Combinations($a, 2));
-        
-        $this->assertContains(array(1,2), $c);
-        $this->assertContains(array(1,3), $c);
-        $this->assertContains(array(2,3), $c);
-    }
-    
-    public function test_product() {
-        $a = array(array(1,2), array(3, 4, 5));
-        $p = iterator_to_array(new Product($a));
-        
-        $this->assertContains(array(1,3), $p);
-        $this->assertContains(array(2,3), $p);
-        $this->assertContains(array(1,4), $p);
-        $this->assertContains(array(2,4), $p);
-        $this->assertContains(array(1,5), $p);
-        $this->assertContains(array(2,5), $p);
-    }
-    
+
     public function test_dspace() {
         $n_users = 3;
         $n_user_samples = 5;

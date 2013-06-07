@@ -167,3 +167,149 @@ function n_random($n) {
 
     return $a;
 }
+
+
+/**
+ * An iterator on all of the combinations of elements in an array
+ *
+ * Modified implementation of the one found on
+ * http://stackoverflow.com/questions/3742506/php-array-combinations
+ *
+ */
+class Combinations implements Iterator {
+    protected $c = null;
+    protected $s = null;
+    protected $n = 0;
+    protected $k = 0;
+    protected $pos = 0;
+
+    function __construct($s, $k) {
+        if (is_array($s)) {
+            $this -> s = array_values($s);
+            $this -> n = count($this -> s);
+        } else {
+            $this -> s = (string)$s;
+            $this -> n = strlen($this -> s);
+        }
+        $this -> k = $k;
+        $this -> rewind();
+    }
+
+    function key() {
+        return $this -> pos;
+    }
+
+    function current() {
+        $r = array();
+        for ($i = 0; $i < $this -> k; $i++)
+            $r[] = $this -> s[$this -> c[$i]];
+        return is_array($this -> s) ? $r : implode('', $r);
+    }
+
+    function next() {
+        if ($this -> _next())
+            $this -> pos++;
+        else
+            $this -> pos = -1;
+    }
+
+    function rewind() {
+        $this -> c = range(0, $this -> k);
+        $this -> pos = 0;
+    }
+
+    function valid() {
+        return $this -> pos >= 0;
+    }
+
+    protected function _next() {
+        $i = $this -> k - 1;
+        while ($i >= 0 && $this -> c[$i] == $this -> n - $this -> k + $i)
+            $i--;
+        if ($i < 0)
+            return false;
+        $this -> c[$i]++;
+        while ($i++ < $this -> k - 1)
+            $this -> c[$i] = $this -> c[$i - 1] + 1;
+        return true;
+    }
+
+}
+
+/**
+ * An iterator on the Cartesion product of several arrays.
+ *
+ * Construct with a multidimensional array to get the Cartesian product of all
+ * the iterables contained in $s
+ *
+ */
+class Product implements Iterator {
+    protected $c = null;
+    protected $s = null;
+    protected $n = 0;
+    protected $k = 0;
+    protected $pos = 0;
+    protected $indices = null;
+    protected $dimensions = null;
+
+    function __construct($s) {
+        if (is_array($s)) {
+            $this -> s = array_values($s);
+        } else {
+            throw new Exception('Must provide a multidimensional array.');
+        }
+        $this -> n = 1;
+        foreach ($this->s as $p) {
+            $this -> n *= count($p);
+        }
+        $this -> k = count($this -> s);
+        $this -> indices = array();
+        $this -> dimensions = array();
+
+        $this -> rewind();
+    }
+
+    function key() {
+        return $this -> pos;
+    }
+
+    function current() {
+        $r = array();
+        foreach ($this->indices as $idx => &$pos) {
+            $r[] = $this -> s[$idx][$pos];
+        }
+        return $r;
+    }
+
+    function next() {
+        if ($this -> _next())
+            $this -> pos++;
+        else
+            $this -> pos = -1;
+    }
+
+    function rewind() {
+        for ($i = 0; $i < $this -> k; $i++) {
+            $this -> indices[$i] = 0;
+            $this -> dimensions[$i] = count($this -> s[$i]);
+        }
+    }
+
+    function valid() {
+        return $this -> pos >= 0;
+    }
+
+    protected function _next() {
+
+        if ($this -> pos + 1 >= $this -> n)
+            return false;
+
+        foreach ($this->indices as $idx => &$pos) {
+            if (!0 == ($pos = ($pos + 1) % $this -> dimensions[$idx])) {
+                break;
+            }
+        }
+
+        return true;
+    }
+}

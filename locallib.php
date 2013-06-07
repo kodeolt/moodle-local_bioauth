@@ -144,6 +144,26 @@ function classify($reference_fspace, $query_fspace, $k) {
     return $nn;
 }
 
+function loo_cross_validation(&$fspace, $k) {
+    $reference_users = array_keys($fspace);
+    $query_users = array_keys($fspace);
+    $nn = new DefaultArray(new DefaultArray(new ArrayObject()));
+    
+    foreach ($query_users as $query_user) {
+        $loo_fspace = $fspace;
+        $query_samples = $loo_fspace[$query_user];
+        foreach ($reference_users as $reference_user) {
+            foreach ($query_samples as $query_sample_idx => $query_sample) {
+                $loo_fspace[$query_user] = array_slice($query_samples, 0, $query_sample_idx, true) + array_slice($query_samples, $query_sample_idx+1, NULL, true);
+                list($distances, $distance_labels) = sorted_distances($loo_fspace, $reference_user, $query_sample);
+                $nn[$reference_user][$query_user][$query_sample_idx] = linear_weighted_decisions($distance_labels, $k);
+            }
+        }
+    }
+    
+    return $nn;
+}
+
 function classify_loo(&$fspace, $k) {
     $nn = new DefaultArray(new DefaultArray(new ArrayObject()));
 
@@ -299,10 +319,10 @@ function sorted_distances_loo(&$fspace, $reference_user, $query_sample_idx) {
     return array($distances, $distance_labels);
 }
 
-function sorted_distances(&$fspace, &$query_sample, $query_user) {
-    $w_dspace = create_user_dspace_within($fspace, $query_user);
-    $b_dspace = create_user_dspace_between($fspace, $query_user);
-    $q_dspace = create_dspace_query($fspace, $query_user, $query_sample);
+function sorted_distances(&$fspace, $reference_user, $query_sample) {
+    $w_dspace = create_user_dspace_within($fspace, $reference_user);
+    $b_dspace = create_user_dspace_between($fspace, $reference_user);
+    $q_dspace = create_dspace_query($fspace, $reference_user, $query_sample);
 
     $w_product = iterator_to_array(new Product( array(&$w_dspace, &$q_dspace)));
     $w_distances = array_map('euclidean_distance', $w_product);
@@ -324,16 +344,16 @@ function sorted_distances(&$fspace, &$query_sample, $query_user) {
 function create_user_dspace_within(&$fspace, $user) {
     $dspace = array();
     $samples = $fspace[$user];
-    $sample_combinations = new Combinations(&$samples, 2);
-    foreach ($sample_combinations as $samples) {
-        $dspace[] = abs_diff($samples[0], $samples[1]);
+    $sample_combinations = new Combinations(array_keys($samples), 2);
+    foreach ($sample_combinations as $sample_idxs) {
+        $dspace[] = abs_diff($fspace[$user][$sample_idxs[0]], $fspace[$user][$sample_idxs[1]]);
     }
     return $dspace;
 }
 
 function create_user_dspace_between(&$fspace, $user) {
     $dspace = array();
-    foreach ($fspace[$user] as $sample) {
+    foreach ($fspace[$user] as $sample_idx => $sample) {
         foreach (array_keys($fspace) as $diff_user) {
             if ($user != $diff_user) {
                 foreach ($fspace[$diff_user] as $diff_sample) {
@@ -343,6 +363,16 @@ function create_user_dspace_between(&$fspace, $user) {
         }
     }
     return $dspace;
+}
+
+function create_dspace_query(&$fspace, $reference_user, $query_sample) {
+    $dspace_query = array();
+
+    foreach ($fspace[$reference_user] as $reference_sample) {
+        $dspace_query[] = abs_diff($reference_sample, $query_sample);
+    }
+
+    return $dspace_query;
 }
 
 function create_dspace_within(&$fspace) {
@@ -377,16 +407,6 @@ function create_dspace_between(&$fspace) {
     }
 
     return $dspace_between;
-}
-
-function create_dspace_query(&$fspace, $reference_user, $query_sample) {
-    $dspace_query = array();
-
-    foreach ($fspace[$reference_user] as $reference_sample) {
-        $dspace_query[] = abs_diff($reference_sample, $query_sample);
-    }
-
-    return $dspace_query;
 }
 
 /**

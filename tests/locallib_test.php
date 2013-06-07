@@ -103,23 +103,6 @@ class local_bioauth_locallib_testcase extends advanced_testcase {
         print_r($q_dspace);
     }
     
-    public function test_binary_classification() {
-        $n_users = 3;
-        $n_user_samples = 3;
-        $n_features = 2;
-        $query_user = 0;
-        
-        $datagen = $this->getDataGenerator()->get_plugin_generator('local_bioauth');
-        list($fspace, $user_means, $user_stds) = $datagen->create_fspace($n_users, $n_user_samples, $n_features);
-        
-        $query_sample = $datagen->create_random_normal_sample($n_features, $user_means[$query_user], $user_stds[$query_user]);
-        
-        list($dists, $labels) = sorted_distances($fspace, $query_sample, 0);
-        // print_r($labels);
-        // print_r($dists);
-        print_r(array_combine($dists, $labels));
-    }
-    
     public function test_linear_weighted_decisions() {
         $neighbors = array('w', 'w', 'b', 'w', 'b', 'b', 'b', 'b', 'b', 'b');
         
@@ -156,9 +139,9 @@ class local_bioauth_locallib_testcase extends advanced_testcase {
         list($reference_fspace, $user_means, $user_stds) = $datagen->create_fspace($n_users, $n_reference_samples, $n_features, $user_spread);
         // $query_fspace = $datagen->create_fspace_from_stats($n_users, $n_query_samples, $user_means, $user_stds);
         
-        $nn = classify_loo($reference_fspace, $k);
+        $nn = loo_cross_validation($reference_fspace, $k);
         
-        print_r($nn);
+        // print_r($nn);
         
         list($far, $frr, $fn_counts, $cp_counts, $fp_counts, $cn_counts) = error_rates($nn);
         

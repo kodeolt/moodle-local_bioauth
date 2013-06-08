@@ -28,7 +28,6 @@
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
-require_once ($CFG -> dirroot . '/local/bioauth/lib.php');
 require_once ($CFG -> dirroot . '/local/bioauth/mathlib.php');
 
 
@@ -347,7 +346,7 @@ function create_dspace_between(&$fspace) {
 class DefaultArray extends ArrayObject {
 
     /**
-     * @var
+     * @var the default value in the array
      */
     protected $_default_value;
 

@@ -30,6 +30,86 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once ($CFG -> dirroot . '/local/bioauth/mathlib.php');
 
+define('PRESS', 0);
+define('RELEASE', 1);
+define('MEAN', 0);
+define('STDDEV', 1);
+define('DURATION', 0);
+define('T1', 1);
+define('T2', 2);
+define('T3', 3);
+define('T4', 4);
+
+function feature_with_fallback(&$observations, $feature, $minfrequency) {
+    
+    $obs = array();
+    
+    $node = $feature;
+    while (NULL != $node && count(obs) < $minfrequency) {
+        foreach ($feature->group1 as $key1) {
+            foreach ($feature->group2 as $key2) {
+                $obs[] = $observations[$feature->distance][$key1][$key2]; 
+            }
+        }
+        $node = $node->fallback;
+    }
+    
+    if (AVG == $feature->measure) {
+        return average($obs);
+    } elseif (STD == $feature->measure) {
+        return sqrt(variance($obs));
+    }
+}
+
+function extract_keystroke_features($keystrokesequence, $keystrokefeatures) {
+    
+    $distances = array(1);
+    
+    $durations = new DefaultArray(new DefaultArray(new DefaultArray(new ArrayObject())));
+    $t1 = new DefaultArray(new DefaultArray(new DefaultArray(new ArrayObject())));
+    $t2 = new DefaultArray(new DefaultArray(new DefaultArray(new ArrayObject())));
+    
+    foreach ($keystrokesequence as $idx => $keystroke) {
+        $durations[0][$keystroke->id][$keystroke->id][] = $keystroke->releasetime - $keystroke->presstime;
+    }
+    
+    foreach ($distances as $distance) {
+        for ($idx = 0; $idx < count($keystrokesequence) - $distance; $idx += $distance) {
+            $firstkey = $keystrokesequence[$idx];
+            $secondkey = $keystrokesequence[$idx + $distance];
+            $t1[$distance][$firstkey->id][$secondkey->id][] =  $secondkey->presstime - $firstkey->releasetime;
+            $t2[$distance][$firstkey->id][$secondkey->id][] =  $secondkey->presstime - $firstkey->presstime;
+        }
+    }
+    
+    $featurevector = array();
+    foreach ($keystrokefeatures as $featureidx => $feature) {
+        if (0 == $feature->distance && PRESS == $feature->action1 && RELEASE == $feature->action2) {
+            // Duration
+            $featurevector[$featureidx] = feature_with_fallback($durations, $feature, $minfrequnecy);
+        } elseif ($feature->distance > 0 && RELEASE == $feature->action1 && PRESS == $feature->action2) {
+            // Type 1 transition
+            $featurevector[$featureidx] = feature_with_fallback($t1, $feature, $minfrequnecy);
+        } elseif ($feature->distance > 0 && PRESS == $feature->action1 && PRESS == $feature->action2) {
+            // Type 2 transition
+            $featurevector[$featureidx] = feature_with_fallback($t2, $feature, $minfrequnecy);
+        }
+    }
+}
+
+
+function create_keystroke_fspace($user_keystroke_sequences, $keystroke_features) {
+    
+    $observations = new DefaultDict(new ArrayObject());
+    
+    foreach ($user_keystroke_sequences as $userid => $keystroke_sequences) {
+        foreach ($keystroke_sequences as $sessionid => $keystroke_sequence) {
+            foreach ($keystroke_features as $featureid => $feature) {
+                $observations[$userid][$sessionid][$featureid] = extract_keystroke_features($keystroke_sequence, $feature);
+            }
+        }
+    }
+}
 
 /**
  * Classify all of the feature vectors in a query set with the supplied reference

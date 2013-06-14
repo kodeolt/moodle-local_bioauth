@@ -32,8 +32,5 @@ require_once($CFG->dirroot . '/local/bioauth/tests/generator/lib.php');
 
 class local_bioauth_keystrokelib_testcase extends advanced_testcase {
     
-    public function test_euclidean_distance() {
-        
-    }
     
 }

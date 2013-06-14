@@ -30,10 +30,50 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 
 
-class keystroke_event {
+class keystroke_sequence {
     
-    protected $key;
-    protected $presstime;
-    protected $releasetime;
+    protected $session;
+    protected $keystrokes;
     
+    public function __construct($session, $keystrokes) {
+        $this->session = $session;
+        $this->keystrokes = $keystrokes;
+    }
+    
+    public static function create($sessionid) {
+        global $DB;
+        
+        $session = $DB->get_record('bioauth_sessions', array('id' => $sessionid), '*', MUST_EXIST);
+        $keystrokes = $DB->get_records('bioauth_keystroke_events', array('userid' => $session->userid, 'sessionid' => $session->id), 'press_time', '*');
+        
+        return new keystroke_sequence($session, $keystrokes);
+    }
+}
+
+class keystroke_feature {
+    
+    protected $features;
+    
+    public function __construct($features) {
+        $this->features = $features;
+    }
+    
+    public static function create($featureset) {
+        $features = $DB->get_records('bioauth_keystroke_features', array('featureset' => $featureset), '', '*');
+        
+        return new keystroke_features($features);
+    }
+}
+
+function create_keystroke_features($featuresetid) {
+    global $DB;
+    
+    $records = $DB->get_records('bioauth_keystroke_features', array('featureset' => $featureset), '', '*');
+    $features = array();
+    
+    foreach ($records as $record) {
+        
+    }
+    
+    return $features;
 }

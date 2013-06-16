@@ -21,9 +21,11 @@
  * @copyright 2013 Vinnie Monaco
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
- 
+
 defined('MOODLE_INTERNAL') || die();
 
+global $CFG;
+require_once ($CFG -> dirroot . '/local/bioauth/constants.php');
 
 /**
  * Post-install script
@@ -35,7 +37,7 @@ function xmldb_local_bioauth_install() {
     // Load the key strings/key codes from a csv file
     $keyids = array();
     $keycodes = array();
-    if (($handle = fopen($CFG->dirroot . "/local/bioauth/models/keys.csv", "r")) !== FALSE) {
+    if (($handle = fopen($CFG -> dirroot . "/local/bioauth/models/keys.csv", "r")) !== FALSE) {
         while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
             $keyids[$data[0]] = 0;
             $num = count($data);
@@ -43,55 +45,73 @@ function xmldb_local_bioauth_install() {
         }
         fclose($handle);
     }
-    
+
     // Save the keyid for later
     foreach (array_keys($keyids) as $keystring) {
-        $keyids[$keystring] = $DB->insert_record('bioauth_keys', array('keystring' => $keystring), true);
+        $keyids[$keystring] = $DB -> insert_record('bioauth_keys', array('keystring' => $keystring), true);
     }
-    
+
     // Mapping of key codes to key ids for creating keystroke sequences
     foreach ($keycodes as $keystring => $keycodes) {
         foreach ($keycodes as $keycode) {
-            $DB->insert_record('bioauth_keycodes', array('keyid' => $keyids[$keystring], 'keycode' => $keycode), false);
+            $DB -> insert_record('bioauth_keycodes', array('keyid' => $keyids[$keystring], 'keycode' => $keycode), false);
         }
     }
-    print_r($keyids);
-    
+
     // $csvkeyids = function() use($keyids) {
-        // $ids = array_map(function($k) {return $keyids[$k];}, func_get_args());
-        // return implode(',',$ids);
+    // $ids = array_map(function($k) {return $keyids[$k];}, func_get_args());
+    // return implode(',',$ids);
     // };
-    
-    $csvkeyids = function() use($keyids) {
+
+    $csvkeyids = function() use ($keyids) {
         $ids = array();
         foreach (func_get_args() as $key) {
-            $ids[] = $keyids[$key]; 
+            $ids[] = $keyids[$key];
         }
-        return implode(',',$ids);
+        return implode(',', $ids);
     };
-    
-    $keystrokefeaturefields = array('type', 'group1', 'group2', 'measure', 'distance');
-    
+
     $keystrokefeatures = array(
-    1 => array(BIOAUTH_FEATURE_DURATION, $csvkeyids('a','b'), $csvkeyids('a','b'), BIOAUTH_MEASURE_MEAN, 0),
-    2 => array(BIOAUTH_FEATURE_T1, $csvkeyids('a','b'), $csvkeyids('a','b'), BIOAUTH_MEASURE_MEAN, 1),
+    1 => array(BIOAUTH_FEATURE_DURATION, $csvkeyids('a', 'b'), $csvkeyids('a', 'b'), BIOAUTH_MEASURE_MEAN, 0), 
+    2 => array(BIOAUTH_FEATURE_DURATION, $csvkeyids('b'), $csvkeyids('b'), BIOAUTH_MEASURE_MEAN, 0), 
+    3 => array(BIOAUTH_FEATURE_DURATION, $csvkeyids('a'), $csvkeyids('a'), BIOAUTH_MEASURE_MEAN, 0), 
+    4 => array(BIOAUTH_FEATURE_T1, $csvkeyids('a', 'b'), $csvkeyids('a', 'b'), BIOAUTH_MEASURE_MEAN, 1), 
+    5 => array(BIOAUTH_FEATURE_T1, $csvkeyids('b'), $csvkeyids('a'), BIOAUTH_MEASURE_MEAN, 1), 
     );
-    
-    $keystrokefallback = array(
-    3 => 1,
-    4 => 1,
-    );
-    
+
+    $keystrokefallback = array(2 => 1, 3 => 1, 5 => 4, );
+
     $keystrokefeatureids = array();
+    $keystrokefeaturefields = array('type', 'group1', 'group2', 'measure', 'distance');
     foreach ($keystrokefeatures as $featureid => $feature) {
-        print_r($feature);
-        $keystrokefeatureids[$featureid] = $DB->insert_record('bioauth_keystroke_features', array_combine($keystrokefeaturefields, $feature), true);
+        $keystrokefeatureids[$featureid] = $DB -> insert_record('bioauth_keystroke_features', array_combine($keystrokefeaturefields, $feature), true);
     }
 
     foreach ($keystrokefallback as $node => $parent) {
-        $DB->update_record('bioauth_keystroke_features', array('id' => $keystrokefeatureids[$node], 'fallback' => $keystrokefeatureids[$parent]));
+        $DB -> update_record('bioauth_keystroke_features', array('id' => $keystrokefeatureids[$node], 'fallback' => $keystrokefeatureids[$parent]));
     }
-    // $enUSid = $DB->insert_record('bioauth_feature_sets')
+
+    $DB -> insert_record('bioauth_feature_sets', array('name' => 'Engish US Basic Keystroke', 'locale' => 'en_US', 'keystrokefeatures' => implode(',', array_keys($keystrokefeatureids)), 'stylometryfeatures' => ''));
+
+    $sessionid = $DB -> insert_record('bioauth_demo_sessions', array('userid' => 1, 'locale' => 'en_US'));
+
+    $keystrokeevents = array(
+    array(1,$sessionid,1,0,110),
+    array(1,$sessionid,1,120,210),
+    array(1,$sessionid,1,200,300),
+    array(1,$sessionid,2,290,350),
+    array(1,$sessionid,2,370,400),
+    array(1,$sessionid,1,390,450),
+    array(1,$sessionid,2,475,520),
+    array(1,$sessionid,1,550,630),
+    array(1,$sessionid,1,603,660),
+    array(1,$sessionid,2,655,700),
+    );
     
+    $keystrokeeventfields = array('userid', 'sessionid', 'keyid', 'presstime', 'releasetime');
+    foreach ($keystrokeevents as $event) {
+        $DB -> insert_record('bioauth_demo_keystrokes', array_combine($keystrokeeventfields, $event));
+    }
+
     return true;
 }

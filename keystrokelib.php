@@ -65,14 +65,57 @@ class keystroke_feature {
     }
 }
 
+function fetch_user_sessions($users) {
+    $sessions = $DB->get_records_list('bioauth_sessions', 'id', $users);
+    
+    return $sessions;
+}
+
+function fetch_user_keystrokes($users) {
+    global $DB;
+    
+    $sessions = $DB->get_records_list('bioauth_sessions', 'id', $users);
+
+    $userkeystrokes = new DefaultArray(new DefaultArray());
+    foreach ($sessions as $session) {
+        $userkeystrokes[$session->userid][$session->id] = array_values($DB->get_records('bioauth_keystrokes', array('userid' => $session->userid, 'sessionid' => $session->id), 'presstime', '*'));
+    }
+    
+    return $userkeystrokes;
+}
+
+function fetch_demo_keystrokes() {
+    global $DB;
+    
+    $sessions = $DB->get_records('bioauth_demo_sessions');
+
+    $userkeystrokes = new DefaultArray(new DefaultArray());
+    foreach ($sessions as $session) {
+        $userkeystrokes[$session->userid][$session->id] = array_values($DB->get_records('bioauth_demo_keystrokes', array('userid' => $session->userid, 'sessionid' => $session->id), 'presstime', '*'));
+    }
+    
+    return $userkeystrokes;
+}
+
 function create_keystroke_features($featuresetid) {
     global $DB;
     
-    $records = $DB->get_records('bioauth_keystroke_features', array('featureset' => $featureset), '', '*');
     $features = array();
     
-    foreach ($records as $record) {
+    $featureids = $DB->get_record('bioauth_feature_sets', array('id' => $featuresetid), 'keystrokefeatures', MUST_EXIST);
+    // print_r($featureids);
+    // foreach (explode(',', $featureids->keystrokefeatures) as $id) {
+        // $feature = $DB->get_records_list('bioauth_keystroke_features', array('id' => $id));
+    // }
+    $features = $DB->get_records_list('bioauth_keystroke_features', 'id', explode(',', $featureids->keystrokefeatures));
+    // print_r($features);
+    foreach ($features as $featureid => $feature) {
+        if ($feature->fallback) {
+            $feature->fallback =& $features[$feature->fallback];
+        }
         
+        $feature->group1 = explode(',', $feature->group1);
+        $feature->group2 = explode(',', $feature->group2);
     }
     
     return $features;

@@ -36,14 +36,15 @@ function feature_with_fallback(&$observations, $feature, $minfrequency) {
     
     $obs = array();
     
-    $node = $feature;
-    while (NULL != $node && count(obs) < $minfrequency) {
-        foreach ($feature->group1 as $key1) {
-            foreach ($feature->group2 as $key2) {
-                $obs[] = $observations[$feature->distance][$key1][$key2]; 
+    $node =& $feature;
+    while ($node && count($obs) < $minfrequency) {
+        foreach ($node->group1 as $key1) {
+            foreach ($node->group2 as $key2) {
+                $obs = array_merge($obs, (array)$observations[$node->distance][$key1][$key2]);
+                // $obs = (array)$observations[$node->distance][$key1][$key2]; 
             }
         }
-        $node = $node->fallback;
+        $node =& $node->fallback;
     }
     
     if (BIOAUTH_MEASURE_MEAN == $feature->measure) {
@@ -53,7 +54,7 @@ function feature_with_fallback(&$observations, $feature, $minfrequency) {
     }
 }
 
-function extract_keystroke_features($keystrokesequence, $keystrokefeatures) {
+function extract_keystroke_features($keystrokesequence, $keystrokefeatures, $minfrequency) {
     
     $distances = array(1);
     
@@ -62,45 +63,47 @@ function extract_keystroke_features($keystrokesequence, $keystrokefeatures) {
     $t2 = new DefaultArray(new DefaultArray(new DefaultArray(new ArrayObject())));
     
     foreach ($keystrokesequence as $idx => $keystroke) {
-        $durations[0][$keystroke->id][$keystroke->id][] = $keystroke->releasetime - $keystroke->presstime;
+        $durations[0][$keystroke->keyid][$keystroke->keyid][] = $keystroke->releasetime - $keystroke->presstime;
     }
     
     foreach ($distances as $distance) {
         for ($idx = 0; $idx < count($keystrokesequence) - $distance; $idx += $distance) {
             $firstkey = $keystrokesequence[$idx];
             $secondkey = $keystrokesequence[$idx + $distance];
-            $t1[$distance][$firstkey->id][$secondkey->id][] =  $secondkey->presstime - $firstkey->releasetime;
-            $t2[$distance][$firstkey->id][$secondkey->id][] =  $secondkey->presstime - $firstkey->presstime;
+            $t1[$distance][$firstkey->keyid][$secondkey->keyid][] =  $secondkey->presstime - $firstkey->releasetime;
+            $t2[$distance][$firstkey->keyid][$secondkey->keyid][] =  $secondkey->presstime - $firstkey->presstime;
         }
     }
     
     $featurevector = array();
     foreach ($keystrokefeatures as $featureidx => $feature) {
-        if (0 == $feature->distance && BIOAUTH_ACTION_PRESS == $feature->action1 && BIOAUTH_ACTION_RELEASE == $feature->action2) {
+        if (0 == $feature->distance && BIOAUTH_FEATURE_DURATION == $feature->type) {
             // Duration
-            $featurevector[$featureidx] = feature_with_fallback($durations, $feature, $minfrequnecy);
-        } elseif ($feature->distance > 0 && BIOAUTH_ACTION_RELEASE == $feature->action1 && BIOAUTH_ACTION_PRESS == $feature->action2) {
+            $featurevector[$featureidx] = feature_with_fallback($durations, $feature, $minfrequency);
+        } elseif ($feature->distance > 0 && BIOAUTH_FEATURE_T1 == $feature->type) {
             // Type 1 transition
-            $featurevector[$featureidx] = feature_with_fallback($t1, $feature, $minfrequnecy);
-        } elseif ($feature->distance > 0 && BIOAUTH_ACTION_PRESS == $feature->action1 && BIOAUTH_ACTION_PRESS == $feature->action2) {
+            $featurevector[$featureidx] = feature_with_fallback($t1, $feature, $minfrequency);
+        } elseif ($feature->distance > 0 && BIOAUTH_FEATURE_T2 == $feature->type) {
             // Type 2 transition
-            $featurevector[$featureidx] = feature_with_fallback($t2, $feature, $minfrequnecy);
+            $featurevector[$featureidx] = feature_with_fallback($t2, $feature, $minfrequency);
         }
     }
+    
+    return $featurevector;
 }
 
 
-function create_keystroke_fspace($user_keystroke_sequences, $keystroke_features) {
+function create_keystroke_fspace($userkeystrokes, $keystrokefeatures, $minfrequency) {
     
-    $observations = new DefaultDict(new ArrayObject());
+    $fspace = new DefaultArray(new ArrayObject());
     
-    foreach ($user_keystroke_sequences as $userid => $keystroke_sequences) {
-        foreach ($keystroke_sequences as $sessionid => $keystroke_sequence) {
-            foreach ($keystroke_features as $featureid => $feature) {
-                $observations[$userid][$sessionid][$featureid] = extract_keystroke_features($keystroke_sequence, $feature);
-            }
+    foreach ($userkeystrokes as $userid => $sessions) {
+        foreach ($sessions as $sessionid => $keystrokes) {
+                $fspace[$userid][$sessionid] = extract_keystroke_features($keystrokes, $keystrokefeatures, $minfrequency);
         }
     }
+    
+    return $fspace;
 }
 
 /**

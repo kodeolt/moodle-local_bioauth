@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Unit tests for (some of) local/bioauth/locallib.php.
+ * Unit tests for local/bioauth/keystrokelib.php.
  *
  * @package    local_bioauth
  * @category   phpunit
@@ -27,10 +27,21 @@
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
+require_once($CFG->dirroot . '/local/bioauth/locallib.php');
 require_once($CFG->dirroot . '/local/bioauth/keystrokelib.php');
 require_once($CFG->dirroot . '/local/bioauth/tests/generator/lib.php');
 
 class local_bioauth_keystrokelib_testcase extends advanced_testcase {
     
-    
+    function test_keystroke_features() {
+        global $DB;
+        
+        $keystrokefeatures = create_keystroke_features(1);
+        // var_dump($keystrokefeatures); 
+        
+        $userkeystrokes = fetch_demo_keystrokes();
+        // var_dump($userkeystrokes);
+        $fspace = create_keystroke_fspace($userkeystrokes, $keystrokefeatures, 2);
+        var_dump($fspace);
+    }
 }

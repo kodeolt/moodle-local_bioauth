@@ -29,16 +29,8 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 require_once ($CFG -> dirroot . '/local/bioauth/mathlib.php');
+require_once ($CFG -> dirroot . '/local/bioauth/constants.php');
 
-define('PRESS', 0);
-define('RELEASE', 1);
-define('MEAN', 0);
-define('STDDEV', 1);
-define('DURATION', 0);
-define('T1', 1);
-define('T2', 2);
-define('T3', 3);
-define('T4', 4);
 
 function feature_with_fallback(&$observations, $feature, $minfrequency) {
     
@@ -54,9 +46,9 @@ function feature_with_fallback(&$observations, $feature, $minfrequency) {
         $node = $node->fallback;
     }
     
-    if (AVG == $feature->measure) {
+    if (BIOAUTH_MEASURE_MEAN == $feature->measure) {
         return average($obs);
-    } elseif (STD == $feature->measure) {
+    } elseif (BIOAUTH_MEASURE_STDDEV == $feature->measure) {
         return sqrt(variance($obs));
     }
 }
@@ -84,13 +76,13 @@ function extract_keystroke_features($keystrokesequence, $keystrokefeatures) {
     
     $featurevector = array();
     foreach ($keystrokefeatures as $featureidx => $feature) {
-        if (0 == $feature->distance && PRESS == $feature->action1 && RELEASE == $feature->action2) {
+        if (0 == $feature->distance && BIOAUTH_ACTION_PRESS == $feature->action1 && BIOAUTH_ACTION_RELEASE == $feature->action2) {
             // Duration
             $featurevector[$featureidx] = feature_with_fallback($durations, $feature, $minfrequnecy);
-        } elseif ($feature->distance > 0 && RELEASE == $feature->action1 && PRESS == $feature->action2) {
+        } elseif ($feature->distance > 0 && BIOAUTH_ACTION_RELEASE == $feature->action1 && BIOAUTH_ACTION_PRESS == $feature->action2) {
             // Type 1 transition
             $featurevector[$featureidx] = feature_with_fallback($t1, $feature, $minfrequnecy);
-        } elseif ($feature->distance > 0 && PRESS == $feature->action1 && PRESS == $feature->action2) {
+        } elseif ($feature->distance > 0 && BIOAUTH_ACTION_PRESS == $feature->action1 && BIOAUTH_ACTION_PRESS == $feature->action2) {
             // Type 2 transition
             $featurevector[$featureidx] = feature_with_fallback($t2, $feature, $minfrequnecy);
         }

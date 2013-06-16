@@ -55,20 +55,26 @@ function xmldb_local_bioauth_install() {
             $DB->insert_record('bioauth_keycodes', array('keyid' => $keyids[$keystring], 'keycode' => $keycode), false);
         }
     }
+    print_r($keyids);
     
-    function csvkeyids($keys) {
+    // $csvkeyids = function() use($keyids) {
+        // $ids = array_map(function($k) {return $keyids[$k];}, func_get_args());
+        // return implode(',',$ids);
+    // };
+    
+    $csvkeyids = function() use($keyids) {
         $ids = array();
-        foreach ($keys as $key) {
+        foreach (func_get_args() as $key) {
             $ids[] = $keyids[$key]; 
         }
         return implode(',',$ids);
-    }
+    };
     
     $keystrokefeaturefields = array('type', 'group1', 'group2', 'measure', 'distance');
     
     $keystrokefeatures = array(
-    1 => array(DURATION, csvkeyids('a','b'), csvkeyids('a','b'), MEAN, 0),
-    2 => array(T1, csvkeyids('a','b'), csvkeyids('a','b'), MEAN, 1),
+    1 => array(BIOAUTH_FEATURE_DURATION, $csvkeyids('a','b'), $csvkeyids('a','b'), BIOAUTH_MEASURE_MEAN, 0),
+    2 => array(BIOAUTH_FEATURE_T1, $csvkeyids('a','b'), $csvkeyids('a','b'), BIOAUTH_MEASURE_MEAN, 1),
     );
     
     $keystrokefallback = array(
@@ -78,7 +84,8 @@ function xmldb_local_bioauth_install() {
     
     $keystrokefeatureids = array();
     foreach ($keystrokefeatures as $featureid => $feature) {
-        $keystrokefeatureids[$featureid] = $DB->insert_record('bioauth_keystroke_features', array_merge($keystrokefeaturefields, $feature), true);
+        print_r($feature);
+        $keystrokefeatureids[$featureid] = $DB->insert_record('bioauth_keystroke_features', array_combine($keystrokefeaturefields, $feature), true);
     }
 
     foreach ($keystrokefallback as $node => $parent) {

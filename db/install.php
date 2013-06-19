@@ -25,43 +25,68 @@
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
+require_once ($CFG -> dirroot . '/local/bioauth/util.php');
 require_once ($CFG -> dirroot . '/local/bioauth/constants.php');
+
+/**
+ * Load all of the key definitions that came with this installation.
+ * 
+ * This is how the keys for each agent and locale are defined.
+ * See [dev doc link] for more information on how to create key files for new agents or locales.
+ * 
+ * @return array an array with the key ids
+ * 
+ */
+function load_keys() {
+    global $CFG;
+    global $DB;
+    
+    $localeit = new DirectoryIterator($CFG -> dirroot . '/local/bioauth/keys');
+    $masterkeys = array();
+    $localeagentkeys = new DefaultArray(new DefaultArray());
+    
+    foreach ($localeit as $locale) {
+        if ($locale->isDot()) continue;
+        $agentit = new DirectoryIterator($locale->getPathname());
+        foreach ($agentit as $agent) {
+            if ($agent->isDot()) continue;
+            
+            $keycodes = load_csv($agent->getPathname());
+            foreach(array_keys($keycodes) as $keystring) {
+                $masterkeys[$keystring] = 0;
+            }
+            
+            $localeagentkeys[$locale->getFilename()][$agent->getBasename('.csv')] = $keycodes;
+        }
+    }
+
+    // Save the keyid for later
+    foreach (array_keys($masterkeys) as $keystring) {
+        $masterkeys[$keystring] = $DB -> insert_record('bioauth_keys', array('keystring' => $keystring), true);
+    }
+
+     // Mapping of key codes to key ids for various agents and locales
+    foreach ($localeagentkeys as $locale => $agentkeys) {
+        foreach ($agentkeys as $agent => $keys) {
+            foreach ($keys as $keystring => $keycodes) {
+                foreach ($keycodes as $keycode) {
+                    $DB -> insert_record('bioauth_keycodes', array('locale' => $locale, 'agent' => $agent, 'keycode' => $keycode, 'keyid' => $masterkeys[$keystring]), false);
+                }
+            }
+        }
+    }
+
+    return $masterkeys;
+}
 
 /**
  * Post-install script
  */
 function xmldb_local_bioauth_install() {
-    global $CFG;
     global $DB;
 
     // Load the key strings/key codes from a csv file
-    $keyids = array();
-    $keycodes = array();
-    if (($handle = fopen($CFG -> dirroot . "/local/bioauth/models/keys.csv", "r")) !== FALSE) {
-        while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
-            $keyids[$data[0]] = 0;
-            $num = count($data);
-            $keycodes[$data[0]] = array_slice($data, 1);
-        }
-        fclose($handle);
-    }
-
-    // Save the keyid for later
-    foreach (array_keys($keyids) as $keystring) {
-        $keyids[$keystring] = $DB -> insert_record('bioauth_keys', array('keystring' => $keystring), true);
-    }
-
-    // Mapping of key codes to key ids for creating keystroke sequences
-    foreach ($keycodes as $keystring => $keycodes) {
-        foreach ($keycodes as $keycode) {
-            $DB -> insert_record('bioauth_keycodes', array('keyid' => $keyids[$keystring], 'keycode' => $keycode), false);
-        }
-    }
-
-    // $csvkeyids = function() use($keyids) {
-    // $ids = array_map(function($k) {return $keyids[$k];}, func_get_args());
-    // return implode(',',$ids);
-    // };
+    $keyids = load_keys();
 
     $csvkeyids = function() use ($keyids) {
         $ids = array();
@@ -72,11 +97,11 @@ function xmldb_local_bioauth_install() {
     };
 
     $keystrokefeatures = array(
-    1 => array(BIOAUTH_FEATURE_DURATION, $csvkeyids('a', 'b'), $csvkeyids('a', 'b'), BIOAUTH_MEASURE_MEAN, 0), 
-    2 => array(BIOAUTH_FEATURE_DURATION, $csvkeyids('b'), $csvkeyids('b'), BIOAUTH_MEASURE_MEAN, 0), 
-    3 => array(BIOAUTH_FEATURE_DURATION, $csvkeyids('a'), $csvkeyids('a'), BIOAUTH_MEASURE_MEAN, 0), 
-    4 => array(BIOAUTH_FEATURE_T1, $csvkeyids('a', 'b'), $csvkeyids('a', 'b'), BIOAUTH_MEASURE_MEAN, 1), 
-    5 => array(BIOAUTH_FEATURE_T1, $csvkeyids('b'), $csvkeyids('a'), BIOAUTH_MEASURE_MEAN, 1), 
+    1 => array(BIOAUTH_FEATURE_DURATION, $csvkeyids('A', 'B'), $csvkeyids('A', 'B'), BIOAUTH_MEASURE_MEAN, 0), 
+    2 => array(BIOAUTH_FEATURE_DURATION, $csvkeyids('B'), $csvkeyids('B'), BIOAUTH_MEASURE_MEAN, 0), 
+    3 => array(BIOAUTH_FEATURE_DURATION, $csvkeyids('A'), $csvkeyids('A'), BIOAUTH_MEASURE_MEAN, 0), 
+    4 => array(BIOAUTH_FEATURE_T1, $csvkeyids('A', 'B'), $csvkeyids('A', 'B'), BIOAUTH_MEASURE_MEAN, 1), 
+    5 => array(BIOAUTH_FEATURE_T1, $csvkeyids('B'), $csvkeyids('A'), BIOAUTH_MEASURE_MEAN, 1), 
     );
 
     $keystrokefallback = array(2 => 1, 3 => 1, 5 => 4, );

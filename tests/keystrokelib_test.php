@@ -23,25 +23,26 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
-require_once($CFG->dirroot . '/local/bioauth/locallib.php');
-require_once($CFG->dirroot . '/local/bioauth/keystrokelib.php');
-require_once($CFG->dirroot . '/local/bioauth/tests/generator/lib.php');
+require_once ($CFG -> dirroot . '/local/bioauth/locallib.php');
+require_once ($CFG -> dirroot . '/local/bioauth/keystrokelib.php');
+require_once ($CFG -> dirroot . '/local/bioauth/tests/generator/lib.php');
+
 
 class local_bioauth_keystrokelib_testcase extends advanced_testcase {
-    
+
     function test_keystroke_features() {
         global $DB;
-        
+
         $keystrokefeatures = create_keystroke_features(1);
-        // var_dump($keystrokefeatures); 
-        
+        // var_dump($keystrokefeatures);
+
         $userkeystrokes = fetch_demo_keystrokes();
         // var_dump($userkeystrokes);
         $fspace = create_keystroke_fspace($userkeystrokes, $keystrokefeatures, 2);
         var_dump($fspace);
     }
+
 }

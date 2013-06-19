@@ -28,6 +28,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
+require_once ($CFG -> dirroot . '/local/bioauth/util.php');
 require_once ($CFG -> dirroot . '/local/bioauth/mathlib.php');
 require_once ($CFG -> dirroot . '/local/bioauth/constants.php');
 
@@ -138,7 +139,7 @@ function classify($reference_fspace, $query_fspace, $k) {
  * and get authentication results on every user.
  * 
  * @param array $fspace the feature space of a population
- * @return int $k the number of neighbors to use in the KNN binary classification
+ * @return int the number of neighbors to use in the KNN binary classification
  * 
  */
 function loo_cross_validation(&$fspace, $k) {
@@ -410,37 +411,4 @@ function create_dspace_between(&$fspace) {
     }
 
     return $dspace_between;
-}
-
-/**
- * DefaultArray provides functionality similar to Python's defaultdict.
- * A default value is initialized and inserted into the array for any key that
- * does not already exist.
- *
- */
-class DefaultArray extends ArrayObject {
-
-    /**
-     * @var the default value in the array
-     */
-    protected $_default_value;
-
-    public function __construct($value = null) {
-        $this -> _default_value = $value;
-    }
-
-    public function offsetExists($index) {
-        return true;
-    }
-
-    public function offsetGet($index) {
-        if (!parent::offsetExists($index)) {
-            if (is_object($this -> _default_value))
-                parent::offsetSet($index, clone $this -> _default_value);
-            else
-                parent::offsetSet($index, $this -> _default_value);
-        }
-        
-        return parent::offsetGet($index);
-    }
 }

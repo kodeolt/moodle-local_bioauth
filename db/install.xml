@@ -22,7 +22,7 @@
     <TABLE NAME="bioauth_keys" COMMENT="Keys which may be pressed and released in keystroke events.">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="keystring" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="A string representation for this key"/>
+        <FIELD NAME="keystring" TYPE="char" LENGTH="60" NOTNULL="true" SEQUENCE="false" COMMENT="A string representation for this key"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -31,12 +31,13 @@
     <TABLE NAME="bioauth_keycodes" COMMENT="Key codes mapped to keys.">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="agent" TYPE="char" LENGTH="30" NOTNULL="true" SEQUENCE="false" COMMENT="The agent for this keycode entry."/>
+        <FIELD NAME="locale" TYPE="char" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The locale for this keycode entry."/>
         <FIELD NAME="keycode" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The key code for the key."/>
         <FIELD NAME="keyid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The key code for the key."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="keycode" TYPE="unique" FIELDS="keycode"/>
         <KEY NAME="keyid" TYPE="foreign" FIELDS="keyid" REFTABLE="bioauth_keys" REFFIELDS="id"/>
       </KEYS>
     </TABLE>

@@ -49,7 +49,7 @@ function fetch_user_keystrokes($users) {
 
     $userkeystrokes = new DefaultArray(new DefaultArray());
     foreach ($sessions as $session) {
-        $userkeystrokes[$session->userid][$session->id] = array_values($DB->get_records('bioauth_keystrokes', array('userid' => $session->userid, 'sessionid' => $session->id), 'presstime', '*'));
+        $userkeystrokes[$session->userid][$session->id] = array_values($DB->get_records('bioauth_keystrokes', array('userid' => $session->userid, 'sessionid' => $session->id), 'timepress', '*'));
     }
     
     return $userkeystrokes;
@@ -62,7 +62,7 @@ function fetch_demo_keystrokes() {
 
     $userkeystrokes = new DefaultArray(new DefaultArray());
     foreach ($sessions as $session) {
-        $userkeystrokes[$session->userid][$session->id] = array_values($DB->get_records('bioauth_demo_keystrokes', array('userid' => $session->userid, 'sessionid' => $session->id), 'presstime', '*'));
+        $userkeystrokes[$session->userid][$session->id] = array_values($DB->get_records('bioauth_demo_keystrokes', array('userid' => $session->userid, 'sessionid' => $session->id), 'timepress', '*'));
     }
     
     return $userkeystrokes;

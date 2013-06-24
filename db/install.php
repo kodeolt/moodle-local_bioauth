@@ -100,7 +100,7 @@ function load_demo_events() {
         foreach ($sessions as $session => $events) {
             $sessionid = $DB -> insert_record('bioauth_demo_sessions', array('userid' => $userid, 'locale' => 'en_US'));
             foreach ($events as $event) {
-                $DB -> insert_record('bioauth_demo_keystrokes', array('userid' => $userid, 'sessionid' => $sessionid, 'keyid' => $event[0], 'presstime' => $event[1], 'releasetime' => $event[2]));
+                $DB -> insert_record('bioauth_demo_keystrokes', array('userid' => $userid, 'sessionid' => $sessionid, 'keyid' => $event[0], 'timepress' => $event[1], 'timerelease' => $event[2]));
             }
         }
     }
@@ -115,7 +115,7 @@ function xmldb_local_bioauth_install() {
     // Load the key strings/key codes from a csv file
     $keyids = load_keys();
 
-    load_demo_events();
+    // load_demo_events();
 
     $csvkeyids = function() use ($keyids) {
         $ids = array();
@@ -162,7 +162,7 @@ function xmldb_local_bioauth_install() {
     array(1,$sessionid,2,655,700),
     );
     
-    $keystrokeeventfields = array('userid', 'sessionid', 'keyid', 'presstime', 'releasetime');
+    $keystrokeeventfields = array('userid', 'sessionid', 'keyid', 'timepress', 'timerelease');
     foreach ($keystrokeevents as $event) {
         $DB -> insert_record('bioauth_demo_keystrokes', array_combine($keystrokeeventfields, $event));
     }

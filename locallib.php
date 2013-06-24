@@ -64,15 +64,15 @@ function extract_keystroke_features($keystrokesequence, $keystrokefeatures, $min
     $t2 = new DefaultArray(new DefaultArray(new DefaultArray(new ArrayObject())));
     
     foreach ($keystrokesequence as $idx => $keystroke) {
-        $durations[0][$keystroke->keyid][$keystroke->keyid][] = $keystroke->releasetime - $keystroke->presstime;
+        $durations[0][$keystroke->keyid][$keystroke->keyid][] = $keystroke->timerelease - $keystroke->timepress;
     }
     
     foreach ($distances as $distance) {
         for ($idx = 0; $idx < count($keystrokesequence) - $distance; $idx += $distance) {
             $firstkey = $keystrokesequence[$idx];
             $secondkey = $keystrokesequence[$idx + $distance];
-            $t1[$distance][$firstkey->keyid][$secondkey->keyid][] =  $secondkey->presstime - $firstkey->releasetime;
-            $t2[$distance][$firstkey->keyid][$secondkey->keyid][] =  $secondkey->presstime - $firstkey->presstime;
+            $t1[$distance][$firstkey->keyid][$secondkey->keyid][] =  $secondkey->timepress - $firstkey->timerelease;
+            $t2[$distance][$firstkey->keyid][$secondkey->keyid][] =  $secondkey->timepress - $firstkey->timepress;
         }
     }
     

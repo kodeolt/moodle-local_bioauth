@@ -29,7 +29,7 @@ global $CFG;
 require_once ($CFG -> dirroot . '/local/bioauth/locallib.php');
 require_once ($CFG -> dirroot . '/local/bioauth/keystrokelib.php');
 require_once ($CFG -> dirroot . '/local/bioauth/tests/generator/lib.php');
-
+require_once($CFG->libdir.'/csvlib.class.php');
 
 class local_bioauth_keystrokelib_testcase extends advanced_testcase {
 
@@ -40,9 +40,11 @@ class local_bioauth_keystrokelib_testcase extends advanced_testcase {
         // var_dump($keystrokefeatures);
 
         $userkeystrokes = fetch_demo_keystrokes();
+        // var_dump(array_keys($userkeystrokes));
         // var_dump($userkeystrokes);
         $fspace = create_keystroke_fspace($userkeystrokes, $keystrokefeatures, 2);
         var_dump($fspace);
+        
     }
 
 }

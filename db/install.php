@@ -27,6 +27,7 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once ($CFG -> dirroot . '/local/bioauth/util.php');
 require_once ($CFG -> dirroot . '/local/bioauth/constants.php');
+require_once ($CFG -> dirroot . '/local/bioauth/keystrokelib.php');
 
 /**
  * Load all of the key definitions that came with this installation.
@@ -79,6 +80,32 @@ function load_keys() {
     return $masterkeys;
 }
 
+function load_demo_events() {
+    global $CFG;
+    global $DB;
+    
+    $userevents = new DefaultArray(new DefaultArray(new ArrayObject()));
+    
+    if (($handle = fopen($CFG -> dirroot . '/local/bioauth/bootstrap/events.csv', "r")) !== FALSE) {
+        while (($csvdata = fgetcsv($handle, 1000, ",")) !== FALSE) {
+            if (5 === count($csvdata)) {
+                    $csvdata[2] = translate_keycode('native', 'en_US', $csvdata[2]);
+                    $userevents[$csvdata[0]][$csvdata[1]][] = array_slice($csvdata, 2);
+                }
+        }
+        fclose($handle);
+    }
+    
+    foreach ($userevents as $userid => $sessions) {
+        foreach ($sessions as $session => $events) {
+            $sessionid = $DB -> insert_record('bioauth_demo_sessions', array('userid' => $userid, 'locale' => 'en_US'));
+            foreach ($events as $event) {
+                $DB -> insert_record('bioauth_demo_keystrokes', array('userid' => $userid, 'sessionid' => $sessionid, 'keyid' => $event[0], 'presstime' => $event[1], 'releasetime' => $event[2]));
+            }
+        }
+    }
+}
+
 /**
  * Post-install script
  */
@@ -87,6 +114,8 @@ function xmldb_local_bioauth_install() {
 
     // Load the key strings/key codes from a csv file
     $keyids = load_keys();
+
+    load_demo_events();
 
     $csvkeyids = function() use ($keyids) {
         $ids = array();

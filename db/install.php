@@ -63,7 +63,7 @@ function load_keys() {
 
     // Save the keyid for later
     foreach (array_keys($masterkeys) as $keystring) {
-        $masterkeys[$keystring] = $DB -> insert_record('bioauth_keys', array('keystring' => $keystring), true);
+        $masterkeys[$keystring] = $DB -> insert_record_raw('bioauth_keys', array('keystring' => $keystring), true, true);
     }
 
      // Mapping of key codes to key ids for various agents and locales
@@ -71,7 +71,7 @@ function load_keys() {
         foreach ($agentkeys as $agent => $keys) {
             foreach ($keys as $keystring => $keycodes) {
                 foreach ($keycodes as $keycode) {
-                    $DB -> insert_record('bioauth_keycodes', array('locale' => $locale, 'agent' => $agent, 'keycode' => $keycode, 'keyid' => $masterkeys[$keystring]), false);
+                    $DB -> insert_record_raw('bioauth_keycodes', array('locale' => $locale, 'agent' => $agent, 'keycode' => $keycode, 'keyid' => $masterkeys[$keystring]), false, true);
                 }
             }
         }
@@ -98,9 +98,9 @@ function load_demo_events() {
     
     foreach ($userevents as $userid => $sessions) {
         foreach ($sessions as $session => $events) {
-            $sessionid = $DB -> insert_record('bioauth_demo_sessions', array('userid' => $userid, 'locale' => 'en_US'));
+            $sessionid = $DB -> insert_record_raw('bioauth_demo_sessions', array('userid' => $userid, 'locale' => 'en_US'), true, true);
             foreach ($events as $event) {
-                $DB -> insert_record('bioauth_demo_keystrokes', array('userid' => $userid, 'sessionid' => $sessionid, 'keyid' => $event[0], 'timepress' => $event[1], 'timerelease' => $event[2]));
+                $DB -> insert_record_raw('bioauth_demo_keystrokes', array('userid' => $userid, 'sessionid' => $sessionid, 'keyid' => $event[0], 'timepress' => $event[1], 'timerelease' => $event[2]), false, true);
             }
         }
     }
@@ -115,7 +115,7 @@ function xmldb_local_bioauth_install() {
     // Load the key strings/key codes from a csv file
     $keyids = load_keys();
 
-    // load_demo_events();
+    load_demo_events();
 
     $csvkeyids = function() use ($keyids) {
         $ids = array();

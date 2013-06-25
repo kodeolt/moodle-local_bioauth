@@ -34,3 +34,5 @@ $string['modulename'] = 'Biometric Authentication';
 $string['modulename_help'] = 'Biometric Authentication help.';
 
 $string['pluginname'] = 'Biometric Authentication';
+
+$string['install_bootstrap'] = 'Installing bootstrap data.';

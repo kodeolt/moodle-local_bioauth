@@ -28,17 +28,22 @@
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
+require_once ($CFG -> dirroot . '/local/bioauth/util.php');
+require_once ($CFG -> dirroot . '/local/bioauth/keys/en_US/keys.php');
 
 function translate_keycode($agent, $locale, $keycode) {
-    global $DB;
-    
-    $id = $DB->get_field('bioauth_keycodes', 'keyid', array('agent' => $agent, 'locale' => $locale, 'keycode' => $keycode), '*', MUST_EXIST);
-    return $id;
+    global $defaultkeycodes;
+    // global $agentkeycodes;
+    return $defaultkeycodes[$keycode];
+}
+
+function translate_keystring($locale, $keystring) {
+    global $keymap;
+    return $keymap[$keystring];
 }
 
 function fetch_user_sessions($users) {
     $sessions = $DB->get_records_list('bioauth_sessions', 'id', $users);
-    
     return $sessions;
 }
 
@@ -57,14 +62,20 @@ function fetch_user_keystrokes($users) {
 
 function fetch_demo_keystrokes() {
     global $DB;
+    // ini_set('memory_limit', '-1');
+    // $sessions = $DB->get_records('bioauth_demo_sessions');
     
-    $sessions = $DB->get_records('bioauth_demo_sessions');
-
     $userkeystrokes = new DefaultArray(new DefaultArray());
-    foreach ($sessions as $session) {
-        $userkeystrokes[$session->userid][$session->id] = array_values($DB->get_records('bioauth_demo_keystrokes', array('userid' => $session->userid, 'sessionid' => $session->id), 'timepress', '*'));
+    $rs = $DB->get_recordset('bioauth_demo_sessions');
+    foreach ($rs as $record) {
+        $keystrokes = json_decode($record->keystrokes);
+        // foreach ($keystrokes as $keystroke) {
+            // $keystroke->keyid = translate_keycode('native', 'en_US', $keystroke->keycode);
+        // }
+        $userkeystrokes[$record->userid][$record->id] = $keystrokes;
     }
-    
+    $rs->close();
+
     return $userkeystrokes;
 }
 

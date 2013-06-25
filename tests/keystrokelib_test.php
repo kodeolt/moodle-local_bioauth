@@ -29,7 +29,6 @@ global $CFG;
 require_once ($CFG -> dirroot . '/local/bioauth/locallib.php');
 require_once ($CFG -> dirroot . '/local/bioauth/keystrokelib.php');
 require_once ($CFG -> dirroot . '/local/bioauth/tests/generator/lib.php');
-require_once($CFG->libdir.'/csvlib.class.php');
 
 class local_bioauth_keystrokelib_testcase extends advanced_testcase {
 

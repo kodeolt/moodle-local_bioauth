@@ -31,6 +31,7 @@ global $CFG;
 require_once ($CFG -> dirroot . '/local/bioauth/util.php');
 require_once ($CFG -> dirroot . '/local/bioauth/mathlib.php');
 require_once ($CFG -> dirroot . '/local/bioauth/constants.php');
+require_once ($CFG -> dirroot . '/local/bioauth/keystrokelib.php');
 
 
 function feature_with_fallback(&$observations, $feature, $minfrequency) {
@@ -376,7 +377,7 @@ function create_user_dspace_between(&$fspace, $user) {
 function create_dspace_within(&$fspace) {
     $dspace_within = array();
     foreach ($fspace as $user => $samples) {
-        $sample_combinations = new Combinations(&$samples, 2);
+        $sample_combinations = new Combinations($samples, 2);
         $user_dspace = array();
 
         foreach ($sample_combinations as $idx) {

@@ -25,9 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
-require_once ($CFG -> dirroot . '/local/bioauth/util.php');
-require_once ($CFG -> dirroot . '/local/bioauth/constants.php');
-require_once ($CFG -> dirroot . '/local/bioauth/keystrokelib.php');
+require_once ($CFG -> dirroot . '/local/bioauth/locallib.php');
 
 /**
  * Load all of the key definitions that came with this installation.
@@ -98,15 +96,7 @@ function load_demo_events() {
             if ('json' !== $session->getExtension()) continue;
             
             $jsonstring = file_get_contents($session->getPathname());
-            
-            $keystrokes = json_decode($jsonstring, true);
-            for ($i = 0; $i < count($keystrokes); $i++) {
-                $keystrokes[$i]['keyid'] = translate_keycode('en_US', (int)$keystrokes[$i]['keycode'], 'native');
-                unset($keystrokes[$i]['keycode']);
-            }
-            
-            $DB -> insert_record_raw('bioauth_demo_sessions', array('userid' => $user->getBasename(), 'locale' => 'en_US', 'keystrokes' => json_encode($keystrokes), 'stylometry' => ''), false, true);
-            
+            $DB -> insert_record_raw('bioauth_demo_sessions', array('userid' => $user->getBasename(), 'locale' => 'en_US', 'data' => $jsonstring), false, true);
             $done++;
             $progressbar->update($done, 1187, get_string('install_bootstrap', 'local_bioauth'));
         }
@@ -114,38 +104,40 @@ function load_demo_events() {
 }
 
 function load_keystroke_features() {
-    $allkeys = 'A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,0,1,2,3,4,5,6,7,8,9,COMMA,PERIOD,SEMICOLON,SLASH,SPACE,BACKSPACE,SHIFT,ENTER';
+    global $DB;
+    
+    $allkeys = 'a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,0,1,2,3,4,5,6,7,8,9,comma,period,semicolon,slash,space,backspace,shift,enter';
 
-    $letters = 'A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z';
-    $vowels = 'A,E,I,O,U';
-    $cons1 = 'T,N,S,R,H';
-    $cons2 = 'L,D,C,P,F';
-    $cons3 = 'M,W,Y,B,G';
-    $cons4 = 'J,K,Q,V,X,Z';
+    $letters = 'a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z';
+    $vowels = 'a,e,i,o,u';
+    $cons1 = 't,n,s,r,h';
+    $cons2 = 'l,d,c,p,f';
+    $cons3 = 'm,w,y,b,g';
+    $cons4 = 'j,k,q,v,x,z';
     
-    $visiblekeys = 'A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,0,1,2,3,4,5,6,7,8,9,COMMA,PERIOD,SEMICOLON,SLASH';
-    $invisiblekeys = 'SPACE,BACKSPACE,SHIFT,ENTER';
+    $visiblekeys = 'a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,0,1,2,3,4,5,6,7,8,9,comma,period,semicolon,slash';
+    $invisiblekeys = 'space,backspace,shift,enter';
     
-    $lefthand = 'Q,W,E,R,T,A,S,D,F,G,Z,X,C,V,B,1,2,3,4,5';
-    $righthand = 'Y,U,I,O,P,H,J,K,L,N,M,6,7,8,9,0';
+    $lefthand = 'q,w,e,r,t,a,s,d,f,g,z,x,c,v,b,1,2,3,4,5';
+    $righthand = 'y,u,i,o,p,h,j,k,l,n,m,6,7,8,9,0';
     
-    $leftlittle = 'A,Z,1,Q';
-    $leftring = 'S,X,2,W';
-    $leftmiddle = 'D,C,4,E';
-    $leftindex = 'F,B,G,R,4,T,5,V';
+    $leftlittle = 'a,z,1,q';
+    $leftring = 's,x,2,w';
+    $leftmiddle = 'd,c,4,e';
+    $leftindex = 'f,b,g,r,4,t,5,v';
     
-    $rightlittle = 'SEMICOLON,SLASH,0,P';
-    $rightring = 'L,PERIOD,9,O';
-    $rightmiddle = 'K,COMMA,8,I';
-    $rightindex = 'H,M,J,Y,6,U,7,N';
+    $rightlittle = 'semicolon,slash,0,p';
+    $rightring = 'l,period,9,o';
+    $rightmiddle = 'k,comma,8,i';
+    $rightindex = 'h,m,j,y,6,u,7,n';
     
-    $leftletters = 'Q,W,E,R,T,A,S,D,F,G,Z,X,C,V,B';
-    $rightletters = 'Y,U,I,O,P,H,J,K,L,N,M';
+    $leftletters = 'q,w,e,r,t,a,s,d,f,g,z,x,c,v,b';
+    $rightletters = 'y,u,i,o,p,h,j,k,l,n,m';
     
     $keystrokefeatures = array(
     
     /* 
-     * Mean Durations
+     * mean durations
      */
     1 => array(BIOAUTH_FEATURE_DURATION, $visiblekeys, $visiblekeys, BIOAUTH_MEASURE_MEAN, 0),
     
@@ -161,82 +153,82 @@ function load_keystroke_features() {
     10 => array(BIOAUTH_FEATURE_DURATION, $rightmiddle, $rightmiddle, BIOAUTH_MEASURE_MEAN, 0),
     11 => array(BIOAUTH_FEATURE_DURATION, $rightindex, $rightindex, BIOAUTH_MEASURE_MEAN, 0),
     
-    // Left little
-    12 => array(BIOAUTH_FEATURE_DURATION, 'A', 'A', BIOAUTH_MEASURE_MEAN, 0),
-    13 => array(BIOAUTH_FEATURE_DURATION, 'Z', 'Z', BIOAUTH_MEASURE_MEAN, 0),
+    // left little
+    12 => array(BIOAUTH_FEATURE_DURATION, 'a', 'a', BIOAUTH_MEASURE_MEAN, 0),
+    13 => array(BIOAUTH_FEATURE_DURATION, 'z', 'z', BIOAUTH_MEASURE_MEAN, 0),
     14 => array(BIOAUTH_FEATURE_DURATION, '1', '1', BIOAUTH_MEASURE_MEAN, 0),
-    15 => array(BIOAUTH_FEATURE_DURATION, 'Q', 'Q', BIOAUTH_MEASURE_MEAN, 0),
-    // Left ring
-    16 => array(BIOAUTH_FEATURE_DURATION, 'S', 'S', BIOAUTH_MEASURE_MEAN, 0),
-    17 => array(BIOAUTH_FEATURE_DURATION, 'X', 'X', BIOAUTH_MEASURE_MEAN, 0),
+    15 => array(BIOAUTH_FEATURE_DURATION, 'q', 'q', BIOAUTH_MEASURE_MEAN, 0),
+    // left ring
+    16 => array(BIOAUTH_FEATURE_DURATION, 's', 's', BIOAUTH_MEASURE_MEAN, 0),
+    17 => array(BIOAUTH_FEATURE_DURATION, 'x', 'x', BIOAUTH_MEASURE_MEAN, 0),
     18 => array(BIOAUTH_FEATURE_DURATION, '2', '2', BIOAUTH_MEASURE_MEAN, 0),
-    19 => array(BIOAUTH_FEATURE_DURATION, 'W', 'W', BIOAUTH_MEASURE_MEAN, 0),
-    // Left middle
-    20 => array(BIOAUTH_FEATURE_DURATION, 'D', 'D', BIOAUTH_MEASURE_MEAN, 0),
-    21 => array(BIOAUTH_FEATURE_DURATION, 'C', 'C', BIOAUTH_MEASURE_MEAN, 0),
+    19 => array(BIOAUTH_FEATURE_DURATION, 'w', 'w', BIOAUTH_MEASURE_MEAN, 0),
+    // left middle
+    20 => array(BIOAUTH_FEATURE_DURATION, 'd', 'd', BIOAUTH_MEASURE_MEAN, 0),
+    21 => array(BIOAUTH_FEATURE_DURATION, 'c', 'c', BIOAUTH_MEASURE_MEAN, 0),
     22 => array(BIOAUTH_FEATURE_DURATION, '3', '3', BIOAUTH_MEASURE_MEAN, 0),
-    23 => array(BIOAUTH_FEATURE_DURATION, 'E', 'E', BIOAUTH_MEASURE_MEAN, 0),
-    // Left index
-    24 => array(BIOAUTH_FEATURE_DURATION, 'F', 'F', BIOAUTH_MEASURE_MEAN, 0),
-    25 => array(BIOAUTH_FEATURE_DURATION, 'B', 'B', BIOAUTH_MEASURE_MEAN, 0),
-    26 => array(BIOAUTH_FEATURE_DURATION, 'G', 'G', BIOAUTH_MEASURE_MEAN, 0),
-    27 => array(BIOAUTH_FEATURE_DURATION, 'R', 'R', BIOAUTH_MEASURE_MEAN, 0),
+    23 => array(BIOAUTH_FEATURE_DURATION, 'e', 'e', BIOAUTH_MEASURE_MEAN, 0),
+    // left index
+    24 => array(BIOAUTH_FEATURE_DURATION, 'f', 'f', BIOAUTH_MEASURE_MEAN, 0),
+    25 => array(BIOAUTH_FEATURE_DURATION, 'b', 'b', BIOAUTH_MEASURE_MEAN, 0),
+    26 => array(BIOAUTH_FEATURE_DURATION, 'g', 'g', BIOAUTH_MEASURE_MEAN, 0),
+    27 => array(BIOAUTH_FEATURE_DURATION, 'r', 'r', BIOAUTH_MEASURE_MEAN, 0),
     28 => array(BIOAUTH_FEATURE_DURATION, '4', '4', BIOAUTH_MEASURE_MEAN, 0),
-    29 => array(BIOAUTH_FEATURE_DURATION, 'T', 'T', BIOAUTH_MEASURE_MEAN, 0),
+    29 => array(BIOAUTH_FEATURE_DURATION, 't', 't', BIOAUTH_MEASURE_MEAN, 0),
     30 => array(BIOAUTH_FEATURE_DURATION, '5', '5', BIOAUTH_MEASURE_MEAN, 0),
-    31 => array(BIOAUTH_FEATURE_DURATION, 'V', 'V', BIOAUTH_MEASURE_MEAN, 0),
-    // Right index
-    32 => array(BIOAUTH_FEATURE_DURATION, 'H', 'H', BIOAUTH_MEASURE_MEAN, 0),
-    33 => array(BIOAUTH_FEATURE_DURATION, 'M', 'M', BIOAUTH_MEASURE_MEAN, 0),
-    34 => array(BIOAUTH_FEATURE_DURATION, 'J', 'J', BIOAUTH_MEASURE_MEAN, 0),
-    35 => array(BIOAUTH_FEATURE_DURATION, 'Y', 'Y', BIOAUTH_MEASURE_MEAN, 0),
+    31 => array(BIOAUTH_FEATURE_DURATION, 'v', 'v', BIOAUTH_MEASURE_MEAN, 0),
+    // right index
+    32 => array(BIOAUTH_FEATURE_DURATION, 'h', 'h', BIOAUTH_MEASURE_MEAN, 0),
+    33 => array(BIOAUTH_FEATURE_DURATION, 'm', 'm', BIOAUTH_MEASURE_MEAN, 0),
+    34 => array(BIOAUTH_FEATURE_DURATION, 'j', 'j', BIOAUTH_MEASURE_MEAN, 0),
+    35 => array(BIOAUTH_FEATURE_DURATION, 'y', 'y', BIOAUTH_MEASURE_MEAN, 0),
     36 => array(BIOAUTH_FEATURE_DURATION, '6', '6', BIOAUTH_MEASURE_MEAN, 0),
-    37 => array(BIOAUTH_FEATURE_DURATION, 'U', 'U', BIOAUTH_MEASURE_MEAN, 0),
+    37 => array(BIOAUTH_FEATURE_DURATION, 'u', 'u', BIOAUTH_MEASURE_MEAN, 0),
     38 => array(BIOAUTH_FEATURE_DURATION, '7', '7', BIOAUTH_MEASURE_MEAN, 0),
-    39 => array(BIOAUTH_FEATURE_DURATION, 'N', 'N', BIOAUTH_MEASURE_MEAN, 0),
-    // Right middle
-    40 => array(BIOAUTH_FEATURE_DURATION, 'K', 'K', BIOAUTH_MEASURE_MEAN, 0),
-    41 => array(BIOAUTH_FEATURE_DURATION, 'COMMA', 'COMMA', BIOAUTH_MEASURE_MEAN, 0),
+    39 => array(BIOAUTH_FEATURE_DURATION, 'n', 'n', BIOAUTH_MEASURE_MEAN, 0),
+    // right middle
+    40 => array(BIOAUTH_FEATURE_DURATION, 'k', 'k', BIOAUTH_MEASURE_MEAN, 0),
+    41 => array(BIOAUTH_FEATURE_DURATION, 'comma', 'comma', BIOAUTH_MEASURE_MEAN, 0),
     42 => array(BIOAUTH_FEATURE_DURATION, '8', '8', BIOAUTH_MEASURE_MEAN, 0),
-    43 => array(BIOAUTH_FEATURE_DURATION, 'I', 'I', BIOAUTH_MEASURE_MEAN, 0),
-    // Right ring
-    44 => array(BIOAUTH_FEATURE_DURATION, 'L', 'L', BIOAUTH_MEASURE_MEAN, 0),
-    45 => array(BIOAUTH_FEATURE_DURATION, 'PERIOD', 'PERIOD', BIOAUTH_MEASURE_MEAN, 0),
+    43 => array(BIOAUTH_FEATURE_DURATION, 'i', 'i', BIOAUTH_MEASURE_MEAN, 0),
+    // right ring
+    44 => array(BIOAUTH_FEATURE_DURATION, 'l', 'l', BIOAUTH_MEASURE_MEAN, 0),
+    45 => array(BIOAUTH_FEATURE_DURATION, 'period', 'period', BIOAUTH_MEASURE_MEAN, 0),
     46 => array(BIOAUTH_FEATURE_DURATION, '9', '9', BIOAUTH_MEASURE_MEAN, 0),
-    47 => array(BIOAUTH_FEATURE_DURATION, 'O', '0', BIOAUTH_MEASURE_MEAN, 0),
-    // Right little
-    48 => array(BIOAUTH_FEATURE_DURATION, 'SEMICOLON', 'SEMICOLON', BIOAUTH_MEASURE_MEAN, 0),
-    49 => array(BIOAUTH_FEATURE_DURATION, 'SLASH', 'SLASH', BIOAUTH_MEASURE_MEAN, 0),
+    47 => array(BIOAUTH_FEATURE_DURATION, 'o', '0', BIOAUTH_MEASURE_MEAN, 0),
+    // right little
+    48 => array(BIOAUTH_FEATURE_DURATION, 'semicolon', 'semicolon', BIOAUTH_MEASURE_MEAN, 0),
+    49 => array(BIOAUTH_FEATURE_DURATION, 'slash', 'slash', BIOAUTH_MEASURE_MEAN, 0),
     50 => array(BIOAUTH_FEATURE_DURATION, '0', '0', BIOAUTH_MEASURE_MEAN, 0),
-    51 => array(BIOAUTH_FEATURE_DURATION, 'P', 'P', BIOAUTH_MEASURE_MEAN, 0),
+    51 => array(BIOAUTH_FEATURE_DURATION, 'p', 'p', BIOAUTH_MEASURE_MEAN, 0),
     
     /*
-     * Mean type 1 transitions
+     * mean type 1 transitions
      */
     52 => array(BIOAUTH_FEATURE_T1, $letters, $letters, BIOAUTH_MEASURE_MEAN, 1),
     53 => array(BIOAUTH_FEATURE_T1, $leftletters, $leftletters, BIOAUTH_MEASURE_MEAN, 1),
     54 => array(BIOAUTH_FEATURE_T1, $rightletters, $rightletters, BIOAUTH_MEASURE_MEAN, 1),
     55 => array(BIOAUTH_FEATURE_T1, $leftletters, $rightletters, BIOAUTH_MEASURE_MEAN, 1),
     56 => array(BIOAUTH_FEATURE_T1, $rightletters, $leftletters, BIOAUTH_MEASURE_MEAN, 1),
-    // Left/Left
-    57 => array(BIOAUTH_FEATURE_T1, 'E', 'R', BIOAUTH_MEASURE_MEAN, 1),
-    58 => array(BIOAUTH_FEATURE_T1, 'A', 'T', BIOAUTH_MEASURE_MEAN, 1),
-    59 => array(BIOAUTH_FEATURE_T1, 'S', 'T', BIOAUTH_MEASURE_MEAN, 1),
-    60 => array(BIOAUTH_FEATURE_T1, 'R', 'E', BIOAUTH_MEASURE_MEAN, 1),
-    61 => array(BIOAUTH_FEATURE_T1, 'E', 'S', BIOAUTH_MEASURE_MEAN, 1),
-    62 => array(BIOAUTH_FEATURE_T1, 'E', 'A', BIOAUTH_MEASURE_MEAN, 1),
-    // Right/Right
-    63 => array(BIOAUTH_FEATURE_T1, 'I', 'N', BIOAUTH_MEASURE_MEAN, 1),
-    64 => array(BIOAUTH_FEATURE_T1, 'O', 'N', BIOAUTH_MEASURE_MEAN, 1),
-    // Left/Right
-    65 => array(BIOAUTH_FEATURE_T1, 'T', 'H', BIOAUTH_MEASURE_MEAN, 1),
-    66 => array(BIOAUTH_FEATURE_T1, 'E', 'N', BIOAUTH_MEASURE_MEAN, 1),
-    67 => array(BIOAUTH_FEATURE_T1, 'A', 'N', BIOAUTH_MEASURE_MEAN, 1),
-    68 => array(BIOAUTH_FEATURE_T1, 'T', 'I', BIOAUTH_MEASURE_MEAN, 1),
-    // Right/Left
-    69 => array(BIOAUTH_FEATURE_T1, 'N', 'D', BIOAUTH_MEASURE_MEAN, 1),
-    70 => array(BIOAUTH_FEATURE_T1, 'H', 'E', BIOAUTH_MEASURE_MEAN, 1),
-    71 => array(BIOAUTH_FEATURE_T1, 'O', 'R', BIOAUTH_MEASURE_MEAN, 1),
+    // left/left
+    57 => array(BIOAUTH_FEATURE_T1, 'e', 'r', BIOAUTH_MEASURE_MEAN, 1),
+    58 => array(BIOAUTH_FEATURE_T1, 'a', 't', BIOAUTH_MEASURE_MEAN, 1),
+    59 => array(BIOAUTH_FEATURE_T1, 's', 't', BIOAUTH_MEASURE_MEAN, 1),
+    60 => array(BIOAUTH_FEATURE_T1, 'r', 'e', BIOAUTH_MEASURE_MEAN, 1),
+    61 => array(BIOAUTH_FEATURE_T1, 'e', 's', BIOAUTH_MEASURE_MEAN, 1),
+    62 => array(BIOAUTH_FEATURE_T1, 'e', 'a', BIOAUTH_MEASURE_MEAN, 1),
+    // right/right
+    63 => array(BIOAUTH_FEATURE_T1, 'i', 'n', BIOAUTH_MEASURE_MEAN, 1),
+    64 => array(BIOAUTH_FEATURE_T1, 'o', 'n', BIOAUTH_MEASURE_MEAN, 1),
+    // left/right
+    65 => array(BIOAUTH_FEATURE_T1, 't', 'h', BIOAUTH_MEASURE_MEAN, 1),
+    66 => array(BIOAUTH_FEATURE_T1, 'e', 'n', BIOAUTH_MEASURE_MEAN, 1),
+    67 => array(BIOAUTH_FEATURE_T1, 'a', 'n', BIOAUTH_MEASURE_MEAN, 1),
+    68 => array(BIOAUTH_FEATURE_T1, 't', 'i', BIOAUTH_MEASURE_MEAN, 1),
+    // right/left
+    69 => array(BIOAUTH_FEATURE_T1, 'n', 'd', BIOAUTH_MEASURE_MEAN, 1),
+    70 => array(BIOAUTH_FEATURE_T1, 'h', 'e', BIOAUTH_MEASURE_MEAN, 1),
+    71 => array(BIOAUTH_FEATURE_T1, 'o', 'r', BIOAUTH_MEASURE_MEAN, 1),
     
     );
 
@@ -260,10 +252,9 @@ function load_keystroke_features() {
  * Post-install script
  */
 function xmldb_local_bioauth_install() {
-    global $DB;
-
-    // load_demo_events();
-
+    
+    load_demo_events();
+    load_keystroke_features();
     
     return true;
 }

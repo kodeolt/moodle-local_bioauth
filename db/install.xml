@@ -13,8 +13,7 @@
         <FIELD NAME="timefinish" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The time the session ended."/>
         <FIELD NAME="tag" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" COMMENT="Tag for the session."/>
         <FIELD NAME="locale" TYPE="char" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The locale for this session."/>
-        <FIELD NAME="keystrokes" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="JSON encoded keystroke events."/>
-        <FIELD NAME="stylometry" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="The text which appeared on screen from the keystrokes."/>
+        <FIELD NAME="data" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="JSON encoded biometric data."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -22,31 +21,6 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
-      </INDEXES>
-    </TABLE>
-    <TABLE NAME="bioauth_keys" COMMENT="Keys which may be pressed and released in keystroke events.">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="keystring" TYPE="char" LENGTH="60" NOTNULL="true" SEQUENCE="false" COMMENT="A string representation for this key"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-      </KEYS>
-    </TABLE>
-    <TABLE NAME="bioauth_keycodes" COMMENT="Key codes mapped to keys.">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="agent" TYPE="char" LENGTH="30" NOTNULL="true" SEQUENCE="false" COMMENT="The agent for this keycode entry."/>
-        <FIELD NAME="locale" TYPE="char" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The locale for this keycode entry."/>
-        <FIELD NAME="keycode" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The key code for the key."/>
-        <FIELD NAME="keyid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The key code for the key."/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="keyid" TYPE="foreign" FIELDS="keyid" REFTABLE="bioauth_keys" REFFIELDS="id"/>
-      </KEYS>
-      <INDEXES>
-        <INDEX NAME="agent-locale-keycode" UNIQUE="true" FIELDS="agent, locale, keycode"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="bioauth_dict" COMMENT="Strings which may appear in an answer, not necessarily whole words.">
@@ -102,51 +76,13 @@
         <KEY NAME="fallback" TYPE="foreign" FIELDS="fallback" REFTABLE="bioauth_stylometry_features" REFFIELDS="id"/>
       </KEYS>
     </TABLE>
-    <!-- <TABLE NAME="bioauth_keystrokes" COMMENT="Raw keystroke data collected during logging sessions.">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Foreign key reference to the user this event belongs to."/>
-        <FIELD NAME="sessionid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Foreign key reference to the session this event was recorded during."/>
-        <FIELD NAME="keyid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Foreign key reference to the key that was pressed and released."/>
-        <FIELD NAME="timepress" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Timestamp of when this key was pressed."/>
-        <FIELD NAME="timerelease" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Timestamp of when this key was released."/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
-        <KEY NAME="sessionid" TYPE="foreign" FIELDS="sessionid" REFTABLE="bioauth_sessions" REFFIELDS="id"/>
-        <KEY NAME="keyid" TYPE="foreign" FIELDS="keyid" REFTABLE="bioauth_keys" REFFIELDS="id"/>
-      </KEYS>
-      <INDEXES>
-        <INDEX NAME="user-session-key-timepress" UNIQUE="true" FIELDS="userid, sessionid, keyid, timepress"/>
-      </INDEXES>
-    </TABLE> -->
-    <!-- <TABLE NAME="bioauth_stylometry" COMMENT="Stylometry events collected during logging sessions.">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Foreign key reference to the user this event belongs to."/>
-        <FIELD NAME="sessionid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Foreign key reference to the session the even was recorded during."/>
-        <FIELD NAME="timestart" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The time this event started."/>
-        <FIELD NAME="timefinish" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The time this event ended."/>
-        <FIELD NAME="text" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="The text entered during the stylometry event"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
-        <KEY NAME="sessionid" TYPE="foreign" FIELDS="sessionid" REFTABLE="bioauth_sessions" REFFIELDS="id"/>
-      </KEYS>
-      <INDEXES>
-        <INDEX NAME="user-session-timestart" UNIQUE="true" FIELDS="userid, sessionid, timestart"/>
-      </INDEXES>
-    </TABLE> -->
     <TABLE NAME="bioauth_demo_sessions" COMMENT="Behavioral biometric logging sessions.">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Foreign key reference to the user this session belongs to."/>
         <FIELD NAME="tag" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" COMMENT="Tag for the session."/>
         <FIELD NAME="locale" TYPE="char" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The locale for this session."/>
-        <FIELD NAME="keystrokes" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="JSON encoded keystroke events."/>
-        <FIELD NAME="stylometry" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="The text which appeared on screen from the keystrokes."/>
+        <FIELD NAME="data" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="JSON encoded biometric data."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

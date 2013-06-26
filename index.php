@@ -25,8 +25,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once("../../config.php");
-require_once("locallib.php");
+require_once('../../config.php');
+require_once('locallib.php');
 
 $id = required_param('id', PARAM_INT);
 $PAGE->set_url('/local/bioauth/index.php', array('id'=>$id));
@@ -38,15 +38,16 @@ require_login($course);
 $PAGE->set_pagelayout('incourse');
 
 // Print the header.
-$strbioauth = get_string("modulename", "local_bioauth");
+$strbioauth = get_string('pluginname', 'local_bioauth');
 
 $PAGE->navbar->add($strbioauth);
 $PAGE->set_title($strbioauth);
-$PAGE->set_button("Button");
-$PAGE->set_heading("Heading");
+$PAGE->set_button('Button');
+$PAGE->set_heading('Heading');
 echo $OUTPUT->header();
 
-
+echo 'Starting index.php';
+echo 'Key 60', get_key(10, 'native');
 
 // Finish the page.
 echo $OUTPUT->footer();

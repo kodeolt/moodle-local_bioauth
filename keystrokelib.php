@@ -54,15 +54,15 @@ function fetch_demo_keystrokes() {
     // ini_set('memory_limit', '-1');
     // $sessions = $DB->get_records('bioauth_demo_sessions');
     
-    $userkeystrokes = new DefaultArray(new DefaultArray());
+    $userdata = new DefaultArray(new DefaultArray());
     $rs = $DB->get_recordset('bioauth_demo_sessions');
     foreach ($rs as $record) {
-        $keystrokes = json_decode($record->keystrokes);
-        $userkeystrokes[$record->userid][$record->id] = $keystrokes;
+        $data = json_decode($record->data);
+        $userdata[$record->userid][$record->id] = $data;
     }
     $rs->close();
 
-    return $userkeystrokes;
+    return $userdata;
 }
 
 function create_keystroke_features($featuresetid) {

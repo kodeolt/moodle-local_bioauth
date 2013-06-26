@@ -31,15 +31,27 @@ global $CFG;
 require_once ($CFG -> dirroot . '/local/bioauth/util.php');
 require_once ($CFG -> dirroot . '/local/bioauth/keys/en_US/keys.php');
 
-function translate_keycode($agent, $locale, $keycode) {
-    global $defaultkeycodes;
-    // global $agentkeycodes;
-    return $defaultkeycodes[$keycode];
+function translate_keycode($locale, $keycode, $agent) {
+    global $keycodes;
+    
+    if (array_key_exists($agent, $keycodes) && array_key_exists($keycode, $keycodes[$agent])) {
+        return $keycodes[$agent][$keycode];
+    } elseif (array_key_exists($keycode, $keycodes['default'])) {
+        return $keycodes['default'][$keycode];
+    } else {
+        // error
+        return 0;
+    }
 }
 
 function translate_keystring($locale, $keystring) {
     global $keymap;
-    return $keymap[$keystring];
+    
+    if (array_key_exists($keystring, $keymap)) {
+        return $keymap[$keystring];
+    } else {
+        // error
+    }
 }
 
 function fetch_user_sessions($users) {
@@ -69,9 +81,6 @@ function fetch_demo_keystrokes() {
     $rs = $DB->get_recordset('bioauth_demo_sessions');
     foreach ($rs as $record) {
         $keystrokes = json_decode($record->keystrokes);
-        // foreach ($keystrokes as $keystroke) {
-            // $keystroke->keyid = translate_keycode('native', 'en_US', $keystroke->keycode);
-        // }
         $userkeystrokes[$record->userid][$record->id] = $keystrokes;
     }
     $rs->close();

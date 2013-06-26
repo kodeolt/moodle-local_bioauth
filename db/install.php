@@ -101,7 +101,7 @@ function load_demo_events() {
             
             $keystrokes = json_decode($jsonstring, true);
             for ($i = 0; $i < count($keystrokes); $i++) {
-                $keystrokes[$i]['key'] = translate_keycode('native', 'en_US', (int)$keystrokes[$i]['keycode']);
+                $keystrokes[$i]['keyid'] = translate_keycode('en_US', (int)$keystrokes[$i]['keycode'], 'native');
                 unset($keystrokes[$i]['keycode']);
             }
             
@@ -121,7 +121,7 @@ function xmldb_local_bioauth_install() {
 
     load_demo_events();
 
-    $allkeys = 'A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,0,1,2,3,4,5,6,7,8,9,COMMA,PERIOD,SEMICOLON,SLASH,SPACE,BACKSPACE,SHIFT,RETURN';
+    $allkeys = 'A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,0,1,2,3,4,5,6,7,8,9,COMMA,PERIOD,SEMICOLON,SLASH,SPACE,BACKSPACE,SHIFT,ENTER';
 
     $letters = 'A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z';
     $vowels = 'A,E,I,O,U';
@@ -131,7 +131,7 @@ function xmldb_local_bioauth_install() {
     $cons4 = 'J,K,Q,V,X,Z';
     
     $visiblekeys = 'A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,0,1,2,3,4,5,6,7,8,9,COMMA,PERIOD,SEMICOLON,SLASH';
-    $invisiblekeys = 'SPACE,BACKSPACE,SHIFT,RETURN';
+    $invisiblekeys = 'SPACE,BACKSPACE,SHIFT,ENTER';
     
     $lefthand = 'Q,W,E,R,T,A,S,D,F,G,Z,X,C,V,B,1,2,3,4,5';
     $righthand = 'Y,U,I,O,P,H,J,K,L,N,M,6,7,8,9,0';

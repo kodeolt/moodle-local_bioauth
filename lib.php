@@ -36,7 +36,7 @@ function validate_model() {
 }
 
 function local_bioauth_cron() {
-    //ini_set('memory_limit', '-1');
+    ini_set('memory_limit', '-1');
     global $DB;
     
     // $DB -> insert_record('bioauth_quiz_validations', array('userid' => 100, 'locale' => 'en_US', 'keystrokes' => 'jsonstring', 'stylometry' => ''));
@@ -47,11 +47,11 @@ function local_bioauth_cron() {
     echo ". Fetching demo keystrokes ", time();
     
     $userkeystrokes = fetch_demo_keystrokes();
-    
+    //print_r($userkeystrokes[1]);
     echo ". Extracting features ", time();
     $fspace = create_keystroke_fspace($userkeystrokes, $keystrokefeatures, 2);
     
-    var_dump($fspace);
+    print_r($fspace);
     
     echo ". Done ", time();
 }

@@ -29,30 +29,7 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 require_once ($CFG -> dirroot . '/local/bioauth/util.php');
-require_once ($CFG -> dirroot . '/local/bioauth/keys/en_US/keys.php');
 
-function translate_keycode($locale, $keycode, $agent) {
-    global $keycodes;
-    
-    if (array_key_exists($agent, $keycodes) && array_key_exists($keycode, $keycodes[$agent])) {
-        return $keycodes[$agent][$keycode];
-    } elseif (array_key_exists($keycode, $keycodes['default'])) {
-        return $keycodes['default'][$keycode];
-    } else {
-        // error
-        return 0;
-    }
-}
-
-function translate_keystring($locale, $keystring) {
-    global $keymap;
-    
-    if (array_key_exists($keystring, $keymap)) {
-        return $keymap[$keystring];
-    } else {
-        // error
-    }
-}
 
 function fetch_user_sessions($users) {
     $sessions = $DB->get_records_list('bioauth_sessions', 'id', $users);

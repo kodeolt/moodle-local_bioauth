@@ -46,9 +46,11 @@ function local_bioauth_cron() {
     //print_r($userkeystrokes[1]);
     echo '. Extracting features ', time();
     $fspace = create_keystroke_fspace($userdata, $keystrokefeatures, 2);
-    file_put_contents('fspace.txt', print_r($fspace, TRUE));
     //print_r($fspace);
     
     echo '. Done ', time();
 }
 
+function validate_sessions($usersessions) {
+    
+}

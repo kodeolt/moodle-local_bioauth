@@ -26,7 +26,7 @@
  */
 
 require_once(dirname(__FILE__) . '/../../config.php');
-require_once($CFG->dirroot . '/local/bioauth/locallib.php');
+require_once($CFG->dirroot . '/local/bioauth/reportlib.php');
 
 $id = optional_param('id', 0, PARAM_INT);
 $q = optional_param('q', 0, PARAM_INT);
@@ -66,7 +66,7 @@ add_to_log($course->id, 'bioauth', 'report', 'report.php?id=' . $cm->id,
         $quiz->id, $cm->id);
 
 $report = new bioauth_report();
-$report->display($quiz, $cm, $course);
+$report->display($cm, $course);
 
 // Print footer.
 echo $OUTPUT->footer();

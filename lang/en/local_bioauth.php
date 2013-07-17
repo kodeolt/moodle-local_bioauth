@@ -32,5 +32,7 @@ $string['mode'] = 'Mode';
 $string['mode_desc'] = 'Enable Biometric Authentication for verifying the identity of students taking quizzes.';
 $string['pluginname'] = 'BioAuth';
 $string['pluginname_help'] = 'BioAuth help.';
+$string['performancegraph'] = 'FRR vs FAR';
 
 $string['install_bootstrap'] = 'Installing bootstrap data.';
+

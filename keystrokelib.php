@@ -32,14 +32,14 @@ require_once ($CFG -> dirroot . '/local/bioauth/util.php');
 
 
 function fetch_user_sessions($users) {
-    $sessions = $DB->get_records_list('bioauth_sessions', 'id', $users);
+    $sessions = $DB->get_records_list('bioauth_quiz_sessions', 'id', $users);
     return $sessions;
 }
 
 function fetch_user_keystrokes($users) {
     global $DB;
     
-    $sessions = $DB->get_records_list('bioauth_sessions', 'id', $users);
+    $sessions = $DB->get_records_list('bioauth_quiz_sessions', 'id', $users);
 
     $userkeystrokes = new DefaultArray(new DefaultArray());
     foreach ($sessions as $session) {
@@ -54,14 +54,14 @@ function fetch_demo_keystrokes() {
     // ini_set('memory_limit', '-1');
     // $sessions = $DB->get_records('bioauth_demo_sessions');
     
-    $userdata = new DefaultArray(new DefaultArray());
-    $rs = $DB->get_recordset('bioauth_demo_sessions');
+    //$userdata = new DefaultArray(new DefaultArray());
+    $userdata = array();
+    $rs = $DB->get_recordset('bioauth_demo_quiz_sessions');
     foreach ($rs as $record) {
         $data = json_decode($record->data);
         $userdata[$record->userid][$record->id] = $data;
     }
     $rs->close();
-
     return $userdata;
 }
 

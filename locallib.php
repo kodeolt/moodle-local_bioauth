@@ -97,7 +97,8 @@ function extract_keystroke_features($keystrokesequence, $keystrokefeatures, $min
 
 function create_keystroke_fspace($userdata, $keystrokefeatures, $minfrequency) {
     
-    $fspace = new DefaultArray(new ArrayObject());
+    //$fspace = new DefaultArray(new ArrayObject());
+    $fspace = array();
     
     foreach ($userdata as $userid => $sessions) {
         foreach ($sessions as $sessionid => $data) {
@@ -130,6 +131,33 @@ function classify($reference_fspace, $query_fspace, $k) {
                 $nn[$reference_user][$query_user][$query_sample_idx] = linear_weighted_decisions($distance_labels, $k);
             }
         }
+    }
+
+    return $nn;
+}
+
+/**
+ * 
+ * 
+ * @param array $fspace the feature space of a population
+ * @return int the number of neighbors to use in the KNN binary classification
+ * 
+ */
+function authenticate_users(&$fspace, $k) {
+    $reference_users = array_keys($fspace);
+    $query_users = array_keys($fspace);
+    $nn = new DefaultArray(new DefaultArray(new ArrayObject()));
+
+    foreach ($query_users as $query_user) {
+        $loo_fspace = $fspace;
+        $query_samples = $loo_fspace[$query_user];
+        foreach ($query_samples as $query_sample_idx => $query_sample) {
+            echo ' user ', $query_user, ' sample ', $query_sample_idx, ' '; 
+            $loo_fspace[$query_user] = array_slice($query_samples, 0, $query_sample_idx, true) + array_slice($query_samples, $query_sample_idx + 1, NULL, true);
+            list($distances, $distance_labels) = sorted_distances($loo_fspace, $query_user, $query_sample);
+            $nn[$query_user][$query_user][$query_sample_idx] = linear_weighted_decisions($distance_labels, $k);
+        }
+        
     }
 
     return $nn;
@@ -377,11 +405,12 @@ function create_user_dspace_between(&$fspace, $user) {
 function create_dspace_within(&$fspace) {
     $dspace_within = array();
     foreach ($fspace as $user => $samples) {
-        $sample_combinations = new Combinations($samples, 2);
+        $sample_combinations = new Combinations(array_keys($samples), 2);
         $user_dspace = array();
-
-        foreach ($sample_combinations as $idx) {
-            $user_dspace[] = abs_diff($samples[0], $samples[1]);
+        print_r(iterator_to_array($sample_combinations));
+        return;
+        foreach ($sample_combinations as $sample_idxs) {
+            $user_dspace[] = abs_diff($samples[$sample_idxs[0]], $samples[$sample_idxs[1]]);
         }
         $dspace_within[$user] = $user_dspace;
     }

@@ -91,14 +91,19 @@ function load_demo_events() {
     foreach ($userit as $user) {
         if (!$user->isDir()) continue;
         
-        $sessionit = new DirectoryIterator($user->getPathname());
-        foreach ($sessionit as $session) {
-            if ('json' !== $session->getExtension()) continue;
+        $quizit = new DirectoryIterator($user->getPathname());
+        foreach ($quizit as $quiz) {
+            if (!$quiz->isDir()) continue;
             
-            $jsonstring = file_get_contents($session->getPathname());
-            $DB -> insert_record_raw('bioauth_demo_sessions', array('userid' => $user->getBasename(), 'locale' => 'en_US', 'data' => $jsonstring), false, true);
-            $done++;
-            $progressbar->update($done, 1187, get_string('install_bootstrap', 'local_bioauth'));
+            $sessionit = new DirectoryIterator($quiz->getPathname());
+            foreach ($sessionit as $session) {
+                if ('json' !== $session->getExtension()) continue;
+                
+                $jsonstring = file_get_contents($session->getPathname());
+                $DB -> insert_record_raw('bioauth_demo_quiz_sessions', array('userid' => $user->getBasename(), 'quizid' => $quiz->getBasename(), 'locale' => 'en_US', 'data' => $jsonstring), false, true);
+                $done++;
+                $progressbar->update($done, 1187, get_string('install_bootstrap', 'local_bioauth'));
+            }
         }
     }
 }
@@ -195,7 +200,7 @@ function load_keystroke_features() {
     44 => array(BIOAUTH_FEATURE_DURATION, 'l', 'l', BIOAUTH_MEASURE_MEAN, 0),
     45 => array(BIOAUTH_FEATURE_DURATION, 'period', 'period', BIOAUTH_MEASURE_MEAN, 0),
     46 => array(BIOAUTH_FEATURE_DURATION, '9', '9', BIOAUTH_MEASURE_MEAN, 0),
-    47 => array(BIOAUTH_FEATURE_DURATION, 'o', '0', BIOAUTH_MEASURE_MEAN, 0),
+    47 => array(BIOAUTH_FEATURE_DURATION, 'o', 'o', BIOAUTH_MEASURE_MEAN, 0),
     // right little
     48 => array(BIOAUTH_FEATURE_DURATION, 'semicolon', 'semicolon', BIOAUTH_MEASURE_MEAN, 0),
     49 => array(BIOAUTH_FEATURE_DURATION, 'slash', 'slash', BIOAUTH_MEASURE_MEAN, 0),
@@ -239,10 +244,10 @@ function load_keystroke_features() {
         $keystrokefeatureids[$featureid] = $DB -> insert_record('bioauth_keystroke_features', array_combine($keystrokefeaturefields, $feature), true);
     }
 
-    // $keystrokefallback = array(2 => 1, 3 => 1, 5 => 4, );
-    // foreach ($keystrokefallback as $node => $parent) {
-        // $DB -> update_record('bioauth_keystroke_features', array('id' => $keystrokefeatureids[$node], 'fallback' => $keystrokefeatureids[$parent]));
-    // }
+    $keystrokefallback = array(2 => 1, 3 => 1, 5 => 4, );
+    foreach ($keystrokefallback as $node => $parent) {
+        $DB -> update_record('bioauth_keystroke_features', array('id' => $keystrokefeatureids[$node], 'fallback' => $keystrokefeatureids[$parent]));
+    }
 
     $DB -> insert_record('bioauth_feature_sets', array('name' => 'Engish US Basic Keystroke', 'locale' => 'en_US', 'keystrokefeatures' => implode(',', array_keys($keystrokefeatureids)), 'stylometryfeatures' => ''));
     

@@ -96,7 +96,7 @@
       </INDEXES>
     </TABLE>
     
-    <TABLE NAME="bioauth_validations" COMMENT="Validations performed on a population with a particular feature set">
+    <TABLE NAME="bioauth_quiz_validations" COMMENT="Validations performed on a population with a particular feature set">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="."/>
@@ -123,6 +123,7 @@
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="ID of the user"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="ID of the course"/>
         <FIELD NAME="quizid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The quiz these neighbor decisions belong to."/>
         <FIELD NAME="neighbors" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="CSV list of the within/between neighbors"/>
       </FIELDS>

@@ -92,13 +92,14 @@ class bioauth_report_table extends table_sql {
      * @param array $questions
      * @param moodle_url $reporturl
      */
-    public function __construct($uniqueid, $context, $groupstudents, $students, $quizzes, $reporturl) {
+    public function __construct($uniqueid, $context, $groupstudents, $students, $quizauths, $reporturl, $m) {
         parent::__construct($uniqueid);
         $this->context = $context;
         $this->groupstudents = $groupstudents;
         $this->students = $students;
-        $this->quizzes = $quizzes;
+        $this->quizauths = $quizauths;
         $this->reporturl = $reporturl;
+        $this->m = $m;
     }
 
     public function build_table() {
@@ -153,6 +154,24 @@ class bioauth_report_table extends table_sql {
             return '';
     }
 
+/**
+     * @param string $colname the name of the column.
+     * @param object $attempt the row of data - see the SQL in display() in
+     * mod/quiz/report/overview/report.php to see what fields are present,
+     * and what they are called.
+     * @return string the contents of the cell.
+     */
+    public function other_cols($colname, $attempt) {
+        if (!preg_match('/^qsquiz(\d+)$/', $colname, $matches)) {
+            return null;
+        }
+        $slot = $matches[1];
+
+        $neighbors = $this->quizauths[$attempt->userid][$slot];
+        $decisions = explode(",", $neighbors);
+        return $decisions[$this->m];
+    }
+    
     /**
      * Contruct all the parts of the main database query.
      * @param array $reportstudents list if userids of users to include in the report.
@@ -162,14 +181,11 @@ class bioauth_report_table extends table_sql {
     public function base_sql($reportstudents) {
         global $DB;
 
-        $fields = $DB->sql_concat('u.id', "'#'", 'COALESCE(quiza.attempt, 0)') . ' AS uniqueid,';
-
         $extrafields = get_extra_user_fields_sql($this->context, 'u', '',
                 array('id', 'idnumber', 'firstname', 'lastname', 'picture',
                 'imagealt', 'institution', 'department', 'email'));
-        $fields .= '
-                quiza.id AS usageid,
-                quiza.quizid AS attempt,
+                
+        $fields = '
                 u.id AS userid,
                 u.idnumber,
                 u.firstname,
@@ -179,94 +195,15 @@ class bioauth_report_table extends table_sql {
                 u.institution,
                 u.department,
                 u.email' . $extrafields;
-        // This part is the same for all cases. Join the users and quiz_attempts tables.
+                
         $from = "\n{user} u";
-        $from .= "\nLEFT JOIN {bioauth_quiz_neighbors} quiza ON
-                                    quiza.userid = u.id AND quiza.quizid = :quizid";
-        $params = array('courseid' => 2);
 
-        // Show all students with or without attempts.
         list($usql, $uparams) = $DB->get_in_or_equal(
                 $reportstudents, SQL_PARAMS_NAMED, 'u');
-        $params += $uparams;
-        $where = "u.id $usql"; // AND (quiza.preview = 0 OR quiza.preview IS NULL)";
+        $params = $uparams;
+        $where = "u.id $usql";
 
         return array($fields, $from, $where, $params);
-    }
-
-    /**
-     * Add the information about the latest state of the question with slot
-     * $slot to the query.
-     *
-     * The extra information is added as a join to a
-     * 'table' with alias qa$slot, with columns that are a union of
-     * the columns of the question_attempts and question_attempts_states tables.
-     *
-     * @param int $slot the question to add information for.
-     */
-    protected function add_latest_state_join($slot) {
-        $alias = 'qa' . $slot;
-
-        $fields = $this->get_required_latest_state_fields($slot, $alias);
-        if (!$fields) {
-            return;
-        }
-
-        // This condition roughly filters the list of attempts to be considered.
-        // It is only used in a subselect to help crappy databases (see MDL-30122)
-        // therefore, it is better to use a very simple join, which may include
-        // too many records, than to do a super-accurate join.
-        $qubaids = new qubaid_join("{quiz_attempts} {$alias}quiza", "{$alias}quiza.uniqueid",
-                "{$alias}quiza.quiz = :{$alias}quizid", array("{$alias}quizid" => $this->sql->params['quizid']));
-
-        $dm = new question_engine_data_mapper();
-        list($inlineview, $viewparams) = $dm->question_attempt_latest_state_view($alias, $qubaids);
-
-        $this->sql->fields .= ",\n$fields";
-        $this->sql->from .= "\nLEFT JOIN $inlineview ON " .
-                "$alias.questionusageid = quiza.uniqueid AND $alias.slot = :{$alias}slot";
-        $this->sql->params[$alias . 'slot'] = $slot;
-        $this->sql->params = array_merge($this->sql->params, $viewparams);
-    }
-
-    /**
-     * Get an appropriate qubaid_condition for loading more data about the
-     * attempts we are displaying.
-     * @return qubaid_condition
-     */
-    protected function get_qubaids_condition() {
-        if (is_null($this->rawdata)) {
-            throw new coding_exception(
-                    'Cannot call get_qubaids_condition until the main data has been loaded.');
-        }
-
-        if ($this->is_downloading()) {
-            // We want usages for all attempts.
-            return new qubaid_join($this->sql->from, 'quiza.uniqueid',
-                    $this->sql->where, $this->sql->params);
-        }
-
-        $qubaids = array();
-        foreach ($this->rawdata as $attempt) {
-            if ($attempt->usageid > 0) {
-                $qubaids[] = $attempt->usageid;
-            }
-        }
-
-        return new qubaid_list($qubaids);
-    }
-
-    public function query_db($pagesize, $useinitialsbar = true) {
-        $doneslots = array();
-        foreach ($this->get_sort_columns() as $column => $notused) {
-            $slot = $this->is_latest_step_column($column);
-            if ($slot && !in_array($slot, $doneslots)) {
-                $this->add_latest_state_join($slot);
-                $doneslots[] = $slot;
-            }
-        }
-
-        parent::query_db($pagesize, $useinitialsbar);
     }
 
     public function wrap_html_start() {
@@ -301,62 +238,6 @@ class bioauth_report_table extends table_sql {
         // Close the form.
         echo '</div>';
         echo '</form></div>';
-    }
-    
-    /**
-     * @param string $colname the name of the column.
-     * @param object $attempt the row of data - see the SQL in display() in
-     * mod/quiz/report/overview/report.php to see what fields are present,
-     * and what they are called.
-     * @return string the contents of the cell.
-     */
-    public function other_cols($colname, $attempt) {
-        if (!preg_match('/^qsquiz(\d+)$/', $colname, $matches)) {
-            return null;
-        }
-        $slot = $matches[1];
-
-        
-
-        $question = $this->quizzes[$slot];
-        if (!isset($this->lateststeps[$attempt->usageid][$slot])) {
-            return print_r($attempt, true);
-        }
-
-        $stepdata = $this->lateststeps[$attempt->usageid][$slot];
-        $state = question_state::get($stepdata->state);
-
-        if ($question->maxmark == 0) {
-            $grade = '-';
-        } else if (is_null($stepdata->fraction)) {
-            if ($state == question_state::$needsgrading) {
-                $grade = get_string('requiresgrading', 'question');
-            } else {
-                $grade = '-';
-            }
-        } else {
-            $grade = quiz_rescale_grade(
-                    $stepdata->fraction * $question->maxmark, $this->quiz, 'question');
-        }
-
-        if ($this->is_downloading()) {
-            return $grade;
-        }
-
-        if (isset($this->regradedqs[$attempt->usageid][$slot])) {
-            $gradefromdb = $grade;
-            $newgrade = quiz_rescale_grade(
-                    $this->regradedqs[$attempt->usageid][$slot]->newfraction * $question->maxmark,
-                    $this->quiz, 'question');
-            $oldgrade = quiz_rescale_grade(
-                    $this->regradedqs[$attempt->usageid][$slot]->oldfraction * $question->maxmark,
-                    $this->quiz, 'question');
-
-            $grade = html_writer::tag('del', $oldgrade) . '/' .
-                    html_writer::empty_tag('br') . $newgrade;
-        }
-
-        return $this->make_review_link($grade, $attempt, $slot);
     }
 }
 
@@ -418,8 +299,11 @@ class bioauth_report {
                 $this->load_relevant_students($cm, $course);
 
         $quizzes = $this->load_relevant_quizzes($course);
+        $quizauths = $this->load_relevant_quizauths($course);
         
-        return array($currentgroup, $students, $groupstudents, $allowed, $quizzes);
+        $validation = $this->load_validation($course);
+        
+        return array($currentgroup, $students, $groupstudents, $allowed, $quizzes, $quizauths, $validation);
     }
 
     /**
@@ -479,6 +363,24 @@ class bioauth_report {
     public function load_relevant_quizzes($course) {
         global $DB;
         return $DB->get_records('quiz', array('course' => $course->id));
+    }
+    
+    public function load_relevant_quizauths($course) {
+        global $DB;
+        // return $DB->get_records('bioauth_quiz_neighbors', array('course' => $course->id));
+        $records = $DB->get_records('bioauth_quiz_neighbors');
+        
+        $quizauths = array();
+        foreach ($records as $record) {
+            $quizauths[$record->userid][$record->quizid] = $record->neighbors;
+        }
+        
+        return $quizauths;
+    }
+    
+    public function load_validation($course) {
+        global $DB;
+        return $DB->get_record('bioauth_quiz_validations', array('courseid' => $course->id));
     }
 
     /**
@@ -554,13 +456,13 @@ class bioauth_report {
     public function display($cm, $course) {
         global $CFG, $DB, $OUTPUT, $PAGE;
 
-        list($currentgroup, $students, $groupstudents, $allowed, $quizzes) =
+        list($currentgroup, $students, $groupstudents, $allowed, $quizzes, $quizauths, $validation) =
                 $this->init($cm, $course);
 
         // Prepare for downloading, if applicable.
         $courseshortname = format_string($course->shortname, true,
                 array('context' => context_course::instance($course->id)));
-        $table = new bioauth_report_table('local-bioauth-report', $this->context, $groupstudents, $students, $quizzes, $this->get_base_url());
+        $table = new bioauth_report_table('local-bioauth-report', $this->context, $groupstudents, $students, $quizauths, $this->get_base_url(), $validation->m);
         $this->print_header_and_tabs($cm, $course);
 
         if ($groupmode = groups_get_activity_groupmode($cm)) {
@@ -586,7 +488,7 @@ class bioauth_report {
             $table->set_sql($fields, $from, $where, $params);
 
             // Output the authenticate button.
-            $authenticatelabel = 'Authenticate Students';
+            $authenticatelabel = 'Re-authenticate Students';
             $displayurl = new moodle_url($this->get_base_url(), array('sesskey' => sesskey()));
             echo '<div class="mdl-align">';
             echo '<form action="'.$displayurl->out_omit_querystring().'">';
@@ -596,6 +498,40 @@ class bioauth_report {
             echo '</div>';
             echo '</form>';
             echo '</div>';
+            
+            $frrstring = explode(',', $validation->frr);
+        $farstring = explode(',', $validation->far);
+        
+        $frr = array();
+        $far = array();
+        foreach (array_keys($frrstring) as $m) {
+            $frr[] = 100 * (float)$frrstring[$m];
+            $far[] = 100 * (float)$farstring[$m];
+        }
+        
+        
+        $linechart = new HighRollerLineChart();
+        $linechart->chart->renderTo = 'linechart';
+        $linechart->title->text = 'FRR and FAR vs M';
+        $linechart->xAxis->title->text = 'M';
+        $linechart->yAxis->title->text = 'Error (%)';
+        
+        
+        $linechart->chart->width = 600;
+        $linechart->chart->height = 300;
+        
+        $frrseries = new HighRollerSeriesData();
+        $frrseries->addName('FRR')->addData($frr);
+        
+        $farseries = new HighRollerSeriesData();
+        $farseries->addName('FAR')->addData($far);
+        
+        $linechart->addSeries($frrseries);
+        $linechart->addSeries($farseries);
+        
+        echo '<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>';
+        echo "<script type='text/javascript' src='highcharts/highcharts.js'></script>";
+        echo '<div id="linechart"></div><script type="text/javascript">'.$linechart->renderChart().'</script>';
             
             // Define table columns.
             $columns = array();
@@ -616,25 +552,6 @@ class bioauth_report {
             $table->out(bioauth_report::DEFAULT_PAGE_SIZE, true);
         }
 
-        $strbioauth = get_string('pluginname', 'local_bioauth');
-
-        $chartData = array(5324, 7534, 6234, 7234, 8251, 10324);
-        
-        $linechart = new HighRollerLineChart();
-        $linechart->chart->renderTo = 'linechart';
-        $linechart->title->text = 'Line Chart';
-        $linechart->chart->width = 300;
-        $linechart->chart->height = 300;
-        
-        $series1 = new HighRollerSeriesData();
-        $series1->addName('myData')->addData($chartData);
-        
-        $linechart->addSeries($series1);
-        
-        echo '<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>';
-        echo "<script type='text/javascript' src='highcharts/highcharts.js'></script>";
-        echo '<div id="linechart"></div><script type="text/javascript">'.$linechart->renderChart().'</script>';
-        
         return true;
     }
 

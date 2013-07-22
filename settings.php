@@ -27,7 +27,7 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/local/bioauth/lib.php');
 
-$pagetitle = get_string('modulename', 'local_bioauth');
+$pagetitle = get_string('pluginname', 'local_bioauth');
 
 $bioauthsettings = new admin_settingpage('modsettingbioauth', $pagetitle, 'moodle/site:config');
 

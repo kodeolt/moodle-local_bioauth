@@ -31,7 +31,6 @@ global $CFG;
 require_once ($CFG -> dirroot . '/local/bioauth/util.php');
 require_once ($CFG -> dirroot . '/local/bioauth/mathlib.php');
 require_once ($CFG -> dirroot . '/local/bioauth/constants.php');
-require_once ($CFG -> dirroot . '/local/bioauth/keystrokelib.php');
 
 
 function get_key($identifier, $agent = '') {

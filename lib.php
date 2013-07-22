@@ -31,27 +31,5 @@ global $CFG;
 require_once($CFG->dirroot . '/local/bioauth/locallib.php');
 
 function local_bioauth_cron() {
-    global $CFG;
-    $jsondata = json_encode(fetch_demo_keystrokes());
-    // $temp = tmpfile();
-    // fwrite($temp, $jsondata);
-    file_put_contents('/Users/vinnie/data.json', $jsondata);
     
-    $jsondata = json_encode(create_keystroke_features(1));
-    // $temp = tmpfile();
-    // fwrite($temp, $jsondata);
-    file_put_contents('/Users/vinnie/features.json', $jsondata);
-    
-    // $meta_data = stream_get_meta_data($temp);
-    // $filename = $meta_data["uri"];
-    // print_r($filename);
-    // print_r($data);
-    // $cmd = '/usr/bin/env java -jar '.$CFG->dirroot.'/local/bioauth/bin/ssi.jar '.escapeshellarg($filename);
-    // $output = shell_exec($cmd);
-    // print_r($output);
-
-    // fseek($temp, 0);
-    // echo fread($temp, 1024);
-    
-    // fclose($temp);
 }

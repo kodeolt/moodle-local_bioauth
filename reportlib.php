@@ -154,7 +154,26 @@ class bioauth_report_table extends table_sql {
             return '';
     }
 
-/**
+    /**
+     * Make a link to review an individual question in a popup window.
+     *
+     * @param string $data HTML fragment. The text to make into the link.
+     * @param object $attempt data for the row of the table being output.
+     * @param int $slot the number used to identify this question within this usage.
+     */
+    public function make_decision_output($decision, $attempt, $slot) {
+        global $OUTPUT;
+
+       $decisionclass = 'w' === $decision ? 'correct' : 'incorrect';
+        $img = $OUTPUT->pix_icon('i/grade_' . $decisionclass, get_string($decisionclass, 'question'),
+                'moodle', array('class' => 'icon'));
+                
+        $output = html_writer::tag('span', $img . html_writer::tag('span', $data));
+    
+        return $output;
+    }
+
+    /**
      * @param string $colname the name of the column.
      * @param object $attempt the row of data - see the SQL in display() in
      * mod/quiz/report/overview/report.php to see what fields are present,
@@ -169,7 +188,7 @@ class bioauth_report_table extends table_sql {
 
         $neighbors = $this->quizauths[$attempt->userid][$slot];
         $decisions = explode(",", $neighbors);
-        return $decisions[$this->m];
+        return $this->make_decision_output($decisions[$this->m], $attempt, $slot);
     }
     
     /**
@@ -367,9 +386,8 @@ class bioauth_report {
     
     public function load_relevant_quizauths($course) {
         global $DB;
-        // return $DB->get_records('bioauth_quiz_neighbors', array('course' => $course->id));
-        $records = $DB->get_records('bioauth_quiz_neighbors');
         
+        $records = $DB->get_records('bioauth_quiz_neighbors', array('courseid' => $course->id));
         $quizauths = array();
         foreach ($records as $record) {
             $quizauths[$record->userid][$record->quizid] = $record->neighbors;
@@ -452,6 +470,35 @@ class bioauth_report {
         $PAGE->set_heading($course->fullname);
         echo $OUTPUT->header();
     }
+    
+    public function display_graph($frr, $far) {
+        $linechart = new HighRollerLineChart();
+        $linechart->chart->renderTo = 'linechart';
+        $linechart->title->text = 'FRR and FAR vs M';
+        $linechart->xAxis->title->text = 'M';
+        $linechart->yAxis->min = 0;
+        $linechart->yAxis->max = 100;
+        $linechart->xAxis->min = 0;
+        $linechart->xAxis->max = count($frr);
+        
+        $linechart->yAxis->title->text = 'Error (%)';
+        
+        $linechart->chart->width = 600;
+        $linechart->chart->height = 300;
+        
+        $frrseries = new HighRollerSeriesData();
+        $frrseries->addName('FRR')->addData($frr);
+        
+        $farseries = new HighRollerSeriesData();
+        $farseries->addName('FAR')->addData($far);
+        
+        $linechart->addSeries($frrseries);
+        $linechart->addSeries($farseries);
+        
+        echo '<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>';
+        echo "<script type='text/javascript' src='highcharts/highcharts.js'></script>";
+        echo '<div id="linechart"></div><script type="text/javascript">'.$linechart->renderChart().'</script>';
+    }
 
     public function display($cm, $course) {
         global $CFG, $DB, $OUTPUT, $PAGE;
@@ -505,33 +552,11 @@ class bioauth_report {
         $frr = array();
         $far = array();
         foreach (array_keys($frrstring) as $m) {
-            $frr[] = 100 * (float)$frrstring[$m];
-            $far[] = 100 * (float)$farstring[$m];
+            $frr[] = (float)$frrstring[$m];
+            $far[] = (float)$farstring[$m];
         }
         
-        
-        $linechart = new HighRollerLineChart();
-        $linechart->chart->renderTo = 'linechart';
-        $linechart->title->text = 'FRR and FAR vs M';
-        $linechart->xAxis->title->text = 'M';
-        $linechart->yAxis->title->text = 'Error (%)';
-        
-        
-        $linechart->chart->width = 600;
-        $linechart->chart->height = 300;
-        
-        $frrseries = new HighRollerSeriesData();
-        $frrseries->addName('FRR')->addData($frr);
-        
-        $farseries = new HighRollerSeriesData();
-        $farseries->addName('FAR')->addData($far);
-        
-        $linechart->addSeries($frrseries);
-        $linechart->addSeries($farseries);
-        
-        echo '<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>';
-        echo "<script type='text/javascript' src='highcharts/highcharts.js'></script>";
-        echo '<div id="linechart"></div><script type="text/javascript">'.$linechart->renderChart().'</script>';
+        $this->display_graph($frr, $far);
             
             // Define table columns.
             $columns = array();

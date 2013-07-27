@@ -119,7 +119,7 @@ class key_manager {
         }
         
         $file = 'keycode';
-        $keycode = array(array());
+        $keycode = array();
         
         include("$CFG->dirroot/local/bioauth/keys/$lang/$file.php");
 

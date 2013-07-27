@@ -541,7 +541,7 @@ class bioauth_report {
             echo '<form action="'.$displayurl->out_omit_querystring().'">';
             echo '<div>';
             echo html_writer::input_hidden_params($displayurl);
-            echo '<input type="submit" name="regradeall" value="'.$authenticatelabel.'"/>';
+            echo '<input type="submit" name="reauthenticate" value="'.$authenticatelabel.'"/>';
             echo '</div>';
             echo '</form>';
             echo '</div>';

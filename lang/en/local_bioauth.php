@@ -36,3 +36,4 @@ $string['performancegraph'] = 'FRR vs FAR';
 
 $string['install_bootstrap'] = 'Installing bootstrap data.';
 
+$string['performancesummary'] = 'Estimated performance is {$a->performance}% on {$a->numauths} quiz attempts';

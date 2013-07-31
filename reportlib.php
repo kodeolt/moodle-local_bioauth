@@ -28,7 +28,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
-require_once($CFG->libdir.'/tablelib.php');
+require_once($CFG->libdir . '/formslib.php');
+require_once($CFG->libdir .'/tablelib.php');
 
 require_once($CFG->dirroot . '/mod/quiz/report/reportlib.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
@@ -37,6 +38,178 @@ require_once($CFG->dirroot . '/local/bioauth/locallib.php');
 require_once($CFG->dirroot . '/local/bioauth/HighRoller/HighRoller.php');
 require_once($CFG->dirroot . '/local/bioauth/HighRoller/HighRollerSeriesData.php');
 require_once($CFG->dirroot . '/local/bioauth/HighRoller/HighRollerLineChart.php');
+
+/**
+ * Base class for the settings form for {@link bioauth_report}s.
+ *
+ * @copyright Vinnie Monaco
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class local_bioauth_report_form extends moodleform {
+
+    protected function definition() {
+        $mform = $this->_form;
+
+        $mform->addElement('header', 'preferencesuser',
+                get_string('reportoptions', 'bioauth'));
+
+        $this->preference_fields($mform);
+
+        $mform->addElement('submit', 'submitbutton',
+                get_string('showreport', 'bioauth'));
+    }
+
+    protected function preference_fields(MoodleQuickForm $mform) {
+        $mform->addElement('text', 'pagesize', get_string('pagesize', 'bioauth'));
+        $mform->setType('pagesize', PARAM_INT);
+    }
+
+
+    public function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+        
+        return $errors;
+    }
+}
+
+/**
+ * Class to store the options for a {@link bioauth_report}.
+ *
+ * @copyright Vinnie Monaco
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class bioauth_report_options {
+
+    /** @var object the settings for the quiz being reported on. */
+    public $validation;
+
+    /** @var object the course module objects for the quiz being reported on. */
+    public $cm;
+
+    /** @var object the course settings for the course the quiz is in. */
+    public $course;
+
+    /** @var int Number of attempts to show per page. */
+    public $pagesize = bioauth_report::DEFAULT_PAGE_SIZE;
+
+    /** @var string whether the data should be downloaded in some format, or '' to display it. */
+    public $download = '';
+
+    /**
+     * Constructor.
+     * @param object $validation the settings for the quiz being reported on.
+     * @param object $cm the course module objects for the quiz being reported on.
+     * @param object $course the course settings for the coures this quiz is in.
+     */
+    public function __construct($validation, $cm, $course) {
+        $this->validation   = $validation;
+        $this->cm           = $cm;
+        $this->course       = $course;
+    }
+
+    /**
+     * Get the URL parameters required to show the report with these options.
+     * @return array URL parameter name => value.
+     */
+    protected function get_url_params() {
+        $params = array(
+            'id'         => $this->cm->id,
+        );
+        if (groups_get_activity_groupmode($this->cm, $this->course)) {
+            $params['group'] = $this->group;
+        }
+        return $params;
+    }
+
+    /**
+     * Get the URL to show the report with these options.
+     * @return moodle_url the URL.
+     */
+    public function get_url() {
+        return new moodle_url('/local/bioauth/report.php', $this->get_url_params());
+    }
+
+    /**
+     * Process the data we get when the settings form is submitted. This includes
+     * updating the fields of this class, and updating the user preferences
+     * where appropriate.
+     * @param object $fromform The data from $mform->get_data() from the settings form.
+     */
+    public function process_settings_from_form($fromform) {
+        $this->setup_from_form_data($fromform);
+        $this->resolve_dependencies();
+        $this->update_user_preferences();
+    }
+
+    /**
+     * Set up this preferences object using optional_param (using user_preferences
+     * to set anything not specified by the params.
+     */
+    public function process_settings_from_params() {
+        $this->setup_from_user_preferences();
+        $this->setup_from_params();
+        $this->resolve_dependencies();
+    }
+
+    /**
+     * Get the current value of the settings to pass to the settings form.
+     */
+    public function get_initial_form_data() {
+        $toform = new stdClass();
+        $toform->pagesize   = $this->pagesize;
+        
+        return $toform;
+    }
+
+    /**
+     * Set the fields of this object from the form data.
+     * @param object $fromform The data from $mform->get_data() from the settings form.
+     */
+    public function setup_from_form_data($fromform) {
+        // $this->attempts   = $fromform->attempts;
+        // $this->group      = groups_get_activity_group($this->cm, true);
+        // $this->onlygraded = !empty($fromform->onlygraded);
+        $this->pagesize   = $fromform->pagesize;
+    }
+
+    /**
+     * Set the fields of this object from the user's preferences.
+     */
+    public function setup_from_params() {
+        // $this->attempts   = optional_param('attempts', $this->attempts, PARAM_ALPHAEXT);
+        // $this->group      = groups_get_activity_group($this->cm, true);
+        // $this->onlygraded = optional_param('onlygraded', $this->onlygraded, PARAM_BOOL);
+        $this->pagesize   = optional_param('pagesize', $this->pagesize, PARAM_INT);
+
+        // $this->download   = optional_param('download', $this->download, PARAM_ALPHA);
+    }
+
+    /**
+     * Set the fields of this object from the user's preferences.
+     * (For those settings that are backed by user-preferences).
+     */
+    public function setup_from_user_preferences() {
+        $this->pagesize = get_user_preferences('bioauth_report_pagesize', $this->pagesize);
+    }
+
+    /**
+     * Update the user preferences so they match the settings in this object.
+     * (For those settings that are backed by user-preferences).
+     */
+    public function update_user_preferences() {
+        set_user_preference('bioauth_report_pagesize', $this->pagesize);
+    }
+
+    /**
+     * Check the settings, and remove any 'impossible' combinations.
+     */
+    public function resolve_dependencies() {
+        
+        if ($this->pagesize < 1) {
+            $this->pagesize = bioauth_report::DEFAULT_PAGE_SIZE;
+        }
+    }
+}
 
 /**
  * 
@@ -140,13 +313,8 @@ class bioauth_report_table extends table_sql {
      */
     public function col_fullname($attempt) {
         $html = parent::col_fullname($attempt);
-        if ($this->is_downloading()) {
-            return $html;
-        }
-
-        return $html . html_writer::empty_tag('br') . html_writer::link(
-                new moodle_url('/mod/quiz/review.php', array('attempt' => $attempt->attempt)),
-                get_string('reviewattempt', 'quiz'), array('class' => 'reviewlink'));
+        
+        return $html;
     }
 
 
@@ -163,13 +331,13 @@ class bioauth_report_table extends table_sql {
      */
     public function make_decision_output($decision, $attempt, $slot) {
         global $OUTPUT;
-
-       $decisionclass = 'w' === $decision ? 'correct' : 'incorrect';
+        
+        $decisionclass = 'w' === $decision ? 'correct' : 'incorrect';
         $img = $OUTPUT->pix_icon('i/grade_' . $decisionclass, get_string($decisionclass, 'question'),
-                'moodle', array('class' => 'icon'));
+                                'moodle', array('class' => 'icon'));
                 
-        $output = html_writer::tag('span', $img . html_writer::tag('span', $data));
-    
+        $output = html_writer::tag('span', $img);
+        
         return $output;
     }
 
@@ -185,10 +353,16 @@ class bioauth_report_table extends table_sql {
             return null;
         }
         $slot = $matches[1];
-
-        $neighbors = $this->quizauths[$attempt->userid][$slot];
-        $decisions = explode(",", $neighbors);
-        return $this->make_decision_output($decisions[$this->m], $attempt, $slot);
+        
+        if (array_key_exists($attempt->userid, $this->quizauths) && array_key_exists($slot, $this->quizauths[$attempt->userid])) {
+            $neighbors = $this->quizauths[$attempt->userid][$slot];
+            $decisions = explode(",", $neighbors);
+            return $this->make_decision_output($decisions[$this->m], $attempt, $slot);
+            
+        } else {
+            return '-';
+            
+        }
     }
     
     /**
@@ -321,6 +495,10 @@ class bioauth_report {
         $quizauths = $this->load_relevant_quizauths($course);
         
         $validation = $this->load_validation($course);
+        
+        $this->form = new local_bioauth_report_form($this->get_base_url(),
+                array('course' => $course,
+                'currentgroup' => $currentgroup, 'context' => $this->context));
         
         return array($currentgroup, $students, $groupstudents, $allowed, $quizzes, $quizauths, $validation);
     }
@@ -507,6 +685,17 @@ class bioauth_report {
 
         list($currentgroup, $students, $groupstudents, $allowed, $quizzes, $quizauths, $validation) =
                 $this->init($cm, $course);
+                
+        $options = new bioauth_report_options($validation, $cm, $course);
+
+        if ($fromform = $this->form->get_data()) {
+            $options->process_settings_from_form($fromform);
+
+        } else {
+            $options->process_settings_from_params();
+        }
+
+        $this->form->set_data($options->get_initial_form_data());
 
         // Prepare for downloading, if applicable.
         $courseshortname = format_string($course->shortname, true,
@@ -524,6 +713,12 @@ class bioauth_report {
         } else if ($currentgroup && !$groupstudents) {
             echo $OUTPUT->notification(get_string('nostudentsingroup'));
         }
+        
+        if ($strperformance = bioauth_performance_summary($validation, $course)) {
+            echo '<div class="bioautherrorsummary">' . $strperformance . '</div>';
+        }
+        
+        $this->form->display();
         
         $hasquizzes = !empty($quizzes);
         $hasstudents = $students && (!$currentgroup || $groupstudents);

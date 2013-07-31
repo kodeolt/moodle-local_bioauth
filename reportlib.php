@@ -488,9 +488,11 @@ class bioauth_report {
         
         $frrseries = new HighRollerSeriesData();
         $frrseries->addName('FRR')->addData($frr);
+        $frrseries->marker->enabled = false;
         
         $farseries = new HighRollerSeriesData();
         $farseries->addName('FAR')->addData($far);
+        $farseries->marker->enabled = false;
         
         $linechart->addSeries($frrseries);
         $linechart->addSeries($farseries);

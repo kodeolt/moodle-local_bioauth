@@ -715,7 +715,7 @@ class bioauth_report {
         }
         
         if ($strperformance = bioauth_performance_summary($validation, $course)) {
-            echo '<div class="bioautherrorsummary">' . $strperformance . '</div>';
+            echo '<div class="performancesummary">' . $strperformance . '</div>';
         }
         
         $this->form->display();

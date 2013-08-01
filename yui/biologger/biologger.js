@@ -45,7 +45,10 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
 
         /** Script that handles the auto-saves. */
         AUTOSAVE_HANDLER : M.cfg.wwwroot + '/local/bioauth/biologger.ajax.php',
-
+        
+        /** Script that handles the auto-saves. */
+        ENROLLMENT_HANDLER : M.cfg.wwwroot + '/local/bioauth/enroll.php',
+        
         /** The delay between a change being made, and it being auto-saved. */
         delay : 120000,
 
@@ -70,6 +73,11 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
         mouse_move_handler : null,
         tinymce_mouse_move_handler : null,
 
+        keystrokes : null,
+        stylometry : null,
+        currentkeystrokes : null,
+        currentstylometry : null,
+
         initializer : function(params) {
             Y.log('Initializing biologger.');
             this.form = Y.one(this.SELECTORS.QUIZ_FORM);
@@ -77,13 +85,19 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
                 Y.log('No response form found. Why did you try to set up autosave?');
                 return;
             }
+            
+            this.delay = params.delay * 1000;
+
+            this.keystrokes = Array();
+            this.stylometry = Array();
+            this.currentkeystrokes = Array();
+            this.currentstylometry = "";
 
             this.form.delegate('valuechange', this.value_changed, this.SELECTORS.VALUE_CHANGE_ELEMENTS, this);
             this.form.delegate('change', this.value_changed, this.SELECTORS.CHANGE_ELEMENTS, this);
             this.form.on('submit', this.stop_autosaving, this);
 
             this.init_tinymce(this.TINYMCE_DETECTION_REPEATS);
-
         },
 
         /**
@@ -138,20 +152,36 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
                 // Not interesting.
             }
             Y.log('Detected a value change in element ' + e.target.get('name') + '.');
-            //this.start_save_timer_if_necessary();
+            this.start_save_timer_if_necessary();
         },
 
         editor_changed : function(editor) {
             Y.log('Detected a value change in editor ' + editor.id + '.');
-            //this.start_save_timer_if_necessary();
+            this.start_save_timer_if_necessary();
         },
 
         key_pressed : function(ed, e) {
             Y.log('Key pressed: ' + e.keyCode + ", @" + e.timeStamp);
+            
+            keycode = e.keyCode;
+            timestamp = e.timeStamp;
+            
+            if (keycode in this.currentkeystrokes && this.currentkeystrokes[keycode] != 0) {
+                return;
+            }
+            this.currentkeystrokes[keycode] = timestamp;
         },
 
         key_released : function(ed, e) {
             Y.log('Key released: ' + e.keyCode + ", @" + e.timeStamp);
+            
+            keycode = e.keyCode;
+            timestamp = e.timeStamp;
+            
+            timepress = this.currentkeystrokes[keycode];
+            keystroke = {"keycode": keycode, "timepress": timepress, "timerelease": timestamp};
+            this.keystrokes.push(keystroke);
+            this.currentkeystrokes[keycode] = 0;
         },
         
         mouse_pressed : function(ed, e) {
@@ -193,6 +223,10 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
             this.delay_timer = null;
         },
 
+        getData : function() {
+        return JSON.stringify({"keystrokes": this.keystrokes, "stylometry": this.stylometry});
+        },
+    
         save_changes : function() {
             this.cancel_delay();
             this.dirty = false;
@@ -211,6 +245,9 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
                 method : 'POST',
                 form : {
                     id : this.form
+                },
+                data : {
+                    biodata : this.getData()
                 },
                 on : {
                     complete : this.save_done
@@ -233,9 +270,40 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
             return M.mod_quiz.timer && M.mod_quiz.timer.endtime && (new Date().getTime() + 2 * this.delay) > M.mod_quiz.timer.endtime;
         },
 
-        stop_logging : function() {
+        stop_autosaving: function() {
+            this.cancel_delay();
+            this.delay_timer = true;
+            if (this.save_transaction) {
+                this.save_transaction.abort();
+            }
+            
+            this.submit_biodata();
+        },
+        
+        submit_biodata : function() {
+            //alert('I am in submit');
+            
+            Y.io(this.ENROLLMENT_HANDLER, {
+                method : 'POST',
+                form : {
+                    id : this.form
+                },
+                data : {
+                    biodata : this.getData()
+                },
+                on : {
+                    complete : this.submit_done
+                },
+                context : this
+            });
+        },
 
-        }
+        submit_done : function() {
+            Y.log('Save completed.');
+            
+            //alert('Submission complete');
+        },
+        
     }, {
         NAME : BIOLOGGERNAME,
         ATTRS : {

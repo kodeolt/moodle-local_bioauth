@@ -33,6 +33,90 @@ require_once ($CFG -> dirroot . '/local/bioauth/mathlib.php');
 require_once ($CFG -> dirroot . '/local/bioauth/constants.php');
 
 
+class bioauth_biodata {
+    
+    // Basic data.
+    protected $biodata;
+
+    // Constructor =============================================================
+    /**
+     * Constructor assuming we already have the necessary data loaded.
+     *
+     * @param object $biodata the row of the bioauth_biodata table.
+     */
+    public function __construct($biodata) {
+        $this->biodata = $biodata;
+    }
+    
+    protected static function create_helper($conditions) {
+        global $DB;
+
+        $biodata = $DB->get_record('bioauth_quiz_biodata', $conditions, '*', MUST_EXIST);
+
+        return new bioauth_biodata($biodata);
+    }
+    
+    public static function create_from_user_quiz($userid, $quizid) {
+        return self::create_helper(array('userid' => $userid, 'quizid' => $quizid));
+    }
+    
+    public function get_locale() {
+        return $biodata->locale;
+    }
+    
+    public function enroll($timestamp) {
+        $jsondata = optional_param('biodata', '', PARAM_TEXT);
+        
+        $newdata = json_decode($jsondata);
+        $currentdata = json_decode($this->biodata->data);
+        
+        foreach ($newdata->keystrokes as $keystroke) {
+            $currentdata->keystrokes[] = array('keyname' => get_key($keystroke->keycode), 'timepress' => $keystroke->timepress, 'timerelease' => $keystroke->timerelease);
+        }
+        
+        // for ($newdata->stylometry as $stylometry) {
+//             
+            // $currentdata['stylometry'][] = 
+        // }
+        
+        $this->biodata->timemodified = $timestamp;
+        $this->biodata->data = json_encode($currentdata);
+        
+        file_put_contents('/Users/vinnie/enroll.txt', print_r($this->biodata, true));
+        $DB->update_record('bioauth_quiz_biodata', $this->biodata);
+    }
+}
+
+
+/**
+ * Handle the quiz_attempt_started event.
+ *
+ * This creates a new bioauth_biodata row for the quiz attempt if necessary
+ *
+ * @param object $event the event object.
+ */
+function quiz_attempt_started_handler($event) {
+    global $DB;
+    
+    if ($DB->record_exists('bioauth_quiz_biodata', array('userid' => $event->userid, 'quizid' => $event->quizid))) {
+        return;
+    }
+    
+    $biodata = new stdClass();
+    
+    $biodata->userid        = $event->userid;
+    $biodata->quizid        = $event->quizid;
+    $biodata->timemodified  = time();
+    $biodata->locale        = current_language();
+    $biodata->data          = json_encode(array('keystrokes' => array(), 'stylometry' => array()));
+    
+    $DB->insert_record('bioauth_quiz_biodata', $biodata);
+}
+
+
+
+
+
 function get_key($identifier, $agent = '') {
     global $CFG;
     $result = get_key_manager()->get_key($identifier, $agent);

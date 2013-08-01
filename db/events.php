@@ -15,18 +15,24 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * This script processes events logged from the biologger module.
+ * Add event handlers for the quiz
  *
  * @package    local_bioauth
- * @copyright  Vinnie Monaco
+ * @category   event
+ * @copyright  2013 Vinnie Monaco
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define('AJAX_SCRIPT', true);
 
-require_once(dirname(__FILE__) . '/../../config.php');
-require_once($CFG->dirroot . '/local/bioauth/locallib.php');
+defined('MOODLE_INTERNAL') || die();
 
-$timenow = time();
-require_sesskey();
 
+$handlers = array(
+    // Handle our own quiz_attempt_submitted event, as a way to send confirmation
+    // messages asynchronously.
+    'quiz_attempt_started' => array (
+        'handlerfile'     => '/local/bioauth/locallib.php',
+        'handlerfunction' => 'quiz_attempt_started_handler',
+        'schedule'        => 'instant',
+    ),
+);

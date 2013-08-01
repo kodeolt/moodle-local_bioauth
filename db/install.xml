@@ -4,14 +4,12 @@
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
   <TABLES>
-    <TABLE NAME="bioauth_quiz_sessions" COMMENT="Behavioral biometric logging sessions.">
+    <TABLE NAME="bioauth_quiz_biodata" COMMENT="Behavioral biometric logging sessions.">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Foreign key reference to the user this session belongs to."/>
         <FIELD NAME="quizid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The quiz this session was recorded during."/>
-        <FIELD NAME="timestart" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The time this session was started."/>
-        <FIELD NAME="timefinish" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The time the session ended."/>
-        <FIELD NAME="tag" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" COMMENT="Tag for the session."/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The time this session data was modified."/>
         <FIELD NAME="locale" TYPE="char" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The locale for this session."/>
         <FIELD NAME="data" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="JSON encoded biometric data."/>
       </FIELDS>
@@ -78,12 +76,11 @@
         <KEY NAME="fallback" TYPE="foreign" FIELDS="fallback" REFTABLE="bioauth_stylometry_features" REFFIELDS="id"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="bioauth_demo_quiz_sessions" COMMENT="Behavioral biometric logging sessions.">
+    <TABLE NAME="bioauth_demo_biodata" COMMENT="Behavioral biometric logging sessions.">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Foreign key reference to the user this session belongs to."/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The user this session belongs to."/>
         <FIELD NAME="quizid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The quiz this session was recorded during."/>
-        <FIELD NAME="tag" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" COMMENT="Tag for the session."/>
         <FIELD NAME="locale" TYPE="char" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The locale for this session."/>
         <FIELD NAME="data" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="JSON encoded biometric data."/>
       </FIELDS>

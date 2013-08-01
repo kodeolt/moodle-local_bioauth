@@ -100,7 +100,7 @@ function load_demo_events() {
                 if ('json' !== $session->getExtension()) continue;
                 
                 $jsonstring = file_get_contents($session->getPathname());
-                $DB -> insert_record_raw('bioauth_demo_quiz_sessions', array('userid' => $user->getBasename(), 'quizid' => $quiz->getBasename(), 'locale' => 'en_US', 'data' => $jsonstring), false, true);
+                $DB -> insert_record_raw('bioauth_demo_biodata', array('userid' => $user->getBasename(), 'quizid' => $quiz->getBasename(), 'locale' => 'en_US', 'data' => $jsonstring), false, true);
                 $done++;
                 $progressbar->update($done, 1187, get_string('install_bootstrap', 'local_bioauth'));
             }

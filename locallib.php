@@ -65,6 +65,8 @@ class bioauth_biodata {
     }
     
     public function enroll($timestamp) {
+        global $DB;
+        
         $jsondata = optional_param('biodata', '', PARAM_TEXT);
         
         $newdata = json_decode($jsondata);
@@ -81,8 +83,9 @@ class bioauth_biodata {
         
         $this->biodata->timemodified = $timestamp;
         $this->biodata->data = json_encode($currentdata);
-        
+
         file_put_contents('/Users/vinnie/enroll.txt', print_r($this->biodata, true));
+        $DB->set_debug(true);
         $DB->update_record('bioauth_quiz_biodata', $this->biodata);
     }
 }

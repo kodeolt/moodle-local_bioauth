@@ -805,4 +805,80 @@ class bioauth_report {
 
         return $currentgroup;
     }
+    
+    // protected function process_actions($quiz, $cm, $currentgroup, $groupstudents, $allowed, $redirecturl) {
+        // parent::process_actions($quiz, $cm, $currentgroup, $groupstudents, $allowed, $redirecturl);
+// 
+        // if (empty($currentgroup) || $groupstudents) {
+            // if (optional_param('regrade', 0, PARAM_BOOL) && confirm_sesskey()) {
+                // if ($attemptids = optional_param_array('attemptid', array(), PARAM_INT)) {
+                    // require_capability('mod/quiz:regrade', $this->context);
+                    // $this->regrade_attempts($quiz, false, $groupstudents, $attemptids);
+                    // redirect($redirecturl, '', 5);
+                // }
+            // }
+        // }
+// 
+        // if (optional_param('regradeall', 0, PARAM_BOOL) && confirm_sesskey()) {
+            // require_capability('mod/quiz:regrade', $this->context);
+            // $this->regrade_attempts($quiz, false, $groupstudents);
+            // redirect($redirecturl, '', 5);
+// 
+        // } else if (optional_param('regradealldry', 0, PARAM_BOOL) && confirm_sesskey()) {
+            // require_capability('mod/quiz:regrade', $this->context);
+            // $this->regrade_attempts($quiz, true, $groupstudents);
+            // redirect($redirecturl, '', 5);
+// 
+        // } else if (optional_param('regradealldrydo', 0, PARAM_BOOL) && confirm_sesskey()) {
+            // require_capability('mod/quiz:regrade', $this->context);
+            // $this->regrade_attempts_needing_it($quiz, $groupstudents);
+            // redirect($redirecturl, '', 5);
+        // }
+    // }
+// 
+// /**
+     // * Regrade attempts for this quiz, exactly which attempts are regraded is
+     // * controlled by the parameters.
+     // * @param object $quiz the quiz settings.
+     // * @param bool $dryrun if true, do a pretend regrade, otherwise do it for real.
+     // * @param array $groupstudents blank for all attempts, otherwise regrade attempts
+     // * for these users.
+     // * @param array $attemptids blank for all attempts, otherwise only regrade
+     // * attempts whose id is in this list.
+     // */
+    // protected function regrade_attempts($quiz, $dryrun = false,
+            // $groupstudents = array(), $attemptids = array()) {
+        // global $DB;
+        // $this->unlock_session();
+// 
+        // $where = "quiz = ? AND preview = 0";
+        // $params = array($quiz->id);
+// 
+        // if ($groupstudents) {
+            // list($usql, $uparams) = $DB->get_in_or_equal($groupstudents);
+            // $where .= " AND userid $usql";
+            // $params = array_merge($params, $uparams);
+        // }
+// 
+        // if ($attemptids) {
+            // list($asql, $aparams) = $DB->get_in_or_equal($attemptids);
+            // $where .= " AND id $asql";
+            // $params = array_merge($params, $aparams);
+        // }
+// 
+        // $attempts = $DB->get_records_select('quiz_attempts', $where, $params);
+        // if (!$attempts) {
+            // return;
+        // }
+// 
+        // $this->clear_regrade_table($quiz, $groupstudents);
+// 
+        // foreach ($attempts as $attempt) {
+            // $this->regrade_attempt($attempt, $dryrun);
+        // }
+// 
+        // if (!$dryrun) {
+            // $this->update_overall_grades($quiz);
+        // }
+    // }
 }

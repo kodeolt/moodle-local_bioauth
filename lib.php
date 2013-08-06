@@ -55,3 +55,10 @@ function bioauth_performance_summary($validation, $course) {
     $a->numauths = $DB->count_records('bioauth_quiz_neighbors', array('courseid'=> $course->id));
     return get_string('performancesummary', 'local_bioauth', $a);
 }
+
+function run_validation($course) {
+    global $CFG;
+    
+    $output = shell_exec('java -Xmx512m -jar '.$CFG->dirroot.'/local/bioauth/bin/ssi.jar localhost moodle root ziggy mdl_ 2 1 11 5');
+    file_put_contents('/Users/vinnie/output.txt', print_r($output, true));
+}

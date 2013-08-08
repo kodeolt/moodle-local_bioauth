@@ -32,6 +32,9 @@ require_once ($CFG -> dirroot . '/local/bioauth/util.php');
 require_once ($CFG -> dirroot . '/local/bioauth/mathlib.php');
 require_once ($CFG -> dirroot . '/local/bioauth/constants.php');
 
+class bioauth_job {
+    
+}
 
 class bioauth_biodata {
     

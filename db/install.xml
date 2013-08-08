@@ -93,6 +93,25 @@
       </INDEXES>
     </TABLE>
     
+    <TABLE NAME="bioauth_jobs" COMMENT="Behavioral biometric logging sessions.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Foreign key reference to the course this job belongs to."/>
+        <FIELD NAME="target" TYPE="char" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The job target. Right now, only quiz is supported."/>
+        <FIELD NAME="state" TYPE="int" LENGTH="3" NOTNULL="true" SEQUENCE="false" COMMENT="The quiz this session was recorded during."/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The time this job was last modified."/>
+        <FIELD NAME="complete" TYPE="int" LENGTH="3" NOTNULL="true" SEQUENCE="false" COMMENT="The percentage of this job that is complete"/>
+        <FIELD NAME="jobparams" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON-encoded job parameters."/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="courseid" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="courseid-state" UNIQUE="true" FIELDS="courseid, state"/>
+      </INDEXES>
+    </TABLE>
+    
     <TABLE NAME="bioauth_quiz_validations" COMMENT="Validations performed on a population with a particular feature set">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
@@ -116,6 +135,7 @@
         <INDEX NAME="courseid" UNIQUE="true" FIELDS="courseid"/>
       </INDEXES>
     </TABLE>
+    
     <TABLE NAME="bioauth_quiz_neighbors" COMMENT="The neighbors for a reference/query authentication attempt">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>

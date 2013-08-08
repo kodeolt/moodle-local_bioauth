@@ -29,13 +29,14 @@ require_once($CFG->dirroot . '/local/bioauth/lib.php');
 
 $pagetitle = get_string('pluginname', 'local_bioauth');
 
-$bioauthsettings = new admin_settingpage('modsettingbioauth', $pagetitle, 'moodle/site:config');
+$bioauthsettings = new admin_settingpage('local_bioauth', $pagetitle, 'moodle/site:config');
 
 // Biometric Authentication
 $options = array(
      true => get_string('enabled', 'local_bioauth'),
      false => get_string('disabled', 'local_bioauth'),
 );
+
 $bioauthsettings->add(new admin_setting_configselect('local_bioauth/mode',
         get_string('mode', 'local_bioauth'), get_string('mode_desc', 'local_bioauth'), 1, $options));
 

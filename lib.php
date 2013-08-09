@@ -45,8 +45,13 @@ function bioauth_extends_navigation(global_navigation $navigation) {
 function run_validation($course) {
     global $CFG;
     
-    
+    // $output = shell_exec('nohup java -Xmx512m -jar '.$CFG->dirroot.'/local/bioauth/bin/ssi.jar localhost moodle root ziggy mdl_ 2 1 11 5 &');
+    $output = shell_exec('java -Xmx512m -jar '.$CFG->dirroot.'/local/bioauth/bin/ssi.jar localhost moodle root ziggy mdl_ 2 1 11 5');
     file_put_contents('/Users/vinnie/output.txt', print_r($output, true));
+}
+
+function bioauth_create_job($course, $target) {
+    
 }
 
 function bioauth_enable_course($courseid) {

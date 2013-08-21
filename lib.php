@@ -33,43 +33,103 @@ require_once($CFG->dirroot . '/local/bioauth/locallib.php');
 function local_bioauth_cron() {
     global $DB;
     
+    $jobs = $DB->get_records('bioauth_quiz_validations');
+    foreach ($jobs as $idx => $job) {
+        update_job_data_available($job);
+    }
+    
     // While jobs are waiting for data, check to see if enough data has been collected.
     // Run the job if enough data has been collected and there is newly discovered data.
     
-    $jobsvoid = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_VOID));
-    foreach ($jobsvoid as $idx => $job) {
+    $jobs = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_VOID));
+    foreach ($jobs as $idx => $job) {
         // delete job
     }
     
-    $jobswaiting = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_WAITING));
-    foreach ($jobswaiting as $idx => $job) {
+    $jobs = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_WAITING));
+    foreach ($jobs as $idx => $job) {
         if (job_enough_data($job)) {
             // If a job has enough data, mark it as ready
+            mtrace('Enough data collected for job ' . $job->id);
+            $DB->set_field('bioauth_quiz_validations', 'state', BIOAUTH_JOB_READY);
         }
     }
     
-    $jobsmonitor = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_MONITOR));
-    foreach ($jobswaiting as $idx => $job) {
+    $jobs = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_MONITOR));
+    foreach ($jobs as $idx => $job) {
         if (job_enough_new_data($job)) {
             // If a job has enough NEW data, mark it as ready
+            mtrace('Enough new data collected for job ' . $job->id);
+            $DB->set_field('bioauth_quiz_validations', 'state', BIOAUTH_JOB_READY);
         }
     }
     
-    $jobsready = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_READY));
-    foreach ($jobsready as $idx => $job) {
+    $jobs = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_READY));
+    foreach ($jobs as $idx => $job) {
         // run job, gets marked as complete afterwards
+        mtrace('Running quiz validation job ' . $job->id);
+        run_quiz_validation($job);
     }
     
-    $jobsrunning = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_RUNNING));
-    foreach ($jobsready as $idx => $job) {
+    $jobs = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_RUNNING));
+    foreach ($jobs as $idx => $job) {
         // do nothing
     }
     
-    $jobscomplete = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_COMPLETE));
-    foreach ($jobsready as $idx => $job) {
-        // check job settings - if monitor flag is set and time has not expired, put back into monitor state
+    $jobs = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_COMPLETE));
+    foreach ($jobs as $idx => $job) {
+        // check job settings - if active flag is set, put back into monitor state
+
     }
 }
+
+function update_job_data_available($job) {
+    global $DB;
+    
+    $coursecontext = get_context_instance(CONTEXT_COURSE, $job->courseid);
+    if (!$students = get_users_by_capability($coursecontext,
+            array('mod/quiz:reviewmyattempts', 'mod/quiz:attempt'),
+            'u.id, 1', '', '', '', '', '', false)) {
+        $students = array();
+    } else {
+        $students = array_keys($students);
+    }
+    
+    $quizzes = $DB->get_records('quiz', array('course' => $job->courseid));
+    $numquizzes = count($quizzes);
+    $numstudents = count($students);
+    
+    list($quizsql, $quizparams) = $DB->get_in_or_equal(array_keys($quizzes), SQL_PARAMS_NAMED, 'qzid0');
+
+    $sql = "SELECT COUNT(bd.id)
+                      FROM {bioauth_quiz_biodata} bd
+                     WHERE bd.quizid $quizsql";
+                           
+    $numbiodata = $DB->count_records_sql($sql, $quizparams);
+    
+    mtrace($numstudents);
+    mtrace($numquizzes);
+    mtrace($numbiodata);
+    
+    if ($numbiodata > 0) {
+        $percentdata = 100 * ($numstudents*$numquizzes)/$numbiodata;
+    } else {
+        $percentdata = 0;
+    }
+    
+    $DB->set_field('bioauth_quiz_validations', 'percentnewdataready', $percentdata);
+    mtrace('**************** Data available ' . $percentdata);
+}
+
+function job_enough_data($job) {
+    return true;
+}
+
+function job_enough_new_data($job) {
+    return true;
+}
+
+
 
 function bioauth_extends_navigation(global_navigation $navigation) {
     $bioauthnode = $navigation->add(get_string('pluginname', 'local_bioauth'));
@@ -77,16 +137,36 @@ function bioauth_extends_navigation(global_navigation $navigation) {
     $settingsnode = $bioauthnode->add(get_string('settings', 'local_bioauth'));
 }
 
-function run_validation($course) {
+function run_quiz_validation($job) {
     global $CFG;
     
+    $jobparams = json_decode($job->jobparams);
     // $output = shell_exec('nohup java -Xmx512m -jar '.$CFG->dirroot.'/local/bioauth/bin/ssi.jar localhost moodle root ziggy mdl_ 2 1 11 5 &');
-    $output = shell_exec('java -Xmx512m -jar '.$CFG->dirroot.'/local/bioauth/bin/ssi.jar localhost moodle root ziggy mdl_ 2 1 11 5');
+    $output = shell_exec("java -Xmx512m -jar $CFG->dirroot/local/bioauth/bin/ssi.jar $CFG->dbhost $CFG->dbname $CFG->dbuser $CFG->dbpass $CFG->prefix $job->courseid $job->featuresetid $jobparams->knn $jobparams->minfrequency");
     file_put_contents('/Users/vinnie/output.txt', print_r($output, true));
 }
 
-function bioauth_create_job($course, $target) {
+function bioauth_create_quiz_validation($course) {
+    global $DB;
     
+    $jobparams = get_default_job_params();
+    
+    $jobrecord = array();
+    $jobrecord['state'] = BIOAUTH_JOB_WAITING;
+    $jobrecord['courseid'] = $course;
+    $jobrecord['featuresetid'] = 1;
+    $jobrecord['jobparams'] = json_encode($jobparams);
+    
+    
+    $DB->insert_record('bioauth_quiz_validations', $jobrecord);
+}
+
+function get_default_job_params() {
+    $jobparams = new stdClass();
+    $jobparams->minkeyfrequency = 5;
+    $jobparams->knn = 11;
+    
+    return $jobparams;
 }
 
 function bioauth_enable_course($courseid) {

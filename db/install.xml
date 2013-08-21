@@ -93,51 +93,32 @@
       </INDEXES>
     </TABLE>
     
-    <TABLE NAME="bioauth_jobs" COMMENT="Behavioral biometric logging sessions.">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Foreign key reference to the course this job belongs to."/>
-        <FIELD NAME="target" TYPE="char" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The job target. Right now, only quiz is supported."/>
-        <FIELD NAME="state" TYPE="int" LENGTH="3" NOTNULL="true" SEQUENCE="false" COMMENT="The quiz this session was recorded during."/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The time this job was last modified."/>
-        <FIELD NAME="complete" TYPE="int" LENGTH="3" NOTNULL="true" SEQUENCE="false" COMMENT="The percentage of this job that is complete"/>
-        <FIELD NAME="jobparams" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON-encoded job parameters."/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="courseid" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
-      </KEYS>
-      <INDEXES>
-        <INDEX NAME="courseid-state" UNIQUE="true" FIELDS="courseid, state"/>
-      </INDEXES>
-    </TABLE>
-    
     <TABLE NAME="bioauth_quiz_validations" COMMENT="Validations performed on a population with a particular feature set">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="."/>
+        <FIELD NAME="state" TYPE="int" LENGTH="3" NOTNULL="true" SEQUENCE="false" COMMENT="The state of this validation (see constants.php)."/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The course (population) used in this validation."/>
         <FIELD NAME="featuresetid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The feature set used for validation."/>
         <FIELD NAME="timestart" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Time when the validation was started."/>
         <FIELD NAME="timefinish" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Time when the validation was completed. 0 if the validation has not finished yet."/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Last modified time."/>
-        <FIELD NAME="minfrequency" TYPE="int" LENGTH="3" NOTNULL="true" SEQUENCE="false" COMMENT=""/>
-        <FIELD NAME="knn" TYPE="int" LENGTH="3" NOTNULL="true" SEQUENCE="false" COMMENT=""/>
-        <FIELD NAME="m" TYPE="int" LENGTH="5" NOTNULL="false" SEQUENCE="false" COMMENT="The point on the ROC curve to display results"/>
+        <FIELD NAME="percentdataused" TYPE="int" LENGTH="3" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The percent of data used for validation."/>
+        <FIELD NAME="percentnewdataready" TYPE="int" LENGTH="3" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The percent of data available, including new data."/>
+        <FIELD NAME="percentjobcomplete" TYPE="int" LENGTH="3" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The percentage of this job that is complete"/>
         <FIELD NAME="frr" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Comma-separated list of FRR values."/>
         <FIELD NAME="far" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Comma-separated list of FAR values."/>
         <FIELD NAME="eer" TYPE="number" LENGTH="10" NOTNULL="false" SEQUENCE="false" DECIMALS="5" COMMENT="The estimated EER for this validation."/>
-        
-        <FIELD NAME="availabledata" TYPE="int" LENGTH="3" NOTNULL="false" SEQUENCE="false" COMMENT="The estimated EER for this validation."/>
-        <FIELD NAME="state" TYPE="int" LENGTH="3" NOTNULL="true" SEQUENCE="false" COMMENT="The quiz this session was recorded during."/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The time this job was last modified."/>
-        <FIELD NAME="complete" TYPE="int" LENGTH="3" NOTNULL="true" SEQUENCE="false" COMMENT="The percentage of this job that is complete"/>
+        <FIELD NAME="m" TYPE="int" LENGTH="5" NOTNULL="false" SEQUENCE="false" COMMENT="The point on the ROC curve to display results"/>
         <FIELD NAME="jobparams" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON-encoded job parameters."/>
+        <FIELD NAME="active" TYPE="int" LENGTH="2" NOTNULL="false" SEQUENCE="false" COMMENT="Look for new data (job is still active)"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
         <KEY NAME="featuresetid" TYPE="foreign" FIELDS="featuresetid" REFTABLE="bioauth_feature_sets" REFFIELDS="id"/>
+        <KEY NAME="courseid" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
       </KEYS>
       <INDEXES>
+        <INDEX NAME="state" UNIQUE="false" FIELDS="state"/>
         <INDEX NAME="courseid" UNIQUE="true" FIELDS="courseid"/>
       </INDEXES>
     </TABLE>

@@ -31,9 +31,44 @@ global $CFG;
 require_once($CFG->dirroot . '/local/bioauth/locallib.php');
 
 function local_bioauth_cron() {
+    global $DB;
     
     // While jobs are waiting for data, check to see if enough data has been collected.
     // Run the job if enough data has been collected and there is newly discovered data.
+    
+    $jobsvoid = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_VOID));
+    foreach ($jobsvoid as $idx => $job) {
+        // delete job
+    }
+    
+    $jobswaiting = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_WAITING));
+    foreach ($jobswaiting as $idx => $job) {
+        if (job_enough_data($job)) {
+            // If a job has enough data, mark it as ready
+        }
+    }
+    
+    $jobsmonitor = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_MONITOR));
+    foreach ($jobswaiting as $idx => $job) {
+        if (job_enough_new_data($job)) {
+            // If a job has enough NEW data, mark it as ready
+        }
+    }
+    
+    $jobsready = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_READY));
+    foreach ($jobsready as $idx => $job) {
+        // run job, gets marked as complete afterwards
+    }
+    
+    $jobsrunning = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_RUNNING));
+    foreach ($jobsready as $idx => $job) {
+        // do nothing
+    }
+    
+    $jobscomplete = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_COMPLETE));
+    foreach ($jobsready as $idx => $job) {
+        // check job settings - if monitor flag is set and time has not expired, put back into monitor state
+    }
 }
 
 function bioauth_extends_navigation(global_navigation $navigation) {

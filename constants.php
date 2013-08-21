@@ -44,8 +44,10 @@ define('BIOAUTH_FEATURE_T2', 2);
 define('BIOAUTH_FEATURE_T3', 3);
 define('BIOAUTH_FEATURE_T4', 4);
 
-define('BIOAUTH_JOB_CANCELED', 0); // Job is void
+define('BIOAUTH_JOB_VOID', 0); // Job is void
 define('BIOAUTH_JOB_WAITING', 1); // Waiting for enough data to run
-define('BIOAUTH_JOB_IN_PROGRESS', 2); // Job is currently running
-define('BIOAUTH_JOB_IN_MONITOR', 3); // Watch for new data
-define('BIOAUTH_JOB_COMPLETE', 3); // Validation results available
+define('BIOAUTH_JOB_MONITOR', 2); // Watch for new data
+define('BIOAUTH_JOB_READY', 3); // Watch for new data
+define('BIOAUTH_JOB_RUNNING', 4); // Job is currently running
+define('BIOAUTH_JOB_COMPLETE', 5); // Validation results available
+define('BIOAUTH_JOB_AVAILABLE', 6); // Validation results available

@@ -40,3 +40,5 @@ $string['performancesummary'] = 'Estimated performance is {$a->performance}% on 
 
 $string['settings'] = 'Settings';
 $string['report'] = 'Report';
+
+$string['coursequizauths'] = '{$a} Quiz Authentications';

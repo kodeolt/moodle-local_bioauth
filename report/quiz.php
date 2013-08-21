@@ -26,47 +26,64 @@
  */
 
 require_once(dirname(__FILE__) . '/../../../config.php');
+require_once($CFG->dirroot . '/local/bioauth/lib.php');
 require_once($CFG->dirroot . '/local/bioauth/report/reportlib.php');
 
-$id = optional_param('id', 0, PARAM_INT);
-$q = optional_param('q', 0, PARAM_INT);
+$courseid      = required_param('id', PARAM_INT);        // course id
+$page          = optional_param('page', 0, PARAM_INT);   // active page
+$sortitemid    = optional_param('sortitemid', 0, PARAM_ALPHANUM); // sort by which grade item
+$action        = optional_param('action', 0, PARAM_ALPHAEXT);
+$target        = optional_param('target', 0, PARAM_ALPHANUM);
 
-if ($id) {
-    if (!$cm = get_coursemodule_from_id('quiz', $id)) {
-        print_error('invalidcoursemodule');
-    }
-    if (!$course = $DB->get_record('course', array('id' => $cm->course))) {
-        print_error('coursemisconf');
-    }
-    if (!$quiz = $DB->get_record('quiz', array('id' => $cm->instance))) {
-        print_error('invalidcoursemodule');
-    }
+$PAGE->set_url(new moodle_url('/local/bioauth/report/quiz.php', array('id'=>$courseid)));
 
-} else {
-    if (!$quiz = $DB->get_record('quiz', array('id' => $q))) {
-        print_error('invalidquizid', 'quiz');
-    }
-    if (!$course = $DB->get_record('course', array('id' => $quiz->course))) {
-        print_error('invalidcourseid');
-    }
-    if (!$cm = get_coursemodule_from_instance("quiz", $quiz->id, $course->id)) {
-        print_error('invalidcoursemodule');
-    }
+/// basic access checks
+if (!$course = $DB->get_record('course', array('id' => $courseid))) {
+    print_error('nocourseid');
+}
+require_login($course);
+$context = context_course::instance($course->id);
+
+require_capability('gradereport/grader:view', $context);
+require_capability('moodle/grade:viewall', $context);
+
+// Perform actions
+if (!empty($target) && !empty($action) && confirm_sesskey()) {
+    bioauth_report_quiz::do_process_action($target, $action);
 }
 
-$url = new moodle_url('/local/bioauth/report/quiz.php', array('id' => $cm->id));
+$reportname = get_string('coursequizauths', 'local_bioauth', $course->shortname);
 
-$PAGE->set_url($url);
+/// Print header
+print_bioauth_page_head('report', $reportname);
 
-require_login($course, false, $cm);
-$context = context_module::instance($cm->id);
-$PAGE->set_pagelayout('report');
+//Initialise the grader report object that produces the table
+$report = new bioauth_report_quiz($context, $page, $sortitemid);
 
-add_to_log($course->id, 'bioauth', 'report', 'report.php?id=' . $cm->id,
-        $quiz->id, $cm->id);
+/// processing posted grades & feedback here
+if ($data = data_submitted() and confirm_sesskey() and has_capability('moodle/grade:edit', $context)) {
+    $warnings = $report->process_data($data);
+} else {
+    $warnings = array();
+}
 
-$report = new bioauth_quiz_report($course);
-$report->display($cm, $course);
+$report->load_validation($context, $course);
+$numcourses = $report->get_numrows();
 
-// Print footer.
+$coursesperpage = $report->get_rows_per_page();
+// Don't use paging if studentsperpage is empty or 0 at course AND site levels
+if (!empty($coursessperpage)) {
+    echo $OUTPUT->paging_bar($numcourses, $report->page, $coursesperpage, $report->pbarurl);
+}
+
+$graphhtml = $report->get_report_graph();
+echo $graphhtml;
+
+$reporthtml = $report->get_report_table();
+echo $reporthtml;
+
+// prints paging bar at bottom for large pages
+if (!empty($coursesperpage) && $coursesperpage >= 20) {
+    echo $OUTPUT->paging_bar($numcourses, $report->page, $coursesperpage, $report->pbarurl);
+}
 echo $OUTPUT->footer();

@@ -126,6 +126,12 @@
         <FIELD NAME="frr" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Comma-separated list of FRR values."/>
         <FIELD NAME="far" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Comma-separated list of FAR values."/>
         <FIELD NAME="eer" TYPE="number" LENGTH="10" NOTNULL="false" SEQUENCE="false" DECIMALS="5" COMMENT="The estimated EER for this validation."/>
+        
+        <FIELD NAME="availabledata" TYPE="int" LENGTH="3" NOTNULL="false" SEQUENCE="false" COMMENT="The estimated EER for this validation."/>
+        <FIELD NAME="state" TYPE="int" LENGTH="3" NOTNULL="true" SEQUENCE="false" COMMENT="The quiz this session was recorded during."/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The time this job was last modified."/>
+        <FIELD NAME="complete" TYPE="int" LENGTH="3" NOTNULL="true" SEQUENCE="false" COMMENT="The percentage of this job that is complete"/>
+        <FIELD NAME="jobparams" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON-encoded job parameters."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

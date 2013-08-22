@@ -51,3 +51,13 @@ define('BIOAUTH_JOB_READY', 3); // Watch for new data
 define('BIOAUTH_JOB_RUNNING', 4); // Job is currently running
 define('BIOAUTH_JOB_COMPLETE', 5); // Validation results available
 define('BIOAUTH_JOB_AVAILABLE', 6); // Validation results available
+
+
+define('BIOAUTH_MODE_DISABLED', 0);
+define('BIOAUTH_MODE_ENABLED', 1);
+
+define('BIOAUTH_DECISION_NEUTRAL', 0);
+define('BIOAUTH_DECISION_CONVENIENT', 1);
+define('BIOAUTH_DECISION_SECURE', 2);
+
+

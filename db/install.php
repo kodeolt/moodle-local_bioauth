@@ -78,6 +78,30 @@ function load_keys() {
     return $masterkeys;
 }
 
+function load_keystroke_features() {
+    global $CFG;
+    global $DB;
+    
+    include($CFG -> dirroot . '/local/bioauth/keys/en/features.php');
+    
+    $keystrokefeatureids = array();
+    $keystrokefallback = array();
+    $keystrokefeaturefields = array('fallback', 'type', 'group1', 'group2', 'measure', 'distance');
+    foreach ($keystrokefeatures as $featureid => $feature) {
+        $row = array_combine($keystrokefeaturefields, $feature);
+        $keystrokefeatureids[$featureid] = $DB -> insert_record('bioauth_keystroke_features', $row, true);
+        $keystrokefallback[$featureid] = $row['fallback'];
+    }
+
+    foreach ($keystrokefallback as $node => $parent) {
+        if (NULL !== $parent) {
+            $DB -> update_record('bioauth_keystroke_features', array('id' => $keystrokefeatureids[$node], 'fallback' => $keystrokefeatureids[$parent]));
+        }
+    }
+
+    $DB -> insert_record('bioauth_feature_sets', array('name' => 'Engish US Basic Keystroke', 'locale' => 'en', 'keystrokefeatures' => implode(',', array_keys($keystrokefeatureids)), 'stylometryfeatures' => ''));
+}
+
 function load_demo_events() {
     global $CFG;
     global $DB;
@@ -106,30 +130,6 @@ function load_demo_events() {
             }
         }
     }
-}
-
-function load_keystroke_features() {
-    global $CFG;
-    global $DB;
-    
-    include($CFG -> dirroot . '/local/bioauth/keys/en/features.php');
-    
-    $keystrokefeatureids = array();
-    $keystrokefallback = array();
-    $keystrokefeaturefields = array('fallback', 'type', 'group1', 'group2', 'measure', 'distance');
-    foreach ($keystrokefeatures as $featureid => $feature) {
-        $row = array_combine($keystrokefeaturefields, $feature);
-        $keystrokefeatureids[$featureid] = $DB -> insert_record('bioauth_keystroke_features', $row, true);
-        $keystrokefallback[$featureid] = $row['fallback'];
-    }
-
-    foreach ($keystrokefallback as $node => $parent) {
-        if (NULL !== $parent) {
-            $DB -> update_record('bioauth_keystroke_features', array('id' => $keystrokefeatureids[$node], 'fallback' => $keystrokefeatureids[$parent]));
-        }
-    }
-
-    $DB -> insert_record('bioauth_feature_sets', array('name' => 'Engish US Basic Keystroke', 'locale' => 'en_US', 'keystrokefeatures' => implode(',', array_keys($keystrokefeatureids)), 'stylometryfeatures' => ''));
 }
 
 /**

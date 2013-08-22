@@ -710,16 +710,22 @@ class bioauth_report_overview extends bioauth_report {
      */
     public function load_course_validations() {
         
+        
         $enrolcourses = enrol_get_my_courses();
         $viewgradecourses = array();
+        $validations = array();
         foreach ($enrolcourses as $course) {
             $coursecontext = get_context_instance(CONTEXT_COURSE, $course->id);
             if (has_capability('moodle/grade:viewall', $coursecontext)) {
-                $viewgradecourses[] = $course;
+                $viewgradecourses[$course->id] = $course;
+                if ($validation = bioauth_get_quiz_validation($course)) {
+                    $validations[$course->id] = $validation;
+                };
             }
         }
         
         $this->courses = $viewgradecourses;
+        $this->validations = $validations;
     }
 
     public function get_report_table() {
@@ -779,11 +785,13 @@ class bioauth_report_overview extends bioauth_report {
             $courserow->id = 'fixed_course_'.$courseid;
             $courserow->attributes['class'] = 'r'.$this->rowcount++.' '.$rowclasses[$this->rowcount % 2];
 
+            $bioauthenabled = array_key_exists($courseid, $this->validations);
+
             $statuscell = new html_table_cell();
             $statuscell->attributes['class'] = 'course';
             $statuscell->header = true;
             $statuscell->scope = 'row';
-            $action = $course->bioauthenabled ? 'disable' : 'enable';
+            $action = $bioauthenabled ? 'disable' : 'enable';
             $statuscell->text .= html_writer::link(new moodle_url($this->pbarurl, array('action' => $action, 'target' => $course->id, 'sesskey' => sesskey())), get_string($action, 'local_bioauth'));
             $courserow->cells[] = $statuscell;
             

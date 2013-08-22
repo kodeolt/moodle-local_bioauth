@@ -19,8 +19,7 @@
         <KEY NAME="quizid" TYPE="foreign" FIELDS="quizid" REFTABLE="quiz" REFFIELDS="id"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
-        <INDEX NAME="quizid" UNIQUE="false" FIELDS="quizid"/>
+        <INDEX NAME="userid-quizid" UNIQUE="true" FIELDS="userid, quizid"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="bioauth_dict" COMMENT="Strings which may appear in an answer, not necessarily whole words.">
@@ -98,23 +97,21 @@
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="state" TYPE="int" LENGTH="3" NOTNULL="true" SEQUENCE="false" COMMENT="The state of this validation (see constants.php)."/>
         <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The course (population) used in this validation."/>
-        <FIELD NAME="featuresetid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The feature set used for validation."/>
         <FIELD NAME="timestart" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Time when the validation was started."/>
         <FIELD NAME="timefinish" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Time when the validation was completed. 0 if the validation has not finished yet."/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Last modified time."/>
-        <FIELD NAME="percentdataused" TYPE="int" LENGTH="3" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The percent of data used for validation."/>
-        <FIELD NAME="percentnewdataready" TYPE="int" LENGTH="3" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The percent of data available, including new data."/>
+        <FIELD NAME="activeuntil" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp when this job becomes inactive (don't look for new data)"/>
+        <FIELD NAME="percentdataneeded" TYPE="int" LENGTH="3" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The percent of data needed for validation."/>
+        <FIELD NAME="percentdataused" TYPE="int" LENGTH="3" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="The percent of data available, including new data."/>
         <FIELD NAME="percentjobcomplete" TYPE="int" LENGTH="3" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The percentage of this job that is complete"/>
         <FIELD NAME="frr" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Comma-separated list of FRR values."/>
         <FIELD NAME="far" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Comma-separated list of FAR values."/>
         <FIELD NAME="eer" TYPE="number" LENGTH="10" NOTNULL="false" SEQUENCE="false" DECIMALS="5" COMMENT="The estimated EER for this validation."/>
         <FIELD NAME="m" TYPE="int" LENGTH="5" NOTNULL="false" SEQUENCE="false" COMMENT="The point on the ROC curve to display results"/>
         <FIELD NAME="jobparams" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON-encoded job parameters."/>
-        <FIELD NAME="active" TYPE="int" LENGTH="2" NOTNULL="false" SEQUENCE="false" COMMENT="Look for new data (job is still active)"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="featuresetid" TYPE="foreign" FIELDS="featuresetid" REFTABLE="bioauth_feature_sets" REFFIELDS="id"/>
         <KEY NAME="courseid" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
       </KEYS>
       <INDEXES>
@@ -137,7 +134,7 @@
         <KEY NAME="quizid" TYPE="foreign" FIELDS="quizid" REFTABLE="quiz" REFFIELDS="id"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="userid-quizid" UNIQUE="false" FIELDS="userid, quizid"/>
+        <INDEX NAME="userid-courseid-quizid" UNIQUE="true" FIELDS="userid, courseid, quizid"/>
       </INDEXES>
     </TABLE>
   </TABLES>

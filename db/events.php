@@ -28,6 +28,13 @@ defined('MOODLE_INTERNAL') || die();
 
 
 $handlers = array(
+
+     'course_created' => array (
+        'handlerfile'     => '/local/bioauth/locallib.php',
+        'handlerfunction' => 'course_created_handler',
+        'schedule'        => 'instant',
+    ),
+    
     // Handle our own quiz_attempt_submitted event, as a way to send confirmation
     // messages asynchronously.
     'quiz_attempt_started' => array (

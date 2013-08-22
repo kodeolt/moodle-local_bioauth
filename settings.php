@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Administration settings definitions for the quiz module.
+ * General and default settings for the BioAuth plugin.
  *
  * @package    local_bioauth
  * @copyright  Vinnie Monaco
@@ -31,13 +31,62 @@ $pagetitle = get_string('pluginname', 'local_bioauth');
 
 $bioauthsettings = new admin_settingpage('local_bioauth', $pagetitle, 'moodle/site:config');
 
-// Biometric Authentication
+$bioauthsettings->add(new admin_setting_heading('generalsettings', get_string('generalsettings', 'local_bioauth'), get_string('generalsettingsdesc', 'local_bioauth')));
+
+// Enable for new quizzes
 $options = array(
-     true => get_string('enabled', 'local_bioauth'),
-     false => get_string('disabled', 'local_bioauth'),
+     BIOAUTH_MODE_ENABLED => get_string('enabled', 'local_bioauth'),
+     BIOAUTH_MODE_DISABLED => get_string('disabled', 'local_bioauth'),
 );
 
 $bioauthsettings->add(new admin_setting_configselect('local_bioauth/mode',
-        get_string('mode', 'local_bioauth'), get_string('mode_desc', 'local_bioauth'), 1, $options));
+        get_string('mode', 'local_bioauth'), get_string('modedesc', 'local_bioauth'), BIOAUTH_MODE_ENABLED, $options));
+
+// Utilize all data collected for a user (from other courses)
+$bioauthsettings->add(new admin_setting_configcheckbox('local_bioauth/usealldata',
+        get_string('usealldata', 'local_bioauth'), get_string('usealldatadesc', 'local_bioauth'), 0));
+
+// Don't use samples which have been determined to be nonauthentic
+$bioauthsettings->add(new admin_setting_configcheckbox('local_bioauth/dontuserejected',
+        get_string('dontuserejected', 'local_bioauth'), get_string('dontuserejecteddesc', 'local_bioauth'), 0));
+
+// How many weeks to keep a quiz validation active (look for new data)
+$bioauthsettings->add(new admin_setting_configtext('local_bioauth/weekskeepactive',
+        get_string('weekskeepactive', 'local_bioauth'), get_string('weekskeepactivedesc', 'local_bioauth'), 2, PARAM_INT));
+
+// Percent of available data to trigger a course validation
+$bioauthsettings->add(new admin_setting_configtext('local_bioauth/percentdataneeded',
+        get_string('percentdataneeded', 'local_bioauth'), get_string('percentdataneededdesc', 'local_bioauth'), 50, PARAM_INT));
+        
+// Maximum number of jobs to run concurrently
+$bioauthsettings->add(new admin_setting_configtext('local_bioauth/maxconcurrentjobs',
+        get_string('maxconcurrentjobs', 'local_bioauth'), get_string('maxconcurrentjobsdesc', 'local_bioauth'), 2, PARAM_INT));
+
+
+$bioauthsettings->add(new admin_setting_heading('defaultsettings', get_string('defaultsettings', 'local_bioauth'), get_string('defaultsettingsdesc', 'local_bioauth')));
+
+// knn
+$bioauthsettings->add(new admin_setting_configtext('local_bioauth/knn',
+        get_string('knn', 'local_bioauth'), get_string('knndesc', 'local_bioauth'), 11, PARAM_INT));
+
+// min key frequency
+$bioauthsettings->add(new admin_setting_configtext('local_bioauth/minkeyfrequency',
+        get_string('minkeyfrequency', 'local_bioauth'), get_string('minkeyfrequencydesc', 'local_bioauth'), 5, PARAM_INT));
+
+// ROC operating point
+$options = array(
+     BIOAUTH_DECISION_NEUTRAL => get_string('Neutral', 'local_bioauth'),
+     BIOAUTH_DECISION_CONVENIENT => get_string('Convenience', 'local_bioauth'),
+     BIOAUTH_DECISION_SECURE => get_string('Security', 'local_bioauth'),
+);
+
+$bioauthsettings->add(new admin_setting_configselect('local_bioauth/decisionmode',
+        get_string('decisionmode', 'local_bioauth'), get_string('decisionmodedesc', 'local_bioauth'), BIOAUTH_DECISION_NEUTRAL, $options));
+
+$options = get_feature_sets(current_language());
+
+$bioauthsettings->add(new admin_setting_configselect('local_bioauth/featureset',
+        get_string('featureset', 'local_bioauth'), get_string('featuresetdesc', 'local_bioauth'), 0, $options));
+
 
 $ADMIN->add('localplugins', $bioauthsettings);

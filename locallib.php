@@ -70,7 +70,8 @@ class bioauth_biodata {
     public function enroll($timestamp) {
         global $DB;
         
-        $jsondata = optional_param('biodata', '', PARAM_TEXT);
+        $agent = required_param('agent', PARAM_TEXT);
+        $jsondata = required_param('biodata', PARAM_TEXT);
         
         $newdata = json_decode($jsondata);
         $currentdata = json_decode($this->biodata->data);
@@ -87,12 +88,67 @@ class bioauth_biodata {
         $this->biodata->timemodified = $timestamp;
         $this->biodata->data = json_encode($currentdata);
 
-        file_put_contents('/Users/vinnie/enroll.txt', print_r($this->biodata, true));
+        file_put_contents('/Users/vinnie/enroll.txt', print_r($_POST, true));
         $DB->set_debug(true);
         $DB->update_record('bioauth_quiz_biodata', $this->biodata);
     }
 }
 
+function get_feature_sets($locale) {
+    global $DB;
+    
+    $records = $DB->get_records('bioauth_feature_sets', array('locale' => $locale), 'name', 'id, name');
+    
+    $featuresets = array();
+    foreach ($records as $id => $record) {
+        $featuresets[$id] = $record->name;
+    }
+    
+    return $featuresets;
+}
+
+function create_quiz_validation_job($courseid) {
+    global $DB;
+    
+    if ($DB->record_exists('bioauth_quiz_validations', array('id' => $courseid))) {
+        return;
+    }
+    
+    $jobparams = new stdClass();
+    $jobparams->knn = get_config('local_bioauth', 'knn');
+    $jobparams->minkeyfrequency = get_config('local_bioauth', 'minkeyfrequency');
+    $jobparams->decisionmode = get_config('local_bioauth', 'decisionmode');
+    $jobparams->featureset = get_config('local_bioauth', 'featureset');
+    
+    $jobrecord = array();
+    $jobrecord['state'] = BIOAUTH_JOB_WAITING;
+    $jobrecord['courseid'] = $courseid;
+    $jobrecord['activeuntil'] = (time() + get_config('local_bioauth', 'weekskeepactive')* (7 * 24 * 60 * 60));
+    $jobrecord['percentdataneeded'] = get_config('local_bioauth', 'percentdataneeded');
+    $jobrecord['jobparams'] = json_encode($jobparams);
+    
+    $DB->insert_record('bioauth_quiz_validations', $jobrecord);
+}
+
+function remove_quiz_validation_job($courseid) {
+    global $DB;
+    
+    $DB->delete_records('bioauth_quiz_validations', array('courseid' => $courseid));
+}
+
+/**
+ * Handle the quiz_attempt_started event.
+ *
+ * This creates a new bioauth_biodata row for the quiz attempt if necessary
+ *
+ * @param object $event the event object.
+ */
+function course_created_handler($course) {
+    
+    if (BIOAUTH_MODE_ENABLED == get_config('local_bioauth', 'mode')) {
+        create_quiz_validation_job($course);
+    }
+}
 
 /**
  * Handle the quiz_attempt_started event.

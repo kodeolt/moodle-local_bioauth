@@ -118,7 +118,7 @@ function get_percent_data_ready($job) {
         $percentdata = 0;
     }
     
-    return $percentdata;
+    return (int)$percentdata;
 }
 
 function job_enough_data($job) {

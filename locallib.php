@@ -134,6 +134,7 @@ function remove_quiz_validation_job($courseid) {
     global $DB;
     
     $DB->delete_records('bioauth_quiz_validations', array('courseid' => $courseid));
+    $DB->delete_records('bioauth_quiz_neighbors', array('courseid' => $courseid));
 }
 
 /**

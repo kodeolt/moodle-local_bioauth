@@ -777,6 +777,34 @@ class bioauth_report_overview extends bioauth_report {
 
         $headerrow->cells[] = $courseheader;
         
+        $performanceheader = new html_table_cell();
+        $performanceheader->attributes['class'] = 'header';
+        $performanceheader->scope = 'col';
+        $performanceheader->header = true;
+        $performanceheader->id = 'performanceheader';
+        $performanceheader->text = get_string('performance', 'local_bioauth');
+
+        $headerrow->cells[] = $performanceheader;
+        
+        $lastrunheader = new html_table_cell();
+        $lastrunheader->attributes['class'] = 'header';
+        $lastrunheader->scope = 'col';
+        $lastrunheader->header = true;
+        $lastrunheader->id = 'lastrunheader';
+        $lastrunheader->text = get_string('lastrun', 'local_bioauth');
+
+        $headerrow->cells[] = $lastrunheader;
+        
+        $completeheader = new html_table_cell();
+        $completeheader->attributes['class'] = 'header';
+        $completeheader->scope = 'col';
+        $completeheader->header = true;
+        $completeheader->id = 'completeheader';
+        $completeheader->text = get_string('percentcomplete', 'local_bioauth');
+
+        $headerrow->cells[] = $completeheader;
+        
+        
         $rows[] = $headerrow;
         $rowclasses = array('even', 'odd');
         
@@ -801,6 +829,27 @@ class bioauth_report_overview extends bioauth_report {
             $coursecell->scope = 'row';
             $coursecell->text .= html_writer::link(new moodle_url('/local/bioauth/report/quiz.php', array('id' => $course->id)), $course->shortname);
             $courserow->cells[] = $coursecell;
+            
+            $performancecell = new html_table_cell();
+            $performancecell->attributes['class'] = 'performance';
+            $performancecell->header = true;
+            $performancecell->scope = 'row';
+            $performancecell->text .= $bioauthenabled ? sprintf('%.2f%%', 100 - $this->validations[$courseid]->eer) : '0%';
+            $courserow->cells[] = $performancecell;
+            
+            $lastruncell = new html_table_cell();
+            $lastruncell->attributes['class'] = 'lastrun';
+            $lastruncell->header = true;
+            $lastruncell->scope = 'row';
+            $lastruncell->text .= $bioauthenabled ? date('F j, Y, g:i a', $this->validations[$courseid]->timefinish) : '-';
+            $courserow->cells[] = $lastruncell;
+            
+            $completecell = new html_table_cell();
+            $completecell->attributes['class'] = 'complete';
+            $completecell->header = true;
+            $completecell->scope = 'row';
+            $completecell->text .= $bioauthenabled ? sprintf('%d%%', $this->validations[$courseid]->percentjobcomplete) : '0%';
+            $courserow->cells[] = $completecell;
 
             $rows[] = $courserow;
         }

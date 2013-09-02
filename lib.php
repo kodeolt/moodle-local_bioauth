@@ -32,13 +32,16 @@ require_once($CFG->dirroot . '/local/bioauth/locallib.php');
 
 function local_bioauth_cron() {
     global $DB;
-    
-    $jobs = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_VOID));
+
+    // Calculate the amount of data ready for jobs waiting or monitoring
+    $jobs = $DB->get_records_list('bioauth_quiz_validations', 'state', array(BIOAUTH_JOB_WAITING, BIOAUTH_JOB_MONITOR));
     foreach ($jobs as $idx => $job) {
-        // do nothing
+        $ready = get_percent_data_ready($job);
+        $DB->set_field('bioauth_quiz_validations', 'percentdataready', $ready, array('id' => $job->id));
+        mtrace('************************ Percent data ready ' . $ready);
     }
     
-    // Place complete jobs which are still active into the monitor state
+    // Place complete jobs which are still active into the monitor state.
     $jobs = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_COMPLETE));
     foreach ($jobs as $idx => $job) {
         if (time() < $job->activeuntil) {
@@ -46,36 +49,38 @@ function local_bioauth_cron() {
             $DB->set_field('bioauth_quiz_validations', 'state', BIOAUTH_JOB_MONITOR, array('id' => $job->id));
         }
     }
-    
-    // If a job has enough data, mark it as ready
+
+    // If a job has enough data, mark it as ready.
     $jobs = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_WAITING));
     foreach ($jobs as $idx => $job) {
-        if (job_enough_data($job)) {
+        if ($job->percentdataready >= $job->percentdataneeded) {
             mtrace('Enough data collected for job ' . $job->id);
             $DB->set_field('bioauth_quiz_validations', 'state', BIOAUTH_JOB_READY, array('id' => $job->id));
         }
     }
-    
-    // If a job has enough NEW data, mark it as ready
+
+    // If a job has enough NEW data, mark it as ready.
     $jobs = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_MONITOR));
     foreach ($jobs as $idx => $job) {
-        if (job_enough_new_data($job)) {
+        if ($job->percentdataready > $job->percentdataused) {
             mtrace('Enough new data collected for job ' . $job->id);
             $DB->set_field('bioauth_quiz_validations', 'state', BIOAUTH_JOB_READY, array('id' => $job->id));
         }
     }
-    
-    // Start ready jobs without exceeding the allowable limit
+
+    // Start ready jobs without exceeding the allowable limit.
     $maxconcurrentjobs = get_config('local_bioauth', 'maxconcurrentjobs');
     $numjobsrunning = $DB->count_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_RUNNING));
-    
+
     $jobs = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_READY));
-    shuffle($jobs); // Ensure all queued jobs have a change of running
+    shuffle($jobs);
+    // Ensure all queued jobs have a change of running.
     foreach ($jobs as $idx => $job) {
         if ($numjobsrunning < $maxconcurrentjobs) {
             mtrace('Running quiz validation job ' . $job->id);
             $percentdataused = get_percent_data_ready($job);
             $DB->set_field('bioauth_quiz_validations', 'percentdataused', $percentdataused, array('id' => $job->id));
+            $DB->set_field('bioauth_quiz_validations', 'state', BIOAUTH_JOB_RUNNING, array('id' => $job->id));
             run_quiz_validation($job);
             $numjobsrunning += 1;
         }
@@ -84,62 +89,73 @@ function local_bioauth_cron() {
 
 function bioauth_get_quiz_validation($course) {
     global $DB;
-    
+
     return $DB->get_record('bioauth_quiz_validations', array('courseid' => $course->id));
+}
+
+function count_quiz_keystrokes($quiz) {
+    global $DB;
+    
+    $numuserkeystrokes = array();
+    
+    $datarecords = $DB->get_records('bioauth_demo_biodata', array('quizid' => $quiz->id));
+    foreach ($datarecords as $idx => $biodata) {
+        if (!array_key_exists($biodata->userid, $numuserkeystrokes)) {
+            $numuserkeystrokes[$biodata->userid] = 0;
+        }
+        $numuserkeystrokes[$biodata->userid] += count(json_decode($biodata->data)->keystrokes);
+        $numuserkeystrokes[$biodata->userid] = min(array($numuserkeystrokes[$biodata->userid], get_config('local_bioauth', 'minkeystrokesperquiz')));
+    }
+    
+    return $numuserkeystrokes;
 }
 
 function get_percent_data_ready($job) {
     global $DB;
-    
+
     $coursecontext = get_context_instance(CONTEXT_COURSE, $job->courseid);
-    if (!$students = get_users_by_capability($coursecontext,
-            array('mod/quiz:reviewmyattempts', 'mod/quiz:attempt'),
-            'u.id, 1', '', '', '', '', '', false)) {
-        $students = array();
+    if (!$students = get_users_by_capability($coursecontext, array('mod/quiz:attempt'), 'u.id, 1', '', '', '', '', '', false)) {
+        return 0; // No students, cannot count data
     } else {
         $students = array_keys($students);
     }
     
     $quizzes = $DB->get_records('quiz', array('course' => $job->courseid));
+    
     $numquizzes = count($quizzes);
-    $numstudents = count($students);
+    $numstudents =  count($students);
     
-    list($quizsql, $quizparams) = $DB->get_in_or_equal(array_keys($quizzes), SQL_PARAMS_NAMED, 'qzid0');
-
-    $sql = "SELECT COUNT(bd.id)
-                      FROM {bioauth_demo_biodata} bd
-                     WHERE bd.quizid $quizsql";
-                           
-    $numbiodata = $DB->count_records_sql($sql, $quizparams);
+    if ($numstudents < 2) {
+        return 0; // Need at least 2 students
+    }
     
-    if ($numbiodata > 0) {
-        $percentdata = 100 * ($numstudents*$numquizzes)/$numbiodata;
+    $minkeystrokes = get_config('local_bioauth', 'minkeystrokesperquiz');
+    $totalkeystrokes = $minkeystrokes * $numquizzes * $numstudents;
+    $availablekeystrokes = 0;
+    $quizkeystrokes = array();
+    
+    foreach ($quizzes as $quizidx => $quiz) {
+        $availablekeystrokes += array_sum(count_quiz_keystrokes($quiz));
+    }
+    
+    if ($totalkeystrokes > 0) {
+        $percentdata = 100 * $availablekeystrokes/$totalkeystrokes;
     } else {
         $percentdata = 0;
     }
-    
+
     return (int)$percentdata;
 }
 
-function job_enough_data($job) {
-    $percentdataready = get_percent_data_ready($job);
-    return $percentdataready >= $job->percentdataneeded;
-}
-
-function job_enough_new_data($job) {
-    $percentdataready = get_percent_data_ready($job);
-    return $percentdataready > $job->percentdataused;
-}
-
 function local_bioauth_extends_navigation(global_navigation $navigation) {
-    
-    if (! isloggedin()) {
+
+    if (!isloggedin()) {
         return;
     }
-    
+
     global $USER;
     $context = context_user::instance($USER->id);
-    
+
     if (has_capability('moodle/grade:viewall', $context)) {
         $bioauthnode = $navigation->add(get_string('pluginname', 'local_bioauth'));
         $reportnode = $bioauthnode->add(get_string('report', 'local_bioauth'), new moodle_url('/local/bioauth/report/index.php'));
@@ -149,19 +165,16 @@ function local_bioauth_extends_navigation(global_navigation $navigation) {
 
 function run_quiz_validation($job) {
     global $CFG;
- 
-    $errorratios = array(
-        BIOAUTH_DECISION_NEUTRAL => 1.0,
-        BIOAUTH_DECISION_CONVENIENT => 0.5,
-        BIOAUTH_DECISION_SECURE => 1.5,
-        );
-    
+
+    $errorratios = array(BIOAUTH_DECISION_NEUTRAL => 1.0, BIOAUTH_DECISION_CONVENIENT => 0.5, BIOAUTH_DECISION_SECURE => 1.5, );
+
     $jobparams = json_decode($job->jobparams);
     $errorratio = $errorratios[$jobparams->decisionmode];
-    
-    shell_exec("nohup java -Xmx512m -jar $CFG->dirroot/local/bioauth/bin/ssi.jar $CFG->dbhost $CFG->dbname $CFG->dbuser $CFG->dbpass $CFG->prefix $job->courseid $jobparams->featureset $jobparams->knn $jobparams->minkeyfrequency $errorratio >/dev/null 2>&1 & ");
-}
 
+    shell_exec("nohup java -Xmx512m -jar $CFG->dirroot/local/bioauth/bin/ssi.jar \
+        $CFG->dbhost $CFG->dbname $CFG->dbuser $CFG->dbpass $CFG->prefix $job->courseid $jobparams->featureset $jobparams->knn $jobparams->minkeyfrequency $errorratio\
+        >/dev/null 2>&1 & ");
+}
 
 function bioauth_enable_course($courseid) {
     create_quiz_validation_job($courseid);
@@ -189,7 +202,7 @@ function bioauth_performance_summary($validation, $course) {
 
     $a = new stdClass();
     $a->performance = number_format(100 - $validation->eer, 2);
-    $a->numauths = $DB->count_records('bioauth_quiz_neighbors', array('courseid'=> $course->id));
+    $a->numauths = $DB->count_records('bioauth_quiz_neighbors', array('courseid' => $course->id));
     return get_string('performancesummary', 'local_bioauth', $a);
 }
 
@@ -212,9 +225,7 @@ function bioauth_performance_summary($validation, $course) {
  *
  * @return string HTML code or nothing if $return == false
  */
-function print_bioauth_page_head($active_type,
-                               $heading = false, $return=false,
-                               $buttons=false, $shownavigation=true) {
+function print_bioauth_page_head($active_type, $heading = false, $return = false, $buttons = false, $shownavigation = true) {
     global $CFG, $OUTPUT, $PAGE;
 
     $title = get_string($active_type, 'local_bioauth');
@@ -224,8 +235,8 @@ function print_bioauth_page_head($active_type,
     } else {
         $PAGE->set_pagelayout('admin');
     }
-    $PAGE->set_title(get_string('pluginname', 'local_bioauth') . ': ' . $active_type);
-    $PAGE->set_heading($title);
+    $PAGE->set_title(get_string('pluginname', 'local_bioauth') . ' : ' . $title);
+    $PAGE->set_heading($heading);
     if ($buttons instanceof single_button) {
         $buttons = $OUTPUT->render($buttons);
     }
@@ -236,7 +247,7 @@ function print_bioauth_page_head($active_type,
         echo $returnval;
     }
 
-    // Guess heading if not given explicitly
+    // Guess heading if not given explicitly.
     if (!$heading) {
         $heading = $stractive_plugin;
     }

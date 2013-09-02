@@ -30,24 +30,24 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Load a csv file with the first element in each row as the key, skipping
  * empty lines.
- * 
+ *
  * @param string $filename the name of the csv file to load
- * @return array a 2-dimensional array keyed by the first element in each row 
- * 
+ * @return array a 2-dimensional array keyed by the first element in each row
+ *
  */
 function load_csv($filename) {
     $data = array();
-    if (($handle = fopen($filename, "r")) !== FALSE) {
-        while (($csvdata = fgetcsv($handle, 1000, ",")) !== FALSE) {
-            if (count($csvdata[0]) > 0)
+    if (($handle = fopen($filename, "r")) !== false) {
+        while (($csvdata = fgetcsv($handle, 1000, ",")) !== false) {
+            if (count($csvdata[0]) > 0) {
                 $data[$csvdata[0]] = array_slice($csvdata, 1);
+            }
         }
         fclose($handle);
     }
-    
+
     return $data;
 }
-
 
 /**
  * DefaultArray provides functionality similar to Python's defaultdict.
@@ -63,7 +63,7 @@ class DefaultArray extends ArrayObject {
     protected $_default_value;
 
     public function __construct($value = null) {
-        $this -> _default_value = $value;
+        $this->_default_value = $value;
     }
 
     public function offsetExists($index) {
@@ -72,12 +72,14 @@ class DefaultArray extends ArrayObject {
 
     public function offsetGet($index) {
         if (!parent::offsetExists($index)) {
-            if (is_object($this -> _default_value))
-                parent::offsetSet($index, clone $this -> _default_value);
-            else
-                parent::offsetSet($index, $this -> _default_value);
+            if (is_object($this->_default_value)) {
+                parent::offsetSet($index, clone $this->_default_value);
+            } else {
+                parent::offsetSet($index, $this->_default_value);
+            }
         }
-        
+
         return parent::offsetGet($index);
     }
+
 }

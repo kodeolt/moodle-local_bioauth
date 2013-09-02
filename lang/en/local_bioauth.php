@@ -61,4 +61,26 @@ $string['convenience'] = 'Convenience';
 $string['security'] = 'Security';
 $string['featureset'] = 'Feature set';
 $string['featuresetdesc'] = 'Which feature set to use in authentications.';
- 
+$string['cachekeycodes'] = 'Cache keycodes';
+$string['cachekeycodesdesc'] = 'Use cache when looking up keycodes';
+$string['sortasc'] = 'Sort ascending';
+$string['sortdesc'] = 'Sort descending';
+$string['lastrun'] = 'Last run';
+$string['status'] = 'Status';
+$string['performance'] = 'Performance';
+$string['percentcomplete'] = 'Job complete';
+$string['action'] = 'Action';
+$string['enable'] = 'Enable';
+$string['disable'] = 'Disable';
+$string['confirmdisable'] = 'Are you sure you want to disable the plugin for {$a}? All jobs and authentication decisions will be removed.';
+
+$string['jobstatewaiting'] = 'Waiting for data...';
+$string['jobstatemonitor'] = 'Looking for NEW data';
+$string['jobstateready'] = 'Queued to run';
+$string['jobstaterunning'] = 'Running, {$a}% complete';
+$string['jobstatecomplete'] = 'Complete';
+$string['jobstateunknown'] = 'Unknown state';
+$string['percentdataready'] = 'Data ready';
+$string['minkeystrokesperquiz'] = 'Min keystrokes/quiz';
+$string['minkeystrokesperquizdesc'] = 'The minimum number of keystrokes needed per quiz in order to achieve 100% data available.';
+

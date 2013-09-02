@@ -16,7 +16,7 @@
 /**
  * Biometric logging. Registers listeners with TinyMCE and other elements to
  * capture keystroke and mouse information.
- * 
+ *
  * This was taken from the autosave script by Tim Hunt.
  *
  * @package   local_bioauth
@@ -25,119 +25,103 @@
  */
 
 var BrowserDetect = {
-    init: function () {
+    init : function() {
         this.browser = this.searchString(this.dataBrowser) || "unknown";
-        this.version = this.searchVersion(navigator.userAgent)
-            || this.searchVersion(navigator.appVersion)
-            || "an unknown version";
+        this.version = this.searchVersion(navigator.userAgent) || this.searchVersion(navigator.appVersion) || "an unknown version";
         this.OS = this.searchString(this.dataOS) || "an unknown OS";
     },
-    searchString: function (data) {
-        for (var i=0;i<data.length;i++) {
+    searchString : function(data) {
+        for (var i = 0; i < data.length; i++) {
             var dataString = data[i].string;
             var dataProp = data[i].prop;
             this.versionSearchString = data[i].versionSearch || data[i].identity;
             if (dataString) {
-                if (dataString.indexOf(data[i].subString) != -1)
+                if (dataString.indexOf(data[i].subString) != -1) {
                     return data[i].identity;
-            }
-            else if (dataProp)
+                }
+            } else if (dataProp) {
                 return data[i].identity;
+            }
         }
     },
-    searchVersion: function (dataString) {
+    searchVersion : function(dataString) {
         var index = dataString.indexOf(this.versionSearchString);
-        if (index == -1) return;
-        return parseFloat(dataString.substring(index+this.versionSearchString.length+1));
+        if (index == -1) {
+            return;
+        }
+        return parseFloat(dataString.substring(index + this.versionSearchString.length + 1));
     },
-    dataBrowser: [
-        {
-            string: navigator.userAgent,
-            subString: "Chrome",
-            identity: "chrome"
-        },
-        {   string: navigator.userAgent,
-            subString: "OmniWeb",
-            versionSearch: "OmniWeb/",
-            identity: "omniweb"
-        },
-        {
-            string: navigator.vendor,
-            subString: "Apple",
-            identity: "safari",
-            versionSearch: "Version"
-        },
-        {
-            prop: window.opera,
-            identity: "opera",
-            versionSearch: "Version"
-        },
-        {
-            string: navigator.vendor,
-            subString: "iCab",
-            identity: "icab"
-        },
-        {
-            string: navigator.vendor,
-            subString: "KDE",
-            identity: "konqueror"
-        },
-        {
-            string: navigator.userAgent,
-            subString: "Firefox",
-            identity: "firefox"
-        },
-        {
-            string: navigator.vendor,
-            subString: "Camino",
-            identity: "camino"
-        },
-        {       // for newer Netscapes (6+)
-            string: navigator.userAgent,
-            subString: "Netscape",
-            identity: "netscape"
-        },
-        {
-            string: navigator.userAgent,
-            subString: "MSIE",
-            identity: "explorer",
-            versionSearch: "MSIE"
-        },
-        {
-            string: navigator.userAgent,
-            subString: "Gecko",
-            identity: "mozilla",
-            versionSearch: "rv"
-        },
-        {       // for older Netscapes (4-)
-            string: navigator.userAgent,
-            subString: "Mozilla",
-            identity: "netscape",
-            versionSearch: "Mozilla"
-        }
-    ],
-    dataOS : [
-        {
-            string: navigator.platform,
-            subString: "Win",
-            identity: "windows"
-        },
-        {
-            string: navigator.platform,
-            subString: "Mac",
-            identity: "mac"
-        },
-        {
-               string: navigator.userAgent,
-               subString: "iPhone",
-               identity: "iphone"
-        },
-        {
-            string: navigator.platform,
-            subString: "Linux",
-            identity: "linux"
-        }
-    ]
+    dataBrowser : [{
+        string : navigator.userAgent,
+        subString : "Chrome",
+        identity : "chrome"
+    }, {
+        string : navigator.userAgent,
+        subString : "OmniWeb",
+        versionSearch : "OmniWeb/",
+        identity : "omniweb"
+    }, {
+        string : navigator.vendor,
+        subString : "Apple",
+        identity : "safari",
+        versionSearch : "Version"
+    }, {
+        prop : window.opera,
+        identity : "opera",
+        versionSearch : "Version"
+    }, {
+        string : navigator.vendor,
+        subString : "iCab",
+        identity : "icab"
+    }, {
+        string : navigator.vendor,
+        subString : "KDE",
+        identity : "konqueror"
+    }, {
+        string : navigator.userAgent,
+        subString : "Firefox",
+        identity : "firefox"
+    }, {
+        string : navigator.vendor,
+        subString : "Camino",
+        identity : "camino"
+    }, {// for newer Netscapes (6+)
+        string : navigator.userAgent,
+        subString : "Netscape",
+        identity : "netscape"
+    }, {
+        string : navigator.userAgent,
+        subString : "MSIE",
+        identity : "explorer",
+        versionSearch : "MSIE"
+    }, {
+        string : navigator.userAgent,
+        subString : "Gecko",
+        identity : "mozilla",
+        versionSearch : "rv"
+    }, {// for older Netscapes (4-)
+        string : navigator.userAgent,
+        subString : "Mozilla",
+        identity : "netscape",
+        versionSearch : "Mozilla"
+    }],
+    dataOS : [{
+        string : navigator.platform,
+        subString : "Win",
+        identity : "windows"
+    }, {
+        string : navigator.platform,
+        subString : "Mac",
+        identity : "mac"
+    }, {
+        string : navigator.userAgent,
+        subString : "iPhone",
+        identity : "iphone"
+    }, {
+        string : navigator.platform,
+        subString : "Linux",
+        identity : "linux"
+    }]
 
 };
 BrowserDetect.init();
@@ -163,10 +147,10 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
 
         /** Script that handles the auto-saves. */
         AUTOSAVE_HANDLER : M.cfg.wwwroot + '/local/bioauth/biologger.ajax.php',
-        
+
         /** Script that handles the auto-saves. */
         ENROLLMENT_HANDLER : M.cfg.wwwroot + '/local/bioauth/enroll.php',
-        
+
         /** The delay between a change being made, and it being auto-saved. */
         delay : 120000,
 
@@ -203,7 +187,7 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
                 Y.log('No response form found. Why did you try to set up autosave?');
                 return;
             }
-            
+
             this.delay = params.delay * 1000;
 
             this.keystrokes = Array();
@@ -251,9 +235,9 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
          */
         init_tinymce_editor : function(notused, editor) {
             Y.log('Biologger found TinyMCE editor ' + editor.id + '.');
-            
-            document.getElementById(editor.id).onmousemove = function (evt){
-               Y.log('TinyMCE mouse: ' + e.screenX + ', ' + e.screenY + ", @" + e.timeStamp);
+
+            document.getElementById(editor.id).onmousemove = function(evt) {
+                Y.log('TinyMCE mouse: ' + e.screenX + ', ' + e.screenY + ", @" + e.timeStamp);
             };
 
             editor.onChange.add(this.editor_change_handler);
@@ -280,11 +264,11 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
 
         key_pressed : function(ed, e) {
             Y.log('Key pressed: ' + e.keyCode + ", @" + e.timeStamp);
-            
+
             keycode = e.keyCode;
             timestamp = e.timeStamp;
-            
-            if (keycode in this.currentkeystrokes && this.currentkeystrokes[keycode] != 0) {
+
+            if ( keycode in this.currentkeystrokes && this.currentkeystrokes[keycode] != 0) {
                 return;
             }
             this.currentkeystrokes[keycode] = timestamp;
@@ -292,16 +276,20 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
 
         key_released : function(ed, e) {
             Y.log('Key released: ' + e.keyCode + ", @" + e.timeStamp);
-            
+
             keycode = e.keyCode;
             timestamp = e.timeStamp;
-            
+
             timepress = this.currentkeystrokes[keycode];
-            keystroke = {"keycode": keycode, "timepress": timepress, "timerelease": timestamp};
+            keystroke = {
+                "keycode" : keycode,
+                "timepress" : timepress,
+                "timerelease" : timestamp
+            };
             this.keystrokes.push(keystroke);
             this.currentkeystrokes[keycode] = 0;
         },
-        
+
         mouse_pressed : function(ed, e) {
             Y.log('Mouse pressed: ' + e.target.nodeName + ", @" + e.timeStamp);
         },
@@ -309,11 +297,11 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
         mouse_released : function(ed, e) {
             Y.log('Mouse released: ' + e.target.nodeName + ", @" + e.timeStamp);
         },
-        
+
         tinymce_mouse_move : function(ed, e) {
             Y.log('Mouse move: ' + e.screenX + ', ' + e.screenY + ", @" + e.timeStamp);
         },
-        
+
         mouse_move : function(e) {
             Y.log('Mouse move: ' + e.screenX + ', ' + e.screenY + ", @" + e.timeStamp);
         },
@@ -342,9 +330,12 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
         },
 
         getData : function() {
-        return JSON.stringify({"keystrokes": this.keystrokes, "stylometry": this.stylometry});
+            return JSON.stringify({
+                "keystrokes" : this.keystrokes,
+                "stylometry" : this.stylometry
+            });
         },
-    
+
         save_changes : function() {
             this.cancel_delay();
             this.dirty = false;
@@ -388,16 +379,16 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
             return M.mod_quiz.timer && M.mod_quiz.timer.endtime && (new Date().getTime() + 2 * this.delay) > M.mod_quiz.timer.endtime;
         },
 
-        stop_autosaving: function() {
+        stop_autosaving : function() {
             this.cancel_delay();
             this.delay_timer = true;
             if (this.save_transaction) {
                 this.save_transaction.abort();
             }
-            
+
             this.submit_biodata();
         },
-        
+
         submit_biodata : function() {
             Y.io(this.ENROLLMENT_HANDLER, {
                 method : 'POST',
@@ -405,10 +396,10 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
                     id : this.form
                 },
                 data : {
-                    source      : BrowserDetect.browser,
-                    useragent   : navigator.userAgent,
-                    platform    : navigator.platform,
-                    biodata     : this.getData()
+                    source : BrowserDetect.browser,
+                    useragent : navigator.userAgent,
+                    platform : navigator.platform,
+                    biodata : this.getData()
                 },
                 on : {
                     complete : this.submit_done
@@ -419,10 +410,9 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
 
         submit_done : function() {
             Y.log('Save completed.');
-            
+
             //alert('Submission complete');
         },
-        
     }, {
         NAME : BIOLOGGERNAME,
         ATTRS : {

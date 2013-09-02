@@ -24,9 +24,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2013072200;
+$plugin->version   = 2013090200;
 $plugin->requires  = 2012112900; // See http://docs.moodle.org/dev/Moodle_Versions
-$plugin->cron      = 0; //3600; // Run cron function once an hour
+$plugin->cron      = 0; //3600; // Run cron function once an hour.
 $plugin->component = 'local_bioauth';
 $plugin->maturity  = MATURITY_BETA;
 $plugin->release   = '0.1.0';

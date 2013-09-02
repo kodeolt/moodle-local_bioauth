@@ -25,71 +25,81 @@
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
-require_once ($CFG -> dirroot . '/local/bioauth/locallib.php');
+require_once($CFG->dirroot . '/local/bioauth/locallib.php');
 
 /**
- * Load all of the key definitions that came with this installation.
- * 
- * This is how the keys for each agent and locale are defined.
- * See [dev doc link] for more information on how to create key files for new agents or locales.
- * 
- * @return array an array with the key ids
- * 
+ * Load all of the keystroke feature sets that came with the installation.
+ *
  */
 function load_keystroke_features() {
     global $CFG;
     global $DB;
-    
-    $featureit = new DirectoryIterator($CFG -> dirroot . '/local/bioauth/features');
+
+    $featureit = new DirectoryIterator($CFG->dirroot . '/local/bioauth/features');
     foreach ($featureit as $features) {
-        if ($features->isDot()) continue;
-        
-        unset($KEYSTROKE_FEATURES);
-        unset($FEATURES_NAME);
+        if ($features->isDot()) {
+            continue;
+        }
+
+        unset($keystrokefeatures);
+        unset($featuresetname);
         include($features->getPathname());
-    
+
         $keystrokefeatureids = array();
         $keystrokefallback = array();
         $keystrokefeaturefields = array('fallback', 'type', 'group1', 'group2', 'measure', 'distance');
-        foreach ($KEYSTROKE_FEATURES as $featureid => $feature) {
+        foreach ($keystrokefeatures as $featureid => $feature) {
             $row = array_combine($keystrokefeaturefields, $feature);
-            $keystrokefeatureids[$featureid] = $DB -> insert_record('bioauth_keystroke_features', $row, true);
+            $keystrokefeatureids[$featureid] = $DB->insert_record('bioauth_keystroke_features', $row, true);
             $keystrokefallback[$featureid] = $row['fallback'];
         }
-    
+
         foreach ($keystrokefallback as $node => $parent) {
-            if (NULL !== $parent) {
-                $DB -> update_record('bioauth_keystroke_features', array('id' => $keystrokefeatureids[$node], 'fallback' => $keystrokefeatureids[$parent]));
+            if (null !== $parent) {
+                $DB->update_record('bioauth_keystroke_features',
+                                    array('id' => $keystrokefeatureids[$node], 'fallback' => $keystrokefeatureids[$parent]));
             }
         }
-    
-        $DB -> insert_record('bioauth_feature_sets', array('name' => $FEATURES_NAME, 'locale' => 'en', 'keystrokefeatures' => implode(',', array_keys($keystrokefeatureids)), 'stylometryfeatures' => ''));
+
+        $DB->insert_record('bioauth_feature_sets', array('name' => $featuresetname, 'locale' => 'en',
+                            'keystrokefeatures' => implode(',', array_keys($keystrokefeatureids)), 'stylometryfeatures' => ''));
     }
 }
 
+/**
+ * Load all of the demo biodata for testing the installation
+ *
+ */
 function load_demo_events() {
     global $CFG;
     global $DB;
-    
+
     $progressbar = new progress_bar('local_bioauth_load_demo_events');
     $progressbar->create();
     $done = 0;
 
-    $userit = new DirectoryIterator($CFG -> dirroot . '/local/bioauth/bootstrap');
-    
+    $userit = new DirectoryIterator($CFG->dirroot . '/local/bioauth/bootstrap');
+
     foreach ($userit as $user) {
-        if (!$user->isDir()) continue;
-        
+        if (!$user->isDir()) {
+            continue;
+        }
+
         $quizit = new DirectoryIterator($user->getPathname());
         foreach ($quizit as $quiz) {
-            if (!$quiz->isDir()) continue;
-            
+            if (!$quiz->isDir()) {
+                continue;
+            }
+
             $sessionit = new DirectoryIterator($quiz->getPathname());
             foreach ($sessionit as $session) {
-                if ('json' !== $session->getExtension()) continue;
-                
+                if ('json' !== $session->getExtension()) {
+                    continue;
+                }
+
                 $jsonstring = file_get_contents($session->getPathname());
-                $DB -> insert_record_raw('bioauth_demo_biodata', array('userid' => $user->getBasename(), 'quizid' => $quiz->getBasename(), 'locale' => 'en_US', 'data' => $jsonstring), false, true);
+                $DB->insert_record_raw('bioauth_demo_biodata', array('userid' => $user->getBasename(),
+                                        'quizid' => $quiz->getBasename(), 'locale' => 'en_US', 'data' => $jsonstring), false, true);
                 $done++;
                 $progressbar->update($done, 1187, get_string('install_bootstrap', 'local_bioauth'));
             }
@@ -101,9 +111,9 @@ function load_demo_events() {
  * Post-install script
  */
 function xmldb_local_bioauth_install() {
-    
+
     load_keystroke_features();
     load_demo_events();
-    
+
     return true;
 }

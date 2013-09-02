@@ -31,10 +31,9 @@ require_once($CFG->dirroot . '/local/bioauth/locallib.php');
 $timenow = time();
 require_sesskey();
 
-
 // Get submitted parameters.
 $attemptid = required_param('attempt', PARAM_INT);
-$thispage  = optional_param('thispage', 0, PARAM_INT);
+$thispage = optional_param('thispage', 0, PARAM_INT);
 
 $attemptobj = quiz_attempt::create($attemptid);
 
@@ -53,8 +52,7 @@ if (!$attemptobj->is_preview_user()) {
 
 // If the attempt is already closed, send them to the review page.
 if ($attemptobj->is_finished()) {
-    throw new moodle_quiz_exception($attemptobj->get_quizobj(),
-            'attemptalreadyclosed', null, $attemptobj->review_url());
+    throw new moodle_quiz_exception($attemptobj->get_quizobj(), 'attemptalreadyclosed', null, $attemptobj->review_url());
 }
 
 bioauth_enroll_quiz_data($attemptobj->get_userid(), $attemptobj->get_quizid(), $timenow);

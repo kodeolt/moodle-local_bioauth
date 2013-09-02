@@ -25,7 +25,7 @@
 
 $definitions = array(
 
-    // Used to store 
+    // Used to store keycode => keystring mappings.
     'keycode' => array(
         'mode' => cache_store::MODE_APPLICATION,
         'persistent' => true,

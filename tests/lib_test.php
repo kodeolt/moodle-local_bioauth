@@ -26,7 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
-require_once ($CFG -> dirroot . '/local/bioauth/lib.php');
+require_once($CFG->dirroot . '/local/bioauth/lib.php');
 
 class local_bioauth_lib_testcase extends basic_testcase {
 

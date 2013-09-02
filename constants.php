@@ -26,36 +26,35 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-// Keystroke actions
-
+// Keystroke actions.
 define('BIOAUTH_ACTION_PRESS', 0);
 define('BIOAUTH_ACTION_RELEASE', 1);
 
-// Keystroke feature measures
-
+// Keystroke feature measures.
 define('BIOAUTH_MEASURE_MEAN', 0);
 define('BIOAUTH_MEASURE_STDDEV', 1);
 
-// Keystroke feature types
-
+// Keystroke feature types.
 define('BIOAUTH_FEATURE_DURATION', 0);
 define('BIOAUTH_FEATURE_T1', 1);
 define('BIOAUTH_FEATURE_T2', 2);
 define('BIOAUTH_FEATURE_T3', 3);
 define('BIOAUTH_FEATURE_T4', 4);
 
-define('BIOAUTH_JOB_VOID', 0); // Job is void
+// Job states.
+define('BIOAUTH_JOB_DISABLED', -1);
+define('BIOAUTH_JOB_VOID', 0);
 define('BIOAUTH_JOB_WAITING', 1); // Waiting for enough data to run
 define('BIOAUTH_JOB_MONITOR', 2); // Watch for new data
-define('BIOAUTH_JOB_READY', 3); // Watch for new data
+define('BIOAUTH_JOB_READY', 3); // Ready to be run
 define('BIOAUTH_JOB_RUNNING', 4); // Job is currently running
-define('BIOAUTH_JOB_COMPLETE', 5); // Validation results available
-define('BIOAUTH_JOB_AVAILABLE', 6); // Validation results available
+define('BIOAUTH_JOB_COMPLETE', 5); // Validation complete
 
-
+// Plugin mode.
 define('BIOAUTH_MODE_DISABLED', 0);
 define('BIOAUTH_MODE_ENABLED', 1);
 
+// Decision mode.
 define('BIOAUTH_DECISION_NEUTRAL', 0);
 define('BIOAUTH_DECISION_CONVENIENT', 1);
 define('BIOAUTH_DECISION_SECURE', 2);

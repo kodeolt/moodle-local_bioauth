@@ -75,9 +75,9 @@ $bioauthsettings->add(new admin_setting_configtext('local_bioauth/minkeyfrequenc
 
 // ROC operating point
 $options = array(
-     BIOAUTH_DECISION_NEUTRAL => get_string('Neutral', 'local_bioauth'),
-     BIOAUTH_DECISION_CONVENIENT => get_string('Convenience', 'local_bioauth'),
-     BIOAUTH_DECISION_SECURE => get_string('Security', 'local_bioauth'),
+     BIOAUTH_DECISION_NEUTRAL => get_string('neutral', 'local_bioauth'),
+     BIOAUTH_DECISION_CONVENIENT => get_string('convenience', 'local_bioauth'),
+     BIOAUTH_DECISION_SECURE => get_string('security', 'local_bioauth'),
 );
 
 $bioauthsettings->add(new admin_setting_configselect('local_bioauth/decisionmode',

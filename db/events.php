@@ -34,12 +34,4 @@ $handlers = array(
         'handlerfunction' => 'course_created_handler',
         'schedule'        => 'instant',
     ),
-    
-    // Handle our own quiz_attempt_submitted event, as a way to send confirmation
-    // messages asynchronously.
-    'quiz_attempt_started' => array (
-        'handlerfile'     => '/local/bioauth/locallib.php',
-        'handlerfunction' => 'quiz_attempt_started_handler',
-        'schedule'        => 'instant',
-    ),
 );

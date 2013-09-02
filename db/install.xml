@@ -11,6 +11,8 @@
         <FIELD NAME="quizid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The quiz this session was recorded during."/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The time this session data was modified."/>
         <FIELD NAME="locale" TYPE="char" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="The locale for this session."/>
+        <FIELD NAME="useragent" TYPE="char" LENGTH="256" NOTNULL="false" SEQUENCE="false" COMMENT="The useragent detected data collection."/>
+        <FIELD NAME="platform" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" COMMENT="The platform detected during collection."/>
         <FIELD NAME="data" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="JSON encoded biometric data."/>
       </FIELDS>
       <KEYS>
@@ -19,7 +21,7 @@
         <KEY NAME="quizid" TYPE="foreign" FIELDS="quizid" REFTABLE="quiz" REFFIELDS="id"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="userid-quizid" UNIQUE="true" FIELDS="userid, quizid"/>
+        <INDEX NAME="userid-quizid" UNIQUE="false" FIELDS="userid, quizid"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="bioauth_dict" COMMENT="Strings which may appear in an answer, not necessarily whole words.">

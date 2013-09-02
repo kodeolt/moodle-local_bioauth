@@ -131,10 +131,20 @@ function job_enough_new_data($job) {
     return $percentdataready > $job->percentdataused;
 }
 
-function bioauth_extends_navigation(global_navigation $navigation) {
-    $bioauthnode = $navigation->add(get_string('pluginname', 'local_bioauth'));
-    $reportnode = $bioauthnode->add(get_string('report', 'local_bioauth'), new moodle_url('/local/bioauth/report/index.php'));
-    $settingsnode = $bioauthnode->add(get_string('settings', 'local_bioauth'), new moodle_url('/admin/settings.php', array('section' => 'local_bioauth')));
+function local_bioauth_extends_navigation(global_navigation $navigation) {
+    
+    if (! isloggedin()) {
+        return;
+    }
+    
+    global $USER;
+    $context = context_user::instance($USER->id);
+    
+    if (has_capability('moodle/grade:viewall', $context)) {
+        $bioauthnode = $navigation->add(get_string('pluginname', 'local_bioauth'));
+        $reportnode = $bioauthnode->add(get_string('report', 'local_bioauth'), new moodle_url('/local/bioauth/report/index.php'));
+        $settingsnode = $bioauthnode->add(get_string('settings', 'local_bioauth'), new moodle_url('/admin/settings.php', array('section' => 'local_bioauth')));
+    }
 }
 
 function run_quiz_validation($job) {

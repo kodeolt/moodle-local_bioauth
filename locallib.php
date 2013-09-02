@@ -32,66 +32,29 @@ require_once ($CFG -> dirroot . '/local/bioauth/util.php');
 require_once ($CFG -> dirroot . '/local/bioauth/mathlib.php');
 require_once ($CFG -> dirroot . '/local/bioauth/constants.php');
 
-class bioauth_job {
-    
-}
 
-class bioauth_biodata {
+function bioauth_enroll_quiz_data($userid, $quizid, $timestamp) {
+    global $DB;
     
-    // Basic data.
-    protected $biodata;
+    $source = required_param('source', PARAM_TEXT);
+    $useragent = required_param('useragent', PARAM_TEXT);
+    $platform = required_param('platform', PARAM_TEXT);
+    $jsondata = required_param('biodata', PARAM_TEXT);
+    
+    // TODO: check precision of timestamps
+    
 
-    // Constructor =============================================================
-    /**
-     * Constructor assuming we already have the necessary data loaded.
-     *
-     * @param object $biodata the row of the bioauth_biodata table.
-     */
-    public function __construct($biodata) {
-        $this->biodata = $biodata;
-    }
+    $biodata = new stdClass();
     
-    protected static function create_helper($conditions) {
-        global $DB;
+    $biodata->userid        = $userid;
+    $biodata->quizid        = $quizid;
+    $biodata->timemodified  = time();
+    $biodata->locale        = current_language();
+    $biodata->useragent = $useragent;
+    $biodata->platform = $platform;
+    $biodata->data = $jsondata;
 
-        $biodata = $DB->get_record('bioauth_quiz_biodata', $conditions, '*', MUST_EXIST);
-
-        return new bioauth_biodata($biodata);
-    }
-    
-    public static function create_from_user_quiz($userid, $quizid) {
-        return self::create_helper(array('userid' => $userid, 'quizid' => $quizid));
-    }
-    
-    public function get_locale() {
-        return $biodata->locale;
-    }
-    
-    public function enroll($timestamp) {
-        global $DB;
-        
-        $agent = required_param('agent', PARAM_TEXT);
-        $jsondata = required_param('biodata', PARAM_TEXT);
-        
-        $newdata = json_decode($jsondata);
-        $currentdata = json_decode($this->biodata->data);
-        
-        foreach ($newdata->keystrokes as $keystroke) {
-            $currentdata->keystrokes[] = array('keyname' => get_key($keystroke->keycode), 'timepress' => $keystroke->timepress, 'timerelease' => $keystroke->timerelease);
-        }
-        
-        // for ($newdata->stylometry as $stylometry) {
-//             
-            // $currentdata['stylometry'][] = 
-        // }
-        
-        $this->biodata->timemodified = $timestamp;
-        $this->biodata->data = json_encode($currentdata);
-
-        file_put_contents('/Users/vinnie/enroll.txt', print_r($_POST, true));
-        $DB->set_debug(true);
-        $DB->update_record('bioauth_quiz_biodata', $this->biodata);
-    }
+    $DB->insert_record('bioauth_quiz_biodata', $biodata);
 }
 
 function get_feature_sets($locale) {
@@ -150,35 +113,6 @@ function course_created_handler($course) {
         create_quiz_validation_job($course);
     }
 }
-
-/**
- * Handle the quiz_attempt_started event.
- *
- * This creates a new bioauth_biodata row for the quiz attempt if necessary
- *
- * @param object $event the event object.
- */
-function quiz_attempt_started_handler($event) {
-    global $DB;
-    
-    if ($DB->record_exists('bioauth_quiz_biodata', array('userid' => $event->userid, 'quizid' => $event->quizid))) {
-        return;
-    }
-    
-    $biodata = new stdClass();
-    
-    $biodata->userid        = $event->userid;
-    $biodata->quizid        = $event->quizid;
-    $biodata->timemodified  = time();
-    $biodata->locale        = current_language();
-    $biodata->data          = json_encode(array('keystrokes' => array(), 'stylometry' => array()));
-    
-    $DB->insert_record('bioauth_quiz_biodata', $biodata);
-}
-
-
-
-
 
 function get_key($identifier, $agent = '') {
     global $CFG;
@@ -310,15 +244,15 @@ class key_manager {
     public function get_key($identifier, $agent = '', $lang = NULL) {
         $this->countgetstring++;
         
-        if (empty($agent)) {
-            $agent = 'default';
-        }
-        
         if ($lang === NULL) {
             $lang = current_language();
         }
         
         $keycode = $this->load_keys($lang);
+
+        if (empty($agent) || !array_key_exists($agent, $keycode)) {
+            $agent = 'default';
+        }
         
         if (isset($keycode[$agent]) && isset($keycode[$agent][$identifier])) {
             return $keycode[$agent][$identifier];

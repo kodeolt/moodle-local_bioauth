@@ -27,6 +27,8 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once ($CFG -> dirroot . '/local/bioauth/constants.php');
 
+$FEATURES_NAME = 'English Keystroke Touchtype Hierarchy';
+
 $allkeys = 'a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,0,1,2,3,4,5,6,7,8,9,comma,period,semicolon,slash,space,backspace,shift,enter';
 
 $letters = 'a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z';
@@ -55,7 +57,7 @@ $rightindex = 'h,m,j,y,6,u,7,n';
 $leftletters = 'q,w,e,r,t,a,s,d,f,g,z,x,c,v,b';
 $rightletters = 'y,u,i,o,p,h,j,k,l,n,m';
 
-$keystrokefeatures = array(
+$KEYSTROKE_FEATURES = array(
 
     /* 
      * mean durations

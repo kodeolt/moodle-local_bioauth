@@ -399,16 +399,16 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
         },
         
         submit_biodata : function() {
-            //alert('I am in submit');
-            
             Y.io(this.ENROLLMENT_HANDLER, {
                 method : 'POST',
                 form : {
                     id : this.form
                 },
                 data : {
-                    agent   : BrowserDetect.browser,
-                    biodata : this.getData()
+                    source      : BrowserDetect.browser,
+                    useragent   : navigator.userAgent,
+                    platform    : navigator.platform,
+                    biodata     : this.getData()
                 },
                 on : {
                     complete : this.submit_done

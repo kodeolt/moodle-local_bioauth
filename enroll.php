@@ -36,7 +36,6 @@ require_sesskey();
 $attemptid = required_param('attempt', PARAM_INT);
 $thispage  = optional_param('thispage', 0, PARAM_INT);
 
-$transaction = $DB->start_delegated_transaction();
 $attemptobj = quiz_attempt::create($attemptid);
 
 // Check login.
@@ -58,7 +57,4 @@ if ($attemptobj->is_finished()) {
             'attemptalreadyclosed', null, $attemptobj->review_url());
 }
 
-$biodataobj = bioauth_biodata::create_from_user_quiz($attemptobj->get_userid(), $attemptobj->get_quizid());
-
-$biodataobj->enroll($timenow);
-$transaction->allow_commit();
+bioauth_enroll_quiz_data($attemptobj->get_userid(), $attemptobj->get_quizid(), $timenow);

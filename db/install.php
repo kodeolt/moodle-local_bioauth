@@ -36,70 +36,35 @@ require_once ($CFG -> dirroot . '/local/bioauth/locallib.php');
  * @return array an array with the key ids
  * 
  */
-function load_keys() {
-    global $CFG;
-    global $DB;
-    
-    $localeit = new DirectoryIterator($CFG -> dirroot . '/local/bioauth/keys');
-    $masterkeys = array();
-    $localeagentkeys = new DefaultArray(new DefaultArray());
-    
-    foreach ($localeit as $locale) {
-        if ($locale->isDot()) continue;
-        $agentit = new DirectoryIterator($locale->getPathname());
-        foreach ($agentit as $agent) {
-            if ($agent->isDot()) continue;
-            
-            $keycodes = load_csv($agent->getPathname());
-            foreach(array_keys($keycodes) as $keystring) {
-                $masterkeys[$keystring] = 0;
-            }
-            
-            $localeagentkeys[$locale->getFilename()][$agent->getBasename('.csv')] = $keycodes;
-        }
-    }
-
-    // Save the keyid for later
-    foreach (array_keys($masterkeys) as $keystring) {
-        $masterkeys[$keystring] = $DB -> insert_record_raw('bioauth_keys', array('keystring' => $keystring), true, true);
-    }
-
-     // Mapping of key codes to key ids for various agents and locales
-    foreach ($localeagentkeys as $locale => $agentkeys) {
-        foreach ($agentkeys as $agent => $keys) {
-            foreach ($keys as $keystring => $keycodes) {
-                foreach ($keycodes as $keycode) {
-                    $DB -> insert_record_raw('bioauth_keycodes', array('locale' => $locale, 'agent' => $agent, 'keycode' => $keycode, 'keyid' => $masterkeys[$keystring]), false, true);
-                }
-            }
-        }
-    }
-
-    return $masterkeys;
-}
-
 function load_keystroke_features() {
     global $CFG;
     global $DB;
     
-    include($CFG -> dirroot . '/local/bioauth/keys/en/features.php');
+    $featureit = new DirectoryIterator($CFG -> dirroot . '/local/bioauth/features');
+    foreach ($featureit as $features) {
+        if ($features->isDot()) continue;
+        
+        unset($KEYSTROKE_FEATURES);
+        unset($FEATURES_NAME);
+        include($features->getPathname());
     
-    $keystrokefeatureids = array();
-    $keystrokefallback = array();
-    $keystrokefeaturefields = array('fallback', 'type', 'group1', 'group2', 'measure', 'distance');
-    foreach ($keystrokefeatures as $featureid => $feature) {
-        $row = array_combine($keystrokefeaturefields, $feature);
-        $keystrokefeatureids[$featureid] = $DB -> insert_record('bioauth_keystroke_features', $row, true);
-        $keystrokefallback[$featureid] = $row['fallback'];
-    }
-
-    foreach ($keystrokefallback as $node => $parent) {
-        if (NULL !== $parent) {
-            $DB -> update_record('bioauth_keystroke_features', array('id' => $keystrokefeatureids[$node], 'fallback' => $keystrokefeatureids[$parent]));
+        $keystrokefeatureids = array();
+        $keystrokefallback = array();
+        $keystrokefeaturefields = array('fallback', 'type', 'group1', 'group2', 'measure', 'distance');
+        foreach ($KEYSTROKE_FEATURES as $featureid => $feature) {
+            $row = array_combine($keystrokefeaturefields, $feature);
+            $keystrokefeatureids[$featureid] = $DB -> insert_record('bioauth_keystroke_features', $row, true);
+            $keystrokefallback[$featureid] = $row['fallback'];
         }
+    
+        foreach ($keystrokefallback as $node => $parent) {
+            if (NULL !== $parent) {
+                $DB -> update_record('bioauth_keystroke_features', array('id' => $keystrokefeatureids[$node], 'fallback' => $keystrokefeatureids[$parent]));
+            }
+        }
+    
+        $DB -> insert_record('bioauth_feature_sets', array('name' => $FEATURES_NAME, 'locale' => 'en', 'keystrokefeatures' => implode(',', array_keys($keystrokefeatureids)), 'stylometryfeatures' => ''));
     }
-
-    $DB -> insert_record('bioauth_feature_sets', array('name' => 'Engish US Basic Keystroke', 'locale' => 'en', 'keystrokefeatures' => implode(',', array_keys($keystrokefeatureids)), 'stylometryfeatures' => ''));
 }
 
 function load_demo_events() {

@@ -32,7 +32,7 @@ $sortitemid    = optional_param('sortitemid', 0, PARAM_ALPHANUM);
 $action        = optional_param('action', 0, PARAM_ALPHAEXT);
 $target        = optional_param('target', 0, PARAM_ALPHANUM);
 
-$PAGE->set_url(new moodle_url('/local/bioauth/report/overview.php'));
+$PAGE->set_url(new moodle_url('/local/bioauth/report/index.php'));
 
 require_login();
 $context = context_user::instance($USER->id);

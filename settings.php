@@ -97,3 +97,5 @@ $bioauthsettings->add(new admin_setting_configselect('local_bioauth/featureset',
                         get_string('featuresetdesc', 'local_bioauth'), 0, $options));
 
 $ADMIN->add('localplugins', $bioauthsettings);
+
+$settings = null;

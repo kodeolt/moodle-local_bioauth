@@ -22,6 +22,10 @@
 					SEQUENCE="false" COMMENT="The platform detected during collection." />
 				<FIELD NAME="data" TYPE="text" NOTNULL="true" SEQUENCE="false"
 					COMMENT="JSON encoded biometric data." />
+				<FIELD NAME="numkeystrokes" TYPE="int" LENGTH="10" NOTNULL="true"
+                    DEFAULT="0" SEQUENCE="false" COMMENT="The number of keystroke events." />
+                <FIELD NAME="numstylometry" TYPE="int" LENGTH="10" NOTNULL="true"
+                    DEFAULT="0" SEQUENCE="false" COMMENT="The number of stylometry events." />
 			</FIELDS>
 			<KEYS>
 				<KEY NAME="primary" TYPE="primary" FIELDS="id" />

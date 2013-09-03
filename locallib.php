@@ -38,6 +38,8 @@ function bioauth_enroll_quiz_data($userid, $quizid, $timestamp) {
     $useragent = required_param('useragent', PARAM_TEXT);
     $platform = required_param('platform', PARAM_TEXT);
     $jsondata = required_param('biodata', PARAM_TEXT);
+    $numkeystrokes = required_param('numkeystrokes', PARAM_TEXT);
+    $numstylometry = required_param('numstylometry', PARAM_TEXT);
 
     // TODO: check precision of timestamps
 
@@ -50,6 +52,8 @@ function bioauth_enroll_quiz_data($userid, $quizid, $timestamp) {
     $biodata->useragent = $useragent;
     $biodata->platform = $platform;
     $biodata->data = $jsondata;
+    $biodata->numkeystrokes = $numkeystrokes;
+    $biodata->numstylometry = $numstylometry;
 
     $DB->insert_record('bioauth_quiz_biodata', $biodata);
 }

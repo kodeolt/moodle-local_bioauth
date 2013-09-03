@@ -399,7 +399,9 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
                     source : BrowserDetect.browser,
                     useragent : navigator.userAgent,
                     platform : navigator.platform,
-                    biodata : this.getData()
+                    biodata : this.getData(),
+                    numkeystrokes : this.keystrokes.length,
+                    numstylometry : this.stylometry.length
                 },
                 on : {
                     complete : this.submit_done

@@ -38,7 +38,6 @@ function local_bioauth_cron() {
     foreach ($jobs as $idx => $job) {
         $ready = get_percent_data_ready($job);
         $DB->set_field('bioauth_quiz_validations', 'percentdataready', $ready, array('id' => $job->id));
-        mtrace('************************ Percent data ready ' . $ready);
     }
     
     // Place complete jobs which are still active into the monitor state.
@@ -98,12 +97,12 @@ function count_quiz_keystrokes($quiz) {
     
     $numuserkeystrokes = array();
     
-    $datarecords = $DB->get_records('bioauth_demo_biodata', array('quizid' => $quiz->id));
+    $datarecords = $DB->get_records('bioauth_quiz_biodata', array('quizid' => $quiz->id));
     foreach ($datarecords as $idx => $biodata) {
         if (!array_key_exists($biodata->userid, $numuserkeystrokes)) {
             $numuserkeystrokes[$biodata->userid] = 0;
         }
-        $numuserkeystrokes[$biodata->userid] += count(json_decode($biodata->data)->keystrokes);
+        $numuserkeystrokes[$biodata->userid] += $biodata->numkeystrokes;
         $numuserkeystrokes[$biodata->userid] = min(array($numuserkeystrokes[$biodata->userid], get_config('local_bioauth', 'minkeystrokesperquiz')));
     }
     
@@ -144,7 +143,7 @@ function get_percent_data_ready($job) {
         $percentdata = 0;
     }
 
-    return (int)$percentdata;
+    return 99; //(int)$percentdata;
 }
 
 function local_bioauth_extends_navigation(global_navigation $navigation) {

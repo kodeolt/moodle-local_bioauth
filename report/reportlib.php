@@ -36,9 +36,9 @@ require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 
 require_once($CFG->dirroot . '/local/bioauth/lib.php');
 require_once($CFG->dirroot . '/local/bioauth/locallib.php');
-require_once($CFG->dirroot . '/local/bioauth/HighRoller/HighRoller.php');
-require_once($CFG->dirroot . '/local/bioauth/HighRoller/HighRollerSeriesData.php');
-require_once($CFG->dirroot . '/local/bioauth/HighRoller/HighRollerLineChart.php');
+require_once($CFG->dirroot . '/local/bioauth/highroller/HighRoller.php');
+require_once($CFG->dirroot . '/local/bioauth/highroller/HighRollerSeriesData.php');
+require_once($CFG->dirroot . '/local/bioauth/highroller/HighRollerLineChart.php');
 
 /*
  * Quiz report subclass for the bioauth quiz report.
@@ -238,12 +238,12 @@ class bioauth_report_quiz extends bioauth_report {
         $linechart->addSeries($frrseries);
         $linechart->addSeries($farseries);
 
-        $html .= html_writer::script(null, 'https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js');
-        $html .= html_writer::script(null, '../highcharts/highcharts.js');
-        $html .= html_writer::div(html_writer::script($linechart->renderChart()), 'linechart');
-        // $html .= '<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>';
-        // $html .= "<script type='text/javascript' src='../highcharts/highcharts.js'></script>";
-        // $html .= '<div id="linechart"></div><script type="text/javascript">' . $linechart->renderChart() . '</script>';
+        // $html .= html_writer::script(null, 'https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js');
+        // $html .= html_writer::script(null, '../highcharts/highcharts.js');
+        // $html .= html_writer::div(html_writer::script($linechart->renderChart()), 'linechart');
+        $html .= '<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>';
+        $html .= "<script type='text/javascript' src='../highcharts/highcharts.js'></script>";
+        $html .= '<div id="linechart"></div><script type="text/javascript">' . $linechart->renderChart() . '</script>';
 
         return $html;
     }

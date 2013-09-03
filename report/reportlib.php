@@ -591,7 +591,7 @@ class bioauth_report_overview extends bioauth_report {
         $courseheader->id = 'courseheader';
         $courseheader->text = $arrows['coursename'];
         $headerrow->cells[] = $courseheader;
-        
+
         $statusheader = new html_table_cell();
         $statusheader->attributes['class'] = 'header';
         $statusheader->scope = 'col';
@@ -697,11 +697,12 @@ class bioauth_report_overview extends bioauth_report {
             $courserow->cells[] = $lastruncell;
 
             $action = $bioauthenabled ? 'disable' : 'enable';
-            $actionbutton = new single_button(new moodle_url($this->pbarurl, array('action' => $action, 'target' => $course->id, 'sesskey' => sesskey())), get_string($action, 'local_bioauth'), 'get');
+            $actionbutton = new single_button(new moodle_url($this->pbarurl, array('action' => $action, 'target' => $course->id,
+                                                                                    'sesskey' => sesskey())), get_string($action, 'local_bioauth'), 'get');
             if ($bioauthenabled) {
                 $actionbutton->add_confirm_action(get_string('confirmdisable', 'local_bioauth', $course->shortname));
             }
-            
+
             $actioncell = new html_table_cell();
             $actioncell->attributes['class'] = 'course';
             $actioncell->header = true;

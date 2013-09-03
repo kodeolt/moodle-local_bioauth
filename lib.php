@@ -39,7 +39,7 @@ function local_bioauth_cron() {
         $ready = get_percent_data_ready($job);
         $DB->set_field('bioauth_quiz_validations', 'percentdataready', $ready, array('id' => $job->id));
     }
-    
+
     // Place complete jobs which are still active into the monitor state.
     $jobs = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_COMPLETE));
     foreach ($jobs as $idx => $job) {
@@ -94,9 +94,9 @@ function bioauth_get_quiz_validation($course) {
 
 function count_quiz_keystrokes($quiz) {
     global $DB;
-    
+
     $numuserkeystrokes = array();
-    
+
     $datarecords = $DB->get_records('bioauth_quiz_biodata', array('quizid' => $quiz->id));
     foreach ($datarecords as $idx => $biodata) {
         if (!array_key_exists($biodata->userid, $numuserkeystrokes)) {
@@ -105,7 +105,7 @@ function count_quiz_keystrokes($quiz) {
         $numuserkeystrokes[$biodata->userid] += $biodata->numkeystrokes;
         $numuserkeystrokes[$biodata->userid] = min(array($numuserkeystrokes[$biodata->userid], get_config('local_bioauth', 'minkeystrokesperquiz')));
     }
-    
+
     return $numuserkeystrokes;
 }
 
@@ -118,32 +118,32 @@ function get_percent_data_ready($job) {
     } else {
         $students = array_keys($students);
     }
-    
+
     $quizzes = $DB->get_records('quiz', array('course' => $job->courseid));
-    
+
     $numquizzes = count($quizzes);
     $numstudents =  count($students);
-    
+
     if ($numstudents < 2) {
         return 0; // Need at least 2 students
     }
-    
+
     $minkeystrokes = get_config('local_bioauth', 'minkeystrokesperquiz');
     $totalkeystrokes = $minkeystrokes * $numquizzes * $numstudents;
     $availablekeystrokes = 0;
     $quizkeystrokes = array();
-    
+
     foreach ($quizzes as $quizidx => $quiz) {
         $availablekeystrokes += array_sum(count_quiz_keystrokes($quiz));
     }
-    
+
     if ($totalkeystrokes > 0) {
         $percentdata = 100 * $availablekeystrokes/$totalkeystrokes;
     } else {
         $percentdata = 0;
     }
 
-    return 99; //(int)$percentdata;
+    return (int)$percentdata;
 }
 
 function local_bioauth_extends_navigation(global_navigation $navigation) {

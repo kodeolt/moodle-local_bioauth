@@ -71,10 +71,10 @@ function get_feature_sets($locale) {
     return $featuresets;
 }
 
-function create_quiz_validation_job($courseid) {
+function create_quiz_validation_job($course) {
     global $DB;
 
-    if ($DB->record_exists('bioauth_quiz_validations', array('courseid' => $courseid))) {
+    if ($DB->record_exists('bioauth_quiz_validations', array('courseid' => $course->id))) {
         return;
     }
 

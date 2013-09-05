@@ -86,7 +86,7 @@ function create_quiz_validation_job($course) {
 
     $jobrecord = array();
     $jobrecord['state'] = BIOAUTH_JOB_WAITING;
-    $jobrecord['courseid'] = $courseid;
+    $jobrecord['courseid'] = $course->id;
     $jobrecord['activeuntil'] = (time() + get_config('local_bioauth', 'weekskeepactive') * (7 * 24 * 60 * 60));
     $jobrecord['percentdataneeded'] = get_config('local_bioauth', 'percentdataneeded');
     $jobrecord['jobparams'] = json_encode($jobparams);

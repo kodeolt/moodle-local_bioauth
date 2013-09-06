@@ -414,7 +414,7 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
         submit_done : function() {
             Y.log('Save completed.');
 
-            alert('Submission complete');
+            //alert('Submission complete');
         },
     }, {
         NAME : BIOLOGGERNAME,

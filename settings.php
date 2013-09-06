@@ -40,26 +40,27 @@ $bioauthsettings->add(new admin_setting_configselect('local_bioauth/mode',
                         get_string('mode', 'local_bioauth'),
                         get_string('modedesc', 'local_bioauth'), BIOAUTH_MODE_ENABLED, $options));
 
-$bioauthsettings->add(new admin_setting_configcheckbox('local_bioauth/usealldata',
-                        get_string('usealldata', 'local_bioauth'),
-                        get_string('usealldatadesc', 'local_bioauth'), 0));
-
-$bioauthsettings->add(new admin_setting_configcheckbox('local_bioauth/dontuserejected',
-                        get_string('dontuserejected', 'local_bioauth'),
-                        get_string('dontuserejecteddesc', 'local_bioauth'), 0));
+// TODO: Implement these features/settings.
+// $bioauthsettings->add(new admin_setting_configcheckbox('local_bioauth/usealldata',
+                        // get_string('usealldata', 'local_bioauth'),
+                        // get_string('usealldatadesc', 'local_bioauth'), 0));
+// 
+// $bioauthsettings->add(new admin_setting_configcheckbox('local_bioauth/dontuserejected',
+                        // get_string('dontuserejected', 'local_bioauth'),
+                        // get_string('dontuserejecteddesc', 'local_bioauth'), 0));
 
 $bioauthsettings->add(new admin_setting_configtext('local_bioauth/weekskeepactive',
                         get_string('weekskeepactive', 'local_bioauth'),
                         get_string('weekskeepactivedesc', 'local_bioauth'), 2, PARAM_INT));
 
+$bioauthsettings->add(new admin_setting_configtext('local_bioauth/minkeystrokesperquiz',
+                        get_string('minkeystrokesperquiz', 'local_bioauth'),
+                        get_string('minkeystrokesperquizdesc', 'local_bioauth'), 500, PARAM_INT));
+                        
 $bioauthsettings->add(new admin_setting_configtext('local_bioauth/percentdataneeded',
                         get_string('percentdataneeded', 'local_bioauth'),
                         get_string('percentdataneededdesc', 'local_bioauth'), 50, PARAM_INT));
                         
-$bioauthsettings->add(new admin_setting_configtext('local_bioauth/minkeystrokesperquiz',
-                        get_string('minkeystrokesperquiz', 'local_bioauth'),
-                        get_string('minkeystrokesperquizdesc', 'local_bioauth'), 500, PARAM_INT));
-
 $bioauthsettings->add(new admin_setting_configtext('local_bioauth/maxconcurrentjobs',
                         get_string('maxconcurrentjobs', 'local_bioauth'),
                         get_string('maxconcurrentjobsdesc', 'local_bioauth'), 2, PARAM_INT));

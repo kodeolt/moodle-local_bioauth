@@ -184,7 +184,7 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
             Y.log('Initializing biologger.');
             this.form = Y.one(this.SELECTORS.QUIZ_FORM);
             if (!this.form) {
-                Y.log('No response form found. Why did you try to set up autosave?');
+                Y.log('No response form found. Why did you try to initialize the biologger?');
                 return;
             }
 
@@ -391,6 +391,7 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
 
         submit_biodata : function() {
             Y.io(this.ENROLLMENT_HANDLER, {
+                sync : true,
                 method : 'POST',
                 form : {
                     id : this.form
@@ -413,7 +414,7 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
         submit_done : function() {
             Y.log('Save completed.');
 
-            //alert('Submission complete');
+            alert('Submission complete');
         },
     }, {
         NAME : BIOLOGGERNAME,

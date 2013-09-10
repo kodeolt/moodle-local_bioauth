@@ -450,14 +450,7 @@ class bioauth_report_quiz extends bioauth_report {
     public static function do_process_action($target, $action) {
 
         switch ($action) {
-            case 'enable' :
-                bioauth_enable_course($target);
-                break;
-
-            case 'disable' :
-                bioauth_disable_course($target);
-                break;
-
+            
             default :
                 break;
         }

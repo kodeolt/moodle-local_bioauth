@@ -30,6 +30,15 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->dirroot . '/local/bioauth/locallib.php');
 
+/**
+ * The cron function modifies the state of validation jobs, depending on whether
+ * enough data was collected to run the job, new data is available, or a job is no
+ * longer active.
+ * 
+ * When validation jobs are ready to be run, they are run asynchronously so that
+ * the work is not done as part of the cron process.
+ * 
+ */
 function local_bioauth_cron() {
     global $DB;
 
@@ -86,12 +95,25 @@ function local_bioauth_cron() {
     }
 }
 
+/**
+ *  Look for a quiz validation job for a particular course.
+ *
+ * @param object $course the course to find a quiz validation for.
+ * @return object the quiz validation object 
+ */
 function bioauth_get_quiz_validation($course) {
     global $DB;
 
     return $DB->get_record('bioauth_quiz_validations', array('courseid' => $course->id));
 }
 
+/**
+ * Count the number of keystrokes collected (over all students/attempts)
+ * for one quiz.
+ *
+ * @param object $quiz the quiz to count keystrokes for
+ * @return int the number of keystrokes logged for the quiz
+ */
 function count_quiz_keystrokes($quiz) {
     global $DB;
 
@@ -109,6 +131,17 @@ function count_quiz_keystrokes($quiz) {
     return $numuserkeystrokes;
 }
 
+/**
+ * Calculate the percent of data that is ready to be used for a
+ * validation job. It is calculated as: 
+ * (#keystrokes ready for each quiz)/(#quizzes * #students * #keystrokes required for each quiz)
+ * Each student can only contribute 1/(#quizzes*#students)% so that if more
+ * than enough keystrokes have been collected for a student, it will not
+ * increase the percent of data that is needed. 
+ *
+ * @param object $job the validation job
+ * @return int the percent of data ready, between 0 and 100
+ */
 function get_percent_data_ready($job) {
     global $DB;
 
@@ -146,6 +179,12 @@ function get_percent_data_ready($job) {
     return (int)$percentdata;
 }
 
+/**
+ * Create navigation links in the left sidebar for easy access to settings and
+ * course reports. 
+ *
+ * @param object $navigation the navigation object
+ */
 function local_bioauth_extends_navigation(global_navigation $navigation) {
 
     if (!isloggedin()) {
@@ -162,6 +201,15 @@ function local_bioauth_extends_navigation(global_navigation $navigation) {
     }
 }
 
+/**
+ * Run a quiz validation job that has been determined to have enough data ready
+ * and is still active.
+ * 
+ * This returns immediately, starting the job as another process. The number of
+ * jobs running should be monitored elsewhere.
+ *
+ * @param object $job the validation job
+ */
 function run_quiz_validation($job) {
     global $CFG;
 
@@ -175,10 +223,20 @@ function run_quiz_validation($job) {
         >/dev/null 2>&1 & ");
 }
 
+/**
+ * Enable biometric authentication for a course.
+ *
+ * @param int $courseid the id of the course
+ */
 function bioauth_enable_course($courseid) {
     create_quiz_validation_job($courseid);
 }
 
+/**
+ * Disable biometric authentication for a course
+ *
+ * @param int $courseid the id of the course
+ */
 function bioauth_disable_course($courseid) {
     remove_quiz_validation_job($courseid);
 }

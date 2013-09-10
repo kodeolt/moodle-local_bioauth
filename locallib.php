@@ -28,9 +28,17 @@
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
-require_once($CFG->dirroot . '/local/bioauth/util.php');
 require_once($CFG->dirroot . '/local/bioauth/constants.php');
 
+/**
+ * Log data which has been collected during a quiz attempt 
+ *
+ * The data should be in $_POST['biodata']
+ * 
+ * @param int $userid the id of the user being logged
+ * @param int $quizid the id of the quiz the attempt belongs to
+ * @param int $timestamp the time the data reached the server
+ */
 function bioauth_enroll_quiz_data($userid, $quizid, $timestamp) {
     global $DB;
 
@@ -41,7 +49,7 @@ function bioauth_enroll_quiz_data($userid, $quizid, $timestamp) {
     $numkeystrokes = required_param('numkeystrokes', PARAM_TEXT);
     $numstylometry = required_param('numstylometry', PARAM_TEXT);
 
-    // TODO: check precision of timestamps
+    // TODO: check precision of keystroke timestamps
 
     $biodata = new stdClass();
 
@@ -58,6 +66,12 @@ function bioauth_enroll_quiz_data($userid, $quizid, $timestamp) {
     $DB->insert_record('bioauth_quiz_biodata', $biodata);
 }
 
+/**
+ * Get a list of the feature sets available for a particular locale
+ *
+ * @param string $language the language feature sets should be compatible with
+ * @return array an array of the feature sets belonging to $language
+ */
 function get_feature_sets($locale) {
     global $DB;
 
@@ -71,10 +85,17 @@ function get_feature_sets($locale) {
     return $featuresets;
 }
 
-function create_quiz_validation_job($course) {
+/**
+ * Create a quiz validation job for a course.
+ * This will allow a validation job to be run once enough data has been
+ * collected from quizzes
+ *
+ * @param int $courseid the course to start logging biometric data for
+ */
+function create_quiz_validation_job($courseid) {
     global $DB;
 
-    if ($DB->record_exists('bioauth_quiz_validations', array('courseid' => $course->id))) {
+    if ($DB->record_exists('bioauth_quiz_validations', array('courseid' => $courseid))) {
         return;
     }
 
@@ -86,7 +107,7 @@ function create_quiz_validation_job($course) {
 
     $jobrecord = array();
     $jobrecord['state'] = BIOAUTH_JOB_WAITING;
-    $jobrecord['courseid'] = $course->id;
+    $jobrecord['courseid'] = $courseid;
     $jobrecord['activeuntil'] = (time() + get_config('local_bioauth', 'weekskeepactive') * (7 * 24 * 60 * 60));
     $jobrecord['percentdataneeded'] = get_config('local_bioauth', 'percentdataneeded');
     $jobrecord['jobparams'] = json_encode($jobparams);
@@ -94,6 +115,12 @@ function create_quiz_validation_job($course) {
     $DB->insert_record('bioauth_quiz_validations', $jobrecord);
 }
 
+/**
+ * Remove a quiz validation job and all of the decisions that have been made
+ * for a particular course.
+ *
+ * @param int $courseid the id of the course
+ */
 function remove_quiz_validation_job($courseid) {
     global $DB;
 
@@ -111,13 +138,21 @@ function remove_quiz_validation_job($courseid) {
 function course_created_handler($course) {
 
     if (BIOAUTH_MODE_ENABLED == get_config('local_bioauth', 'mode')) {
-        create_quiz_validation_job($course);
+        create_quiz_validation_job($course->id);
     }
 }
 
-function get_key($identifier, $agent = '') {
+/**
+ * Lookup the name of a key which was pressed. This function's behavior
+ * is very similar to get_string in the string API.
+ *
+ * @param int $keycode the keycode of the physical key
+ * @param string $agent the source which generated the keycode
+ * @return string the name of the key which was pressed
+ */
+function get_key($keycode, $agent = '') {
     global $CFG;
-    $result = get_key_manager()->get_key($identifier, $agent);
+    $result = get_key_manager()->get_key($keycode, $agent);
     return $result;
 }
 
@@ -146,6 +181,10 @@ function get_key_manager($forcereload = false) {
     return $singleton;
 }
 
+/**
+ * 
+ *
+ */
 class key_manager {
 
     /** @var cache lang string cache - it will be optimised more later */

@@ -69,7 +69,7 @@ $bioauthsettings->add(new admin_setting_configcheckbox('local_bioauth/cachekeyco
                         get_string('cachekeycodes', 'local_bioauth'),
                         get_string('cachekeycodesdesc', 'local_bioauth'), 0));
 
-/******************* Default settings *********************/
+/******************* Default course settings *********************/
 
 $bioauthsettings->add(new admin_setting_heading('defaultsettings',
                         get_string('defaultsettings', 'local_bioauth'),

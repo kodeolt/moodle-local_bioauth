@@ -25,7 +25,7 @@
 
 require_once(dirname(__FILE__) . '/../../../config.php');
 require_once($CFG->dirroot . '/local/bioauth/lib.php');
-require_once($CFG->dirroot . '/local/bioauth/report/reportlib.php');
+require_once($CFG->dirroot . '/local/bioauth/report/overviewreport.php');
 
 $page          = optional_param('page', 0, PARAM_INT);
 $sortitemid    = optional_param('sortitemid', 0, PARAM_ALPHANUM);
@@ -38,8 +38,8 @@ require_login();
 $context = context_user::instance($USER->id);
 $PAGE->set_context($context);
 
-require_capability('gradereport/grader:view', $context);
-require_capability('moodle/grade:viewall', $context);
+// Capability checked for each course individually.
+// require_capability('moodle/grade:viewall', $context);
 
 // Perform actions
 if (!empty($target) && !empty($action) && confirm_sesskey()) {
@@ -51,14 +51,13 @@ $reportname = get_string('pluginname', 'local_bioauth');
 // Print header.
 print_bioauth_page_head('report', $reportname);
 
-// Initialize the bioauth report object that produces the table
+// Initialize the bioauth report object that produces the table.
 $report = new bioauth_report_overview($context, $page, $sortitemid);
-
 $report->load_course_validations();
 $numcourses = $report->get_numrows();
-
 $coursesperpage = $report->get_rows_per_page();
-// Don't use paging if rows per page is empty or 0
+
+// Don't use paging if rows per page is empty or 0.
 if (!empty($coursessperpage)) {
     echo $OUTPUT->paging_bar($numcourses, $report->page, $coursesperpage, $report->pbarurl);
 }
@@ -70,4 +69,5 @@ echo $reporthtml;
 if (!empty($coursesperpage) && $coursesperpage >= 20) {
     echo $OUTPUT->paging_bar($numcourses, $report->page, $coursesperpage, $report->pbarurl);
 }
+
 echo $OUTPUT->footer();

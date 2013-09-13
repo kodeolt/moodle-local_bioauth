@@ -25,7 +25,7 @@
 
 require_once(dirname(__FILE__) . '/../../../config.php');
 require_once($CFG->dirroot . '/local/bioauth/lib.php');
-require_once($CFG->dirroot . '/local/bioauth/report/reportlib.php');
+require_once($CFG->dirroot . '/local/bioauth/report/quizreport.php');
 
 $courseid      = required_param('id', PARAM_INT);
 $page          = optional_param('page', 0, PARAM_INT);
@@ -42,7 +42,6 @@ if (!$course = $DB->get_record('course', array('id' => $courseid))) {
 require_login($course);
 $context = context_course::instance($course->id);
 
-require_capability('gradereport/grader:view', $context);
 require_capability('moodle/grade:viewall', $context);
 
 // Perform actions.

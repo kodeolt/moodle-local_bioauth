@@ -29,6 +29,7 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 require_once($CFG->dirroot . '/local/bioauth/constants.php');
+require_once($CFG->dirroot . '/local/bioauth/lib.php');
 
 /**
  * Log data which has been collected during a quiz attempt 
@@ -67,6 +68,78 @@ function bioauth_enroll_quiz_data($userid, $quizid, $timestamp) {
 }
 
 /**
+ * Count the number of keystrokes collected (over all students/attempts)
+ * for one quiz.
+ *
+ * @param object $quiz the quiz to count keystrokes for
+ * @return int the number of keystrokes logged for the quiz
+ */
+function count_quiz_keystrokes($quiz) {
+    global $DB;
+
+    $numuserkeystrokes = array();
+
+    $datarecords = $DB->get_records('bioauth_quiz_biodata', array('quizid' => $quiz->id));
+    foreach ($datarecords as $idx => $biodata) {
+        if (!array_key_exists($biodata->userid, $numuserkeystrokes)) {
+            $numuserkeystrokes[$biodata->userid] = 0;
+        }
+        $numuserkeystrokes[$biodata->userid] += $biodata->numkeystrokes;
+        $numuserkeystrokes[$biodata->userid] = min(array($numuserkeystrokes[$biodata->userid], get_config('local_bioauth', 'minkeystrokesperquiz')));
+    }
+
+    return $numuserkeystrokes;
+}
+
+/**
+ * Calculate the percent of data that is ready to be used for a
+ * validation job. It is calculated as: 
+ * (#keystrokes ready for each quiz)/(#quizzes * #students * #keystrokes required for each quiz)
+ * Each student can only contribute 1/(#quizzes*#students)% so that if more
+ * than enough keystrokes have been collected for a student, it will not
+ * increase the percent of data that is needed. 
+ *
+ * @param object $job the validation job
+ * @return int the percent of data ready, between 0 and 100
+ */
+function get_percent_data_ready($job) {
+    global $DB;
+
+    $coursecontext = get_context_instance(CONTEXT_COURSE, $job->courseid);
+    if (!$students = get_users_by_capability($coursecontext, array('mod/quiz:attempt'), 'u.id, 1', '', '', '', '', '', false)) {
+        return 0; // No students, cannot count data
+    } else {
+        $students = array_keys($students);
+    }
+
+    $quizzes = $DB->get_records('quiz', array('course' => $job->courseid));
+
+    $numquizzes = count($quizzes);
+    $numstudents =  count($students);
+
+    if ($numstudents < 2) {
+        return 0; // Need at least 2 students
+    }
+
+    $minkeystrokes = get_config('local_bioauth', 'minkeystrokesperquiz');
+    $totalkeystrokes = $minkeystrokes * $numquizzes * $numstudents;
+    $availablekeystrokes = 0;
+    $quizkeystrokes = array();
+
+    foreach ($quizzes as $quizidx => $quiz) {
+        $availablekeystrokes += array_sum(count_quiz_keystrokes($quiz));
+    }
+
+    if ($totalkeystrokes > 0) {
+        $percentdata = 100 * $availablekeystrokes/$totalkeystrokes;
+    } else {
+        $percentdata = 0;
+    }
+
+    return (int)$percentdata;
+}
+
+/**
  * Get a list of the feature sets available for a particular locale
  *
  * @param string $language the language feature sets should be compatible with
@@ -83,6 +156,28 @@ function get_feature_sets($locale) {
     }
 
     return $featuresets;
+}
+
+/**
+ * Run a quiz validation job that has been determined to have enough data ready
+ * and is still active.
+ * 
+ * This returns immediately, starting the job as another process. The number of
+ * jobs running should be monitored elsewhere.
+ *
+ * @param object $job the validation job
+ */
+function run_quiz_validation($job) {
+    global $CFG;
+
+    $errorratios = array(BIOAUTH_DECISION_NEUTRAL => 1.0, BIOAUTH_DECISION_CONVENIENT => 0.5, BIOAUTH_DECISION_SECURE => 1.5, );
+
+    $jobparams = json_decode($job->jobparams);
+    $errorratio = $errorratios[$jobparams->decisionmode];
+
+    shell_exec("nohup java -Xmx512m -jar $CFG->dirroot/local/bioauth/bin/ssi.jar \
+        $CFG->dbhost $CFG->dbname $CFG->dbuser $CFG->dbpass $CFG->prefix $job->courseid $jobparams->featureset $jobparams->knn $jobparams->minkeyfrequency $errorratio\
+        >/dev/null 2>&1 & ");
 }
 
 /**

@@ -92,7 +92,7 @@ var BrowserDetect = {
     }, {
         string : navigator.userAgent,
         subString : "MSIE",
-        identity : "explorer",
+        identity : "MSIE",
         versionSearch : "MSIE"
     }, {
         string : navigator.userAgent,

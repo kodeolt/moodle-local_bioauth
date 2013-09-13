@@ -23,8 +23,8 @@
  */
 
 
-$keycode['default'][9] = 'tab';
 $keycode['default'][8] = 'backspace';
+$keycode['default'][9] = 'tab';
 $keycode['default'][13] = 'enter';
 $keycode['default'][16] = 'shift';
 $keycode['default'][17] = 'ctrl';
@@ -111,6 +111,7 @@ $keycode['default'][121] = 'f10';
 $keycode['default'][122] = 'f11';
 $keycode['default'][123] = 'f12';
 $keycode['default'][144] = 'num_lock';
+$keycode['default'][145] = 'scroll_lock';
 $keycode['default'][188] = 'comma';
 $keycode['default'][189] = 'dash';
 $keycode['default'][190] = 'period';
@@ -134,3 +135,36 @@ $keycode['native'][93] = 'close_bracket';
 $keycode['native'][127] = 'delete';
 $keycode['native'][155] = 'insert';
 $keycode['native'][524] = 'windows';
+
+$keycode['opera'][59] = 'semicolon';
+$keycode['opera'][61] = 'equals';
+$keycode['opera'][109] = 'dash';
+$keycode['opera'][219] = 'windows';
+$keycode['opera'][0] = 'menu';
+
+$keycode['MSIE'][186] = 'semicolon';
+$keycode['MSIE'][187] = 'equals';
+$keycode['MSIE'][189] = 'dash';
+$keycode['MSIE'][91] = 'windows';
+$keycode['MSIE'][93] = 'menu';
+
+$keycode['firefox'][59] = 'semicolon';
+$keycode['firefox'][107] = 'equals';
+$keycode['firefox'][109] = 'dash';
+$keycode['firefox'][91] = 'windows';
+$keycode['firefox'][93] = 'menu';
+
+$keycode['safari'][186] = 'semicolon';
+$keycode['safari'][187] = 'equals';
+$keycode['safari'][189] = 'dash';
+$keycode['safari'][91] = 'windows';
+$keycode['safari'][93] = 'menu';
+
+$keycode['chrome'][186] = 'semicolon';
+$keycode['chrome'][187] = 'equals';
+$keycode['chrome'][189] = 'dash';
+$keycode['chrome'][91] = 'windows';
+$keycode['chrome'][93] = 'menu';
+
+
+

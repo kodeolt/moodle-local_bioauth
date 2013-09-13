@@ -192,6 +192,7 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
 
             this.keystrokes = Array();
             this.stylometry = Array();
+            this.mouse = Array();
             this.currentkeystrokes = Array();
             this.currentstylometry = "";
 
@@ -224,7 +225,6 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
             this.mouse_down_handler = Y.bind(this.mouse_pressed, this);
             this.mouse_up_handler = Y.bind(this.mouse_released, this);
             this.mouse_move_handler = Y.bind(this.mouse_move, this);
-            this.tinymce_mouse_move_handler = Y.bind(this.tinymce_mouse_move, this);
             tinyMCE.onAddEditor.add(Y.bind(this.init_tinymce_editor, this));
         },
 
@@ -236,16 +236,16 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
         init_tinymce_editor : function(notused, editor) {
             Y.log('Biologger found TinyMCE editor ' + editor.id + '.');
 
-            document.getElementById(editor.id).onmousemove = function(evt) {
-                Y.log('TinyMCE mouse: ' + e.screenX + ', ' + e.screenY + ", @" + e.timeStamp);
-            };
-
             editor.onChange.add(this.editor_change_handler);
             editor.onKeyDown.add(this.key_down_handler);
             editor.onKeyUp.add(this.key_up_handler);
             editor.onMouseDown.add(this.mouse_down_handler);
             editor.onMouseUp.add(this.mouse_up_handler);
+            
             document.onmousemove = this.mouse_move_handler;
+            
+            // TODO: Unable to record motion events within the editor text area.
+            document.getElementById(editor.id).onmousemove = this.mouse_move_handler;
         },
 
         value_changed : function(e) {
@@ -260,6 +260,10 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
         editor_changed : function(editor) {
             Y.log('Detected a value change in editor ' + editor.id + '.');
             this.start_save_timer_if_necessary();
+            
+            stylometry = {
+                
+            };
         },
 
         key_pressed : function(ed, e) {
@@ -292,18 +296,57 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
 
         mouse_pressed : function(ed, e) {
             Y.log('Mouse pressed: ' + e.target.nodeName + ", @" + e.timeStamp);
+            
+            mouseevent = {
+                "event" : "press",
+                "time" : e.timeStamp,
+                "x" : e.screenX,
+                "y" : e.screenY,
+                "button" : e.button
+            };
+            
+            this.mouse.push(mouseevent);
         },
 
         mouse_released : function(ed, e) {
             Y.log('Mouse released: ' + e.target.nodeName + ", @" + e.timeStamp);
+            
+            mouseevent = {
+                "event" : "release",
+                "time" : e.timeStamp,
+                "x" : e.screenX,
+                "y" : e.screenY,
+                "button" : e.button
+            };
+            
+            this.mouse.push(mouseevent);
         },
 
-        tinymce_mouse_move : function(ed, e) {
-            Y.log('Mouse move: ' + e.screenX + ', ' + e.screenY + ", @" + e.timeStamp);
-        },
+        // tinymce_mouse_move : function(ed, e) {
+            // Y.log('Mouse move: ' + e.screenX + ', ' + e.screenY + ", @" + e.timeStamp);
+//             
+            // mouseevent = {
+                // "event" : "motion",
+                // "time" : e.timeStamp,
+                // "x" : e.screenX,
+                // "y" : e.screenY
+            // };
+//             
+            // this.mouse.push(mouseevent);
+        // },
 
         mouse_move : function(e) {
-            Y.log('Mouse move: ' + e.screenX + ', ' + e.screenY + ", @" + e.timeStamp);
+            Y.log('Mouse move: ' + e.screenX + ', ' + e.screenY + ", @" + e.timeStamp + ", dragged: " + e.which);
+            
+            mouseevent = {
+                "event" : "motion",
+                "time" : e.timeStamp,
+                "x" : e.screenX,
+                "y" : e.screenY,
+                "dragged" : e.which
+            };
+            
+            this.mouse.push(mouseevent);
         },
 
         start_save_timer_if_necessary : function() {
@@ -331,8 +374,9 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
 
         getData : function() {
             return JSON.stringify({
-                "keystrokes" : this.keystrokes,
-                "stylometry" : this.stylometry
+                "keystrokes"    : this.keystrokes,
+                "stylometry"    : this.stylometry,
+                "mouse"        : this.mouse
             });
         },
 
@@ -350,19 +394,19 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
             if ( typeof tinyMCE !== 'undefined') {
                 tinyMCE.triggerSave();
             }
-            this.save_transaction = Y.io(this.AUTOSAVE_HANDLER, {
-                method : 'POST',
-                form : {
-                    id : this.form
-                },
-                data : {
-                    biodata : this.getData()
-                },
-                on : {
-                    complete : this.save_done
-                },
-                context : this
-            });
+            // this.save_transaction = Y.io(this.AUTOSAVE_HANDLER, {
+                // method : 'POST',
+                // form : {
+                    // id : this.form
+                // },
+                // data : {
+                    // biodata : this.getData()
+                // },
+                // on : {
+                    // complete : this.save_done
+                // },
+                // context : this
+            // });
         },
 
         save_done : function() {
@@ -402,7 +446,8 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
                     platform : navigator.platform,
                     biodata : this.getData(),
                     numkeystrokes : this.keystrokes.length,
-                    numstylometry : this.stylometry.length
+                    numstylometry : this.stylometry.length,
+                    nummouseevents : this.mouse.length
                 },
                 on : {
                     complete : this.submit_done

@@ -51,6 +51,12 @@ function bioauth_enroll_quiz_data($userid, $quizid, $timestamp) {
     $numstylometry = required_param('numstylometry', PARAM_TEXT);
 
     // TODO: check precision of keystroke timestamps
+    
+    $data = json_decode($jsondata);
+    
+    foreach ($data->keystrokes as $keystroke) {
+        $keystroke->keyname = get_key($keystroke->keycode, $useragent);
+    }
 
     $biodata = new stdClass();
 
@@ -60,7 +66,7 @@ function bioauth_enroll_quiz_data($userid, $quizid, $timestamp) {
     $biodata->locale = current_language();
     $biodata->useragent = $useragent;
     $biodata->platform = $platform;
-    $biodata->data = $jsondata;
+    $biodata->data = json_encode($data);
     $biodata->numkeystrokes = $numkeystrokes;
     $biodata->numstylometry = $numstylometry;
 

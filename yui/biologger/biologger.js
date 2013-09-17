@@ -241,11 +241,9 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
             editor.onKeyUp.add(this.key_up_handler);
             editor.onMouseDown.add(this.mouse_down_handler);
             editor.onMouseUp.add(this.mouse_up_handler);
-            
+            editor.onMouseMove.add(this.mouse_move_handler);
             document.onmousemove = this.mouse_move_handler;
-            
             // TODO: Unable to record motion events within the editor text area.
-            document.getElementById(editor.id).onmousemove = this.mouse_move_handler;
         },
 
         value_changed : function(e) {

@@ -173,7 +173,6 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
         mouse_down_handler : null,
         mouse_up_handler : null,
         mouse_move_handler : null,
-        tinymce_mouse_move_handler : null,
 
         keystrokes : null,
         stylometry : null,
@@ -258,10 +257,6 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
         editor_changed : function(editor) {
             Y.log('Detected a value change in editor ' + editor.id + '.');
             this.start_save_timer_if_necessary();
-            
-            stylometry = {
-                
-            };
         },
 
         key_pressed : function(ed, e) {
@@ -270,7 +265,8 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
             keycode = e.keyCode;
             timestamp = e.timeStamp;
 
-            if ( keycode in this.currentkeystrokes && this.currentkeystrokes[keycode] != 0) {
+            // Ignore auto-repeated keystrokes.
+            if (keycode in this.currentkeystrokes && this.currentkeystrokes[keycode] != 0) {
                 return;
             }
             this.currentkeystrokes[keycode] = timestamp;
@@ -392,6 +388,7 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
             if ( typeof tinyMCE !== 'undefined') {
                 tinyMCE.triggerSave();
             }
+            // TODO: Finish autosave ajax script on the server.
             // this.save_transaction = Y.io(this.AUTOSAVE_HANDLER, {
                 // method : 'POST',
                 // form : {

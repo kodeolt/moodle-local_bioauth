@@ -69,6 +69,10 @@ $bioauthsettings->add(new admin_setting_configcheckbox('local_bioauth/cachekeyco
                         get_string('cachekeycodes', 'local_bioauth'),
                         get_string('cachekeycodesdesc', 'local_bioauth'), 0));
 
+$bioauthsettings->add(new admin_setting_configtext('local_bioauth/autosaveperiod',
+                        get_string('autosaveperiod', 'local_bioauth'),
+                        get_string('autosaveperioddesc', 'local_bioauth'), 5, PARAM_INT));
+
 /******************* Default course settings *********************/
 
 $bioauthsettings->add(new admin_setting_heading('defaultsettings',

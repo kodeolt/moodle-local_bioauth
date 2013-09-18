@@ -49,6 +49,7 @@ function bioauth_enroll_quiz_data($userid, $quizid, $timestamp) {
     $jsondata = required_param('biodata', PARAM_TEXT);
     $numkeystrokes = required_param('numkeystrokes', PARAM_TEXT);
     $numstylometry = required_param('numstylometry', PARAM_TEXT);
+    $nummouseevents = required_param('nummouseevents', PARAM_TEXT);
 
     // TODO: check precision of keystroke timestamps
     
@@ -69,6 +70,7 @@ function bioauth_enroll_quiz_data($userid, $quizid, $timestamp) {
     $biodata->data = json_encode($data);
     $biodata->numkeystrokes = $numkeystrokes;
     $biodata->numstylometry = $numstylometry;
+    $biodata->nummouseevents = $nummouseevents;
 
     $DB->insert_record('bioauth_quiz_biodata', $biodata);
 }

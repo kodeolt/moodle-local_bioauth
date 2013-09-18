@@ -22,6 +22,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['autosaveperiod'] = 'Autosave period';
+$string['autosaveperioddesc'] = 'Duration (in seconds) between auto save attempts in the biologger.';
 $string['bioauth'] = 'Biometric Authentication';
 $string['disabled'] = 'Disabled';
 $string['enabled'] = 'Enabled';

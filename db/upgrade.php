@@ -30,21 +30,21 @@ defined('MOODLE_INTERNAL') || die();
  * BioAuth plugin upgrade function.
  * @param string $oldversion the version we are upgrading from.
  */
-function xmldb_quiz_upgrade($oldversion) {
+function xmldb_local_bioauth_upgrade($oldversion) {
     global $CFG, $DB;
 
     $dbman = $DB->get_manager();
 
     if ($oldversion < 2013091600) {
         // Number of mouse events cached.
-        $table = new xmldb_table('bioauth');
+        $table = new xmldb_table('bioauth_quiz_biodata');
 
         $field = new xmldb_field('nummouseevents', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0);
 
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
-        upgrade_mod_savepoint(true, 2012030901, 'bioauth');
+        upgrade_plugin_savepoint(true, 2012030901, 'local', 'bioauth');
     }
 
     // Moodle v2.5.0 release upgrade line.

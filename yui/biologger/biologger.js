@@ -253,9 +253,14 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
             this.start_save_timer_if_necessary();
         },
 
-        editor_changed : function(editor) {
-            Y.log('Detected a value change in editor ' + editor.id + '.');
+        editor_changed : function(ed) {
+            Y.log('Detected a value change in editor ' + ed.id + '.');
             this.start_save_timer_if_necessary();
+            stylevent = {
+                "time" : (new Date()).getTime(),
+                "text"      : ed.getContent()
+            };
+            this.stylometry.push(stylevent);
         },
 
         key_pressed : function(ed, e) {
@@ -314,19 +319,6 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
             
             this.mouse.push(mouseevent);
         },
-
-        // tinymce_mouse_move : function(ed, e) {
-            // Y.log('Mouse move: ' + e.screenX + ', ' + e.screenY + ", @" + e.timeStamp);
-//             
-            // mouseevent = {
-                // "event" : "motion",
-                // "time" : e.timeStamp,
-                // "x" : e.screenX,
-                // "y" : e.screenY
-            // };
-//             
-            // this.mouse.push(mouseevent);
-        // },
 
         mouse_move : function(e) {
             Y.log('Mouse move: ' + e.screenX + ', ' + e.screenY + ", @" + e.timeStamp + ", dragged: " + e.which);

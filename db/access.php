@@ -15,18 +15,26 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Quiz statistics report version information.
+ * Capability definitions for the BioAuth plugin.
  *
  * @package    local_bioauth
- * @copyright  Vinnie Monaco
+ * @copyright  2013 Vinnie Monaco
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2013091600;
-$plugin->requires  = 2012112900; // See http://docs.moodle.org/dev/Moodle_Versions
-$plugin->cron      = 3600; // Run cron function once an hour.
-$plugin->component = 'local_bioauth';
-$plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '0.1.0';
+$capabilities = array(
+
+    // Ability to see the authentication reports
+    'local/bioauth:view' => array(
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => array(
+            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW
+        )
+    ),
+);
+

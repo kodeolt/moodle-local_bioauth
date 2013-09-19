@@ -108,6 +108,19 @@ function local_bioauth_extends_navigation(global_navigation $navigation) {
         return;
     }
 
+    $enrolcourses = enrol_get_my_courses();
+    $viewgradecourses = array();
+    foreach ($enrolcourses as $course) {
+        $coursecontext = get_context_instance(CONTEXT_COURSE, $course->id);
+        if (has_capability('moodle/grade:viewall', $coursecontext)) {
+            $viewgradecourses[$course->id] = $course;
+        }
+    }
+    
+    if (count($viewgradecourses) == 0) {
+        return;
+    }
+
     global $USER;
     $context = context_user::instance($USER->id);
     $bioauthnode = $navigation->add(get_string('pluginname', 'local_bioauth'));

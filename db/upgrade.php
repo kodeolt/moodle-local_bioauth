@@ -44,7 +44,7 @@ function xmldb_local_bioauth_upgrade($oldversion) {
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
-        upgrade_plugin_savepoint(true, 2012030901, 'local', 'bioauth');
+        upgrade_plugin_savepoint(true, 2013091600, 'local', 'bioauth');
     }
 
     // Moodle v2.5.0 release upgrade line.

@@ -16,6 +16,6 @@ Then add /local/bioauth and mod/quiz/accessrule/biologger to your git ignore.
 
 The local plugin contains everything needed to perform biometric authentication. The quiz access-rule plugin allows behavioral biometric data to be collected during quiz attempts.
 
-After you have installed the plugin, you will be able to view authentication reports in the sidebare under:
+After you have installed the plugin, you will be able to view authentication reports in the sidebar under:
 Bioauth -> Report
 

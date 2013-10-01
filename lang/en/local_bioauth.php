@@ -86,3 +86,14 @@ $string['percentdataready'] = 'Data ready';
 $string['minkeystrokesperquiz'] = 'Min keystrokes/quiz';
 $string['minkeystrokesperquizdesc'] = 'The minimum number of keystrokes needed per quiz in order to achieve 100% data available.';
 
+$string['bbl'] = 'Behavioral Biometrics Logger';
+$string['activity'] = 'Activity';
+$string['selectanactivity'] = 'Select an activity';
+$string['pleaseselect'] = 'Please select an activity before launching.';
+$string['onlinegamestarbubbles'] = 'Game: Star Bubbles';
+$string['onlinegamespidersolitaire'] = 'Game: Spider Solitaire';
+$string['editparagraph'] = 'Edit paragraph';
+$string['browsersearch'] = 'Browser search';
+$string['freeinput'] = 'Free input';
+$string['launch'] = 'Launch';
+$string['launchopen'] = 'Select an activity and then click launch. Open the file "bbl.jnlp" with Java Web Start';

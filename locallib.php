@@ -31,48 +31,114 @@ global $CFG;
 require_once($CFG->dirroot . '/local/bioauth/constants.php');
 require_once($CFG->dirroot . '/local/bioauth/lib.php');
 
+
 /**
- * Log data which has been collected during a quiz attempt 
+ * Update the sesskey for a user attempting to start the native logger.
+ * 
+ * @param int $userid the id of the user being logged
+ * @param int $timestamp the time the data reached the server
+ */
+function bioauth_save_sesskey($userid) {
+    global $DB;
+    
+    $record = new stdClass();
+    $record->userid = $userid;
+    $record->sesskey = sesskey();
+    $record->timemodified = time();
+    
+    if ($DB->record_exists('bioauth_sessions', array('userid' => $userid), true)) {
+        $record->id = $DB->get_field('bioauth_sessions', 'id', array('userid' => $userid));
+        $DB->update_record('bioauth_sessions', $record);
+    } else {
+        $DB->insert_record('bioauth_sessions', $record);
+    }
+}
+
+/**
+ * Confirm the sesskey for a user attempting to enroll data.
+ * 
+ * @param int $userid the id of the user being logged
+ * @param int $timestamp the time the data reached the server
+ */
+function bioauth_confirm_sesskey($userid, $sesskey=NULL) {
+    global $DB;
+    
+    if (!$DB->record_exists('bioauth_sessions', array('userid' => $userid))) {
+        return false;
+    }
+    
+    if (empty($sesskey)) {
+        $sesskey = required_param('sesskey', PARAM_RAW);
+    }
+    $storedsesskey = $DB->get_field('bioauth_sessions', 'sesskey', array('userid' => $userid));
+
+    return ($storedsesskey === $sesskey);
+}
+
+/**
+ * Log data which has been collected from any source
  *
- * The data should be in $_POST['biodata']
+ * The user should already be logged in or authenticated in some other way
  * 
  * @param int $userid the id of the user being logged
  * @param int $quizid the id of the quiz the attempt belongs to
  * @param int $timestamp the time the data reached the server
  */
-function bioauth_enroll_quiz_data($userid, $quizid, $timestamp) {
+function bioauth_enroll_data($userid, $time) {
+
+    $platform = required_param('platform', PARAM_TEXT);
+    
+    $task = required_param('task', PARAM_TEXT);
+    $source = required_param('source', PARAM_TEXT);
+    $tags = required_param('tags', PARAM_TEXT);
+    
+    $jsondata = optional_param('keystroke', '', PARAM_TEXT);
+    if (!empty($jsondata) && ($quantity = required_param('numkeystroke', PARAM_INT)) > 0) {
+        $useragent = required_param('useragent', PARAM_TEXT);
+        $keystrokes = json_decode($jsondata);
+        foreach ($keystrokes as $k) {
+            $k->keyname = get_key($k->keycode, $useragent);
+        }
+        enroll_biometric_data($userid, $task, $source, $tags, 'keystroke', $quantity, json_encode($keystrokes), $platform, $time);
+    }
+    
+    $jsondata = optional_param('stylometry', '', PARAM_TEXT);
+    if (!empty($jsondata) && ($quantity = required_param('numstylometry', PARAM_INT)) > 0) {
+        enroll_biometric_data($userid, $task, $source, $tags, 'stylometry', $quantity, $jsondata, $platform, $time);
+    }
+    
+    $jsondata = optional_param('mouseclick', '', PARAM_TEXT);
+    if (!empty($jsondata) && ($quantity = required_param('nummouseclick', PARAM_INT)) > 0) {
+        enroll_biometric_data($userid, $task, $source, $tags, 'mouseclick', $quantity, $jsondata, $platform, $time);
+    }
+    
+    $jsondata = optional_param('mousemotion', '', PARAM_TEXT);
+    if (!empty($jsondata) && ($quantity = required_param('nummousemotion', PARAM_INT)) > 0) {
+        enroll_biometric_data($userid, $task, $source, $tags, 'mousemotion', $quantity, $jsondata, $platform, $time);
+    }
+    
+    $jsondata = optional_param('mousescroll', '', PARAM_TEXT);
+    if (!empty($jsondata) && ($quantity = required_param('nummousescroll', PARAM_INT)) > 0) {
+        enroll_biometric_data($userid, $task, $source, $tags, 'mousescroll', $quantity, $jsondata, $platform, $time);
+    }
+}
+
+function enroll_biometric_data($userid, $task, $source, $tags, $biometric, $quantity, $jsondata, $platform, $time) {
     global $DB;
 
-    $source = required_param('source', PARAM_TEXT);
-    $useragent = required_param('useragent', PARAM_TEXT);
-    $platform = required_param('platform', PARAM_TEXT);
-    $jsondata = required_param('biodata', PARAM_TEXT);
-    $numkeystrokes = required_param('numkeystrokes', PARAM_TEXT);
-    $numstylometry = required_param('numstylometry', PARAM_TEXT);
-    $nummouseevents = required_param('nummouseevents', PARAM_TEXT);
-
-    // TODO: check precision of keystroke timestamps
-    
-    $data = json_decode($jsondata);
-    
-    foreach ($data->keystrokes as $keystroke) {
-        $keystroke->keyname = get_key($keystroke->keycode, $useragent);
-    }
-
     $biodata = new stdClass();
-
     $biodata->userid = $userid;
-    $biodata->quizid = $quizid;
-    $biodata->timemodified = time();
-    $biodata->locale = current_language();
-    $biodata->useragent = $useragent;
+    $biodata->task = $task;
+    $biodata->source = $source;
+    $biodata->tags = $tags;
+    $biodata->biometric = $biometric;
+    $biodata->quantity = $quantity;
+    $biodata->jsondata = $jsondata;
     $biodata->platform = $platform;
-    $biodata->data = json_encode($data);
-    $biodata->numkeystrokes = $numkeystrokes;
-    $biodata->numstylometry = $numstylometry;
-    $biodata->nummouseevents = $nummouseevents;
+    $biodata->timemodified = $time;
 
-    $DB->insert_record('bioauth_quiz_biodata', $biodata);
+    $DB->insert_record('bioauth_biodata', $biodata);
+    
 }
 
 /**
@@ -87,12 +153,12 @@ function count_quiz_keystrokes($quiz) {
 
     $numuserkeystrokes = array();
 
-    $datarecords = $DB->get_records('bioauth_quiz_biodata', array('quizid' => $quiz->id));
+    $datarecords = $DB->get_records('bioauth_biodata', array('biometric' => 'keystroke', 'task' => 'quiz'.$quiz->id));
     foreach ($datarecords as $idx => $biodata) {
         if (!array_key_exists($biodata->userid, $numuserkeystrokes)) {
             $numuserkeystrokes[$biodata->userid] = 0;
         }
-        $numuserkeystrokes[$biodata->userid] += $biodata->numkeystrokes;
+        $numuserkeystrokes[$biodata->userid] += $biodata->quantity;
         $numuserkeystrokes[$biodata->userid] = min(array($numuserkeystrokes[$biodata->userid], get_config('local_bioauth', 'minkeystrokesperquiz')));
     }
 
@@ -389,12 +455,14 @@ class key_manager {
 
         $keycode = $this->load_keys($lang);
 
-        if (empty($agent) || !array_key_exists($agent, $keycode)) {
+        if (empty($agent)) {
             $agent = 'default';
         }
 
         if (isset($keycode[$agent]) && isset($keycode[$agent][$identifier])) {
             return $keycode[$agent][$identifier];
+        } elseif (isset($keycode['default'][$identifier])) {
+            return $keycode['default'][$identifier];
         }
 
         if ($this->usecache) {
@@ -407,10 +475,13 @@ class key_manager {
 
         if (isset($keycode[$agent]) && isset($keycode[$agent][$identifier])) {
             return $keycode[$agent][$identifier];
+        } elseif (isset($keycode['default'][$identifier])) {
+            return $keycode['default'][$identifier];
         }
 
         debugging("Invalid get_key() identifier: '{$identifier}' or agent '{$agent}' using language: {$lang}. "
                 . "Perhaps you are missing \$keycode['{$identifier}'] = ''; in {$lang}/keycode.php?", DEBUG_DEVELOPER);
+                
         return 'UNKNOWN';
     }
 

@@ -15,18 +15,31 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Quiz statistics report version information.
- *
+ * Main page for the BioAuth reporting capabilities.
+ * This gives an overview of courses
+ * 
  * @package    local_bioauth
  * @copyright  Vinnie Monaco
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+require_once(dirname(__FILE__) . '/../../../config.php');
+require_once($CFG->dirroot . '/local/bioauth/lib.php');
+require_once($CFG->dirroot . '/local/bioauth/launch/bblform.php');
 
-$plugin->version   = 2013092603;
-$plugin->requires  = 2012112900; // See http://docs.moodle.org/dev/Moodle_Versions
-$plugin->cron      = 0; //3600; // Run cron function once an hour.
-$plugin->component = 'local_bioauth';
-$plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '0.1.0';
+$PAGE->set_url(new moodle_url('/local/bioauth/launch/bbl.php'));
+
+$launchurl = new moodle_url('/local/bioauth/launch/launchbbl.php');
+
+require_login();
+$context = context_user::instance($USER->id);
+$PAGE->set_context($context);
+
+print_bioauth_page_head('bbl', 'General Purpose Logger');
+
+bioauth_save_sesskey($USER->id);
+
+$mform = new bioauth_bbl_form($launchurl);
+$mform->display();
+
+echo $OUTPUT->footer();

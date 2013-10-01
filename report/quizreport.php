@@ -101,12 +101,18 @@ class bioauth_report_quiz extends bioauth_report {
         $this->course = $course;
 
         $this->validation = $DB->get_record('bioauth_quiz_validations', array('courseid' => $course->id));
-        $this->quizzes = $DB->get_records('quiz', array('course' => $course->id));
-
+        
+        $quizzes = $DB->get_records('quiz', array('course' => $course->id));
+        
+        $this->quiztasknames = array();
+        foreach ($quizzes as $quizid => $quiz) {
+            $this->quiztasknames["quiz$quiz->id"] = $quiz->name;
+        }
+        
         $records = $DB->get_records('bioauth_quiz_neighbors', array('courseid' => $course->id));
         $quizauths = array();
         foreach ($records as $record) {
-            $quizauths[$record->userid][$record->quizid] = explode(',', $record->neighbors);
+            $quizauths[$record->userid][$record->task] = explode(',', $record->neighbors);
         }
 
         $this->quizauths = $quizauths;
@@ -251,7 +257,7 @@ class bioauth_report_quiz extends bioauth_report {
     public function get_report_table() {
         global $CFG, $DB, $OUTPUT, $PAGE;
 
-        if (!$this->quizzes) {
+        if (!$this->quiztasknames) {
             echo $OUTPUT->notification(get_string('noquizzesyet'));
             return;
         }
@@ -292,13 +298,13 @@ class bioauth_report_quiz extends bioauth_report {
 
         $headerrow->cells[] = $studentheader;
 
-        foreach ($this->quizzes as $quizid => $quiz) {
+        foreach ($this->quiztasknames as $quizname) {
             $quizheader = new html_table_cell();
             $quizheader->attributes['class'] = 'header';
             $quizheader->scope = 'col';
             $quizheader->header = true;
             $quizheader->id = 'quizheader';
-            $quizheader->text = $quiz->name;
+            $quizheader->text = $quizname;
 
             $headerrow->cells[] = $quizheader;
         }
@@ -337,15 +343,15 @@ class bioauth_report_quiz extends bioauth_report {
 
             $userrow->cells[] = $usercell;
 
-            foreach ($this->quizzes as $quizid => $quiz) {
+            foreach (array_keys($this->quiztasknames) as $quizkey) {
                 $quizcell = new html_table_cell();
                 $quizcell->attributes['class'] = 'quiz';
 
                 $quizcell->header = true;
                 $quizcell->scope = 'row';
 
-                if (array_key_exists($userid, $this->quizauths) && array_key_exists($quizid, $this->quizauths[$userid])) {
-                    $quizcell->text .= $this->make_decision_output($this->quizauths[$userid][$quizid][$this->validation->m]);
+                if (array_key_exists($userid, $this->quizauths) && array_key_exists($quizkey, $this->quizauths[$userid])) {
+                    $quizcell->text .= $this->make_decision_output($this->quizauths[$userid][$quizkey][$this->validation->m]);
                 } else {
                     $quizcell->text .= '-';
                 }

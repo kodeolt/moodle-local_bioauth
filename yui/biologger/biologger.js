@@ -149,7 +149,7 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
         AUTOSAVE_HANDLER : M.cfg.wwwroot + '/local/bioauth/biologger.ajax.php',
 
         /** Script that handles the auto-saves. */
-        ENROLLMENT_HANDLER : M.cfg.wwwroot + '/local/bioauth/enroll.php',
+        ENROLLMENT_HANDLER : M.cfg.wwwroot + '/local/bioauth/enroll.ajax.php',
 
         /** The delay between a change being made, and it being auto-saved. */
         delay : 120000,
@@ -167,15 +167,26 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
         save_transaction : null,
 
         /** Key and mouse event handlers. */
-        editor_change_handler : null,
         key_down_handler : null,
         key_up_handler : null,
         mouse_down_handler : null,
         mouse_up_handler : null,
         mouse_move_handler : null,
-
-        keystrokes : null,
+        mouse_scroll_handler : null,
+        
+        tinymce_change_handler : null,
+        tinymce_key_down_handler : null,
+        tinymce_key_up_handler : null,
+        tinymce_mouse_down_handler : null,
+        tinymce_mouse_up_handler : null,
+        
+        keystroke : null,
         stylometry : null,
+        mouseclick : null,
+        mousemotion : null,
+        mousescroll : null,
+        
+        currentbuttons : null,
         currentkeystrokes : null,
         currentstylometry : null,
 
@@ -186,19 +197,63 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
                 Y.log('No response form found. Why did you try to initialize the biologger?');
                 return;
             }
-
+            this.username = params.username;
+            this.task = params.task;
+            this.tags = params.tags;
             this.delay = params.delay * 1000;
 
-            this.keystrokes = Array();
+            this.keystroke = Array();
             this.stylometry = Array();
-            this.mouse = Array();
+            this.mouseclick = Array();
+            this.mousemotion = Array();
+            this.mousescroll = Array();
+
+            this.currentbuttons = Array();
             this.currentkeystrokes = Array();
             this.currentstylometry = "";
 
             this.form.delegate('valuechange', this.value_changed, this.SELECTORS.VALUE_CHANGE_ELEMENTS, this);
             this.form.delegate('change', this.value_changed, this.SELECTORS.CHANGE_ELEMENTS, this);
             this.form.on('submit', this.stop_autosaving, this);
-
+            
+            this.key_down_handler = Y.bind(this.key_pressed, this);
+            this.key_up_handler = Y.bind(this.key_released, this);
+            this.mouse_down_handler = Y.bind(this.mouse_pressed, this);
+            this.mouse_up_handler = Y.bind(this.mouse_released, this);
+            this.mouse_move_handler = Y.bind(this.mouse_move, this);
+            this.mouse_scroll_handler = Y.bind(this.mouse_scroll, this);
+            
+            this.tinymce_change_handler = Y.bind(this.tinymce_editor_changed, this);
+            this.tinymce_key_down_handler = Y.bind(this.tinymce_key_pressed, this);
+            this.tinymce_key_up_handler = Y.bind(this.tinymce_key_released, this);
+            this.tinymce_mouse_down_handler = Y.bind(this.tinymce_mouse_pressed, this);
+            this.tinymce_mouse_up_handler = Y.bind(this.tinymce_mouse_released, this);
+            
+            var mousewheelevt = (/Firefox/i.test(navigator.userAgent)) ? "DOMMouseScroll" : "mousewheel"; //FF doesn't recognize mousewheel as of FF3.x
+            
+            if (document.addEventListener) {
+                document.addEventListener('keydown',this.key_pressed_handler,false);
+                document.addEventListener('keyup',this.key_released_handler,false);
+                document.addEventListener('mousedown',this.mouse_pressed_handler,false);
+                document.addEventListener('mouseup',this.mouse_released_handler,false);
+                document.addEventListener('mousemove',this.mouse_move_handler,false);
+                document.addEventListener(mousewheelevt,this.mouse_scroll_handler,false);
+            } else if(document.attachEvent) {
+                document.attachEvent('onkeydown',this.key_pressed_handler);
+                document.attachEvent('onkeyup',this.key_released_handler);
+                document.attachEvent('onmousedown',this.mouse_pressed_handler);
+                document.attachEvent('onmouseup',this.mouse_released_handler);
+                document.attachEvent('onmousemove',this.mouse_move_handler);
+                document.attachEvent("on"+mousewheelevt,this.mouse_scroll_handler);
+            } else {
+                document.onkeydown = this.key_pressed_handler;
+                document.onkeyup = this.key_released_handler;
+                document.onmousedown = this.mouse_pressed_handler;
+                document.onmouseup = this.mouse_released_handler;
+                document.onmousemove = this.mouse_move_handler;
+                document.onmousewheel = this.mouse_scroll_handler;
+            }
+            
             this.init_tinymce(this.TINYMCE_DETECTION_REPEATS);
         },
 
@@ -218,12 +273,6 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
             }
 
             Y.log('Biologger found TinyMCE.');
-            this.editor_change_handler = Y.bind(this.editor_changed, this);
-            this.key_down_handler = Y.bind(this.key_pressed, this);
-            this.key_up_handler = Y.bind(this.key_released, this);
-            this.mouse_down_handler = Y.bind(this.mouse_pressed, this);
-            this.mouse_up_handler = Y.bind(this.mouse_released, this);
-            this.mouse_move_handler = Y.bind(this.mouse_move, this);
             tinyMCE.onAddEditor.add(Y.bind(this.init_tinymce_editor, this));
         },
 
@@ -235,12 +284,11 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
         init_tinymce_editor : function(notused, editor) {
             Y.log('Biologger found TinyMCE editor ' + editor.id + '.');
 
-            editor.onChange.add(this.editor_change_handler);
-            editor.onKeyDown.add(this.key_down_handler);
-            editor.onKeyUp.add(this.key_up_handler);
-            editor.onMouseDown.add(this.mouse_down_handler);
-            editor.onMouseUp.add(this.mouse_up_handler);
-            document.onmousemove = this.mouse_move_handler;
+            editor.onChange.add(this.tinymce_change_handler);
+            editor.onKeyDown.add(this.tinymce_key_down_handler);
+            editor.onKeyUp.add(this.tinymce_key_up_handler);
+            editor.onMouseDown.add(this.tinymce_mouse_down_handler);
+            editor.onMouseUp.add(this.tinymce_mouse_up_handler);
             // TODO: Unable to record motion events within the editor text area.
         },
 
@@ -257,13 +305,30 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
             Y.log('Detected a value change in editor ' + ed.id + '.');
             this.start_save_timer_if_necessary();
             stylevent = {
-                "time" : (new Date()).getTime(),
+                "timestart" : (new Date()).getTime(),
+                "timeend"   : (new Date()).getTime(),
                 "text"      : ed.getContent()
             };
             this.stylometry.push(stylevent);
         },
+        
+        tinymce_key_pressed : function(ed, e) {
+            this.key_pressed(e);
+        },
 
-        key_pressed : function(ed, e) {
+        tinymce_key_released : function(ed, e) {
+            this.key_released(e);
+        },
+
+        tinymce_mouse_pressed : function(ed, e) {
+            this.mouse_pressed(e);
+        },
+
+        tinymce_mouse_released : function(ed, e) {
+            this.mouse_released(e);
+        },
+        
+        key_pressed : function(e) {
             Y.log('Key pressed: ' + e.keyCode + ", @" + e.timeStamp);
 
             keycode = e.keyCode;
@@ -276,62 +341,87 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
             this.currentkeystrokes[keycode] = timestamp;
         },
 
-        key_released : function(ed, e) {
+        key_released : function(e) {
             Y.log('Key released: ' + e.keyCode + ", @" + e.timeStamp);
-
+            if (!this.currentkeystrokes[keycode]) {
+                return;
+            }
+            timepress = this.currentkeystrokes[keycode];
+            this.currentkeystrokes[keycode] = false;
+            
             keycode = e.keyCode;
             timestamp = e.timeStamp;
 
-            timepress = this.currentkeystrokes[keycode];
-            keystroke = {
+            keystrokeevent = {
                 "keycode" : keycode,
                 "timepress" : timepress,
                 "timerelease" : timestamp
             };
-            this.keystrokes.push(keystroke);
-            this.currentkeystrokes[keycode] = 0;
-        },
-
-        mouse_pressed : function(ed, e) {
-            Y.log('Mouse pressed: ' + e.target.nodeName + ", @" + e.timeStamp);
             
-            mouseevent = {
-                "event" : "press",
-                "time" : e.timeStamp,
-                "x" : e.screenX,
-                "y" : e.screenY,
-                "button" : e.button
+            this.keystroke.push(keystrokeevent);
+        },
+        
+        mouse_pressed : function(e) {
+            Y.log('Mouse pressed: ' + ", @" + e.timeStamp);
+            this.dragging = true;
+            
+            pressevent = {
+                "timepress" : e.timeStamp,
+                "xpress" : e.screenX,
+                "ypress" : e.screenY
             };
             
-            this.mouse.push(mouseevent);
+            this.currentbuttons[e.button] = pressevent;
         },
 
-        mouse_released : function(ed, e) {
+        mouse_released : function(e) {
             Y.log('Mouse released: ' + e.target.nodeName + ", @" + e.timeStamp);
+            this.dragging = false;
+            if (!this.currentbuttons[e.button]) {
+                return;
+            }
+            pressevent = this.currentbuttons[e.button];
+            this.currentbuttons[e.button] = false;
             
-            mouseevent = {
-                "event" : "release",
-                "time" : e.timeStamp,
-                "x" : e.screenX,
-                "y" : e.screenY,
+            clickevent = {
+                "timepress" : pressevent['timepress'],
+                "timerelease" : e.timeStamp,
+                "xpress"    : pressevent['xpress'],
+                "ypress"    : pressevent['ypress'],
+                "xrelease" : e.screenX,
+                "yrelease" : e.screenY,
                 "button" : e.button
             };
             
-            this.mouse.push(mouseevent);
+            this.mouseclick.push(clickevent);
         },
 
         mouse_move : function(e) {
-            Y.log('Mouse move: ' + e.screenX + ', ' + e.screenY + ", @" + e.timeStamp + ", dragged: " + e.which);
+            Y.log('Mouse move: ' + e.screenX + ', ' + e.screenY + ", @" + e.timeStamp);
             
-            mouseevent = {
-                "event" : "motion",
+            motionevent = {
                 "time" : e.timeStamp,
                 "x" : e.screenX,
                 "y" : e.screenY,
-                "dragged" : e.which
+                "dragged" : this.dragging
             };
             
-            this.mouse.push(mouseevent);
+            this.mousemotion.push(motionevent);
+        },
+        
+        mouse_scroll : function(e) {
+            var evt = window.event || e; //equalize event object
+            var delta = evt.detail ? evt.detail*(-120) : evt.wheelDelta; //delta returns +120 when wheel is scrolled up, -120 when scrolled down
+            Y.log('Mouse scroll: ' + delta + ", @" + e.timeStamp);
+            
+             scrollevent = {
+                "time" : e.timeStamp,
+                "x" : e.screenX,
+                "y" : e.screenY,
+                "amount" : delta
+            };
+            
+            this.mousescroll.push(scrollevent);
         },
 
         start_save_timer_if_necessary : function() {
@@ -355,14 +445,6 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
                 this.delay_timer.cancel();
             }
             this.delay_timer = null;
-        },
-
-        getData : function() {
-            return JSON.stringify({
-                "keystrokes"    : this.keystrokes,
-                "stylometry"    : this.stylometry,
-                "mouse"        : this.mouse
-            });
         },
 
         save_changes : function() {
@@ -427,13 +509,22 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
                     id : this.form
                 },
                 data : {
-                    source : BrowserDetect.browser,
-                    useragent : navigator.userAgent,
-                    platform : navigator.platform,
-                    biodata : this.getData(),
-                    numkeystrokes : this.keystrokes.length,
-                    numstylometry : this.stylometry.length,
-                    nummouseevents : this.mouse.length
+                    username        : this.username,
+                    useragent       : BrowserDetect.browser,
+                    platform        : navigator.platform,
+                    task            : this.task,
+                    source          : 'quiz_biologger',
+                    tags            : this.tags,
+                    keystroke       : JSON.stringify(this.keystroke),
+                    numkeystroke    : this.keystroke.length,
+                    stylometry      : JSON.stringify(this.stylometry),
+                    numstylometry   : this.stylometry.length,
+                    mousemotion     : JSON.stringify(this.mousemotion),
+                    nummousemotion  : this.mousemotion.length,
+                    mouseclick      : JSON.stringify(this.mouseclick),
+                    nummouseclick   : this.mouseclick.length,
+                    mousescroll     : JSON.stringify(this.mousescroll),
+                    nummousescroll  : this.mousescroll.length
                 },
                 on : {
                     complete : this.submit_done
@@ -444,7 +535,6 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
 
         submit_done : function() {
             Y.log('Save completed.');
-
             //alert('Submission complete');
         },
     }, {

@@ -15,18 +15,31 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Quiz statistics report version information.
+ * This script processes events logged from the biologger module.
  *
  * @package    local_bioauth
  * @copyright  Vinnie Monaco
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+define('AJAX_SCRIPT', true);
 
-$plugin->version   = 2013092603;
-$plugin->requires  = 2012112900; // See http://docs.moodle.org/dev/Moodle_Versions
-$plugin->cron      = 0; //3600; // Run cron function once an hour.
-$plugin->component = 'local_bioauth';
-$plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '0.1.0';
+require_once(dirname(__FILE__) . '/../../config.php');
+require_once($CFG->dirroot . '/local/bioauth/locallib.php');
+
+$timenow = time();
+
+$userid = optional_param('userid', 0, PARAM_INT);
+
+if (empty($userid)) {
+    global $DB;
+    $username = required_param('username', PARAM_USERNAME);
+    $userid = $DB->get_field('user', 'id', array('username' => $username));
+}
+
+if (bioauth_confirm_sesskey($userid)) {
+    bioauth_enroll_data($userid, $timenow);
+    echo 'Data received for '.$username;
+} else {
+    echo 'Unable to authenticate '.$username;
+}

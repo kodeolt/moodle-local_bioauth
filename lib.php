@@ -125,6 +125,7 @@ function local_bioauth_extends_navigation(global_navigation $navigation) {
     $context = context_user::instance($USER->id);
     $bioauthnode = $navigation->add(get_string('pluginname', 'local_bioauth'));
     $reportnode = $bioauthnode->add(get_string('report', 'local_bioauth'), new moodle_url('/local/bioauth/report/index.php'));
+    $launch = $bioauthnode->add(get_string('launch', 'local_bioauth'), new moodle_url('/local/bioauth/launch/bbl.php'));
     // TODO: create settings for each individual course, accessable from the report overview page.
     // $settingsnode = $bioauthnode->add(get_string('settings', 'local_bioauth'), new moodle_url('/admin/settings.php', array('section' => 'local_bioauth')));
 }

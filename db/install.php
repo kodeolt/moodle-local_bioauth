@@ -67,53 +67,11 @@ function load_keystroke_features() {
 }
 
 /**
- * Load all of the demo biodata for testing the installation
- *
- */
-function load_demo_events() {
-    global $CFG;
-    global $DB;
-
-    $progressbar = new progress_bar('local_bioauth_load_demo_events');
-    $progressbar->create();
-    $done = 0;
-
-    $userit = new DirectoryIterator($CFG->dirroot . '/local/bioauth/bootstrap');
-
-    foreach ($userit as $user) {
-        if (!$user->isDir()) {
-            continue;
-        }
-
-        $quizit = new DirectoryIterator($user->getPathname());
-        foreach ($quizit as $quiz) {
-            if (!$quiz->isDir()) {
-                continue;
-            }
-
-            $sessionit = new DirectoryIterator($quiz->getPathname());
-            foreach ($sessionit as $session) {
-                if ('json' !== $session->getExtension()) {
-                    continue;
-                }
-
-                $jsonstring = file_get_contents($session->getPathname());
-                $DB->insert_record_raw('bioauth_demo_biodata', array('userid' => $user->getBasename(),
-                                        'quizid' => $quiz->getBasename(), 'locale' => 'en_US', 'data' => $jsonstring), false, true);
-                $done++;
-                $progressbar->update($done, 1187, get_string('install_bootstrap', 'local_bioauth'));
-            }
-        }
-    }
-}
-
-/**
  * Post-install script
  */
 function xmldb_local_bioauth_install() {
 
     load_keystroke_features();
-    load_demo_events();
 
     return true;
 }

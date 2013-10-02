@@ -36,8 +36,8 @@ header("Pragma: no-cache");
         height="300">
         <argument><?php echo required_param('enrollurl', PARAM_URL); ?></argument>
         <argument><?php echo required_param('username', PARAM_USERNAME); ?></argument>
-        <argument><?php echo required_param('task', PARAM_ALPHAEXT); ?></argument>
-        <?php if ($tags = optional_param('tags', '', PARAM_ALPHAEXT)) {
+        <argument><?php echo required_param('task', PARAM_TEXT); ?></argument>
+        <?php if ($tags = optional_param('tags', '', PARAM_TEXT)) {
                 echo "<argument>$tags</argument>\n";
               } ?>
     </application-desc>

@@ -53,9 +53,9 @@ class bioauth_bbl_form extends moodleform {
                 get_string('activity', 'local_bioauth'),
                 array(
                     'edit paragraph' => get_string('editparagraph', 'local_bioauth'),
-                    'online game star bubbles' => get_string('onlinegamestarbubbles', 'local_bioauth'),
-                    'online game spider solitaire' => get_string('onlinegamespidersolitaire', 'local_bioauth'),
-                    'browser search' => get_string('browsersearch', 'local_bioauth'),
+                    // 'online game star bubbles' => get_string('onlinegamestarbubbles', 'local_bioauth'),
+                    // 'online game spider solitaire' => get_string('onlinegamespidersolitaire', 'local_bioauth'),
+                    // 'browser search' => get_string('browsersearch', 'local_bioauth'),
                     'free input' => get_string('freeinput', 'local_bioauth'),
                 ));
         

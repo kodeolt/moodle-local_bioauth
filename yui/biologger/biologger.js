@@ -211,6 +211,7 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
             this.currentbuttons = Array();
             this.currentkeystrokes = Array();
             this.currentstylometry = "";
+            this.dragging = 0;
 
             this.form.delegate('valuechange', this.value_changed, this.SELECTORS.VALUE_CHANGE_ELEMENTS, this);
             this.form.delegate('change', this.value_changed, this.SELECTORS.CHANGE_ELEMENTS, this);
@@ -363,7 +364,7 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
         
         mouse_pressed : function(e) {
             Y.log('Mouse pressed: ' + ", @" + e.timeStamp);
-            this.dragging = true;
+            this.dragging = 1;
             
             pressevent = {
                 "timepress" : e.timeStamp,
@@ -376,7 +377,7 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
 
         mouse_released : function(e) {
             Y.log('Mouse released: ' + e.target.nodeName + ", @" + e.timeStamp);
-            this.dragging = false;
+            this.dragging = 0;
             if (!this.currentbuttons[e.button]) {
                 return;
             }

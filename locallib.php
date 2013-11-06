@@ -141,6 +141,23 @@ function enroll_biometric_data($userid, $task, $source, $tags, $biometric, $quan
     
 }
 
+function biauth_enroll_mobile_data($userid, $time) {
+    global $DB;
+
+    $platform = required_param('platform', PARAM_TEXT);
+    $task = required_param('task', PARAM_TEXT);
+    $jsondata = optional_param('keystroke', '', PARAM_TEXT);
+
+    $biodata = new stdClass();
+    $biodata->userid = $userid;
+    $biodata->task = $task;
+    $biodata->jsondata = $jsondata;
+    $biodata->platform = $platform;
+    $biodata->timemodified = $time;
+
+    $DB->insert_record('bioauth_mobile_biodata', $biodata);
+}
+
 /**
  * Count the number of keystrokes collected (over all students/attempts)
  * for one quiz.

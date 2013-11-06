@@ -512,7 +512,7 @@ YUI.add('moodle-local_bioauth-biologger', function(Y) {
                 data : {
                     username        : this.username,
                     useragent       : BrowserDetect.browser,
-                    platform        : navigator.platform,
+                    platform        : navigator.userAgent,
                     task            : this.task,
                     source          : 'quiz_biologger',
                     tags            : this.tags,

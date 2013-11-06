@@ -33,7 +33,7 @@ $userid = optional_param('userid', 0, PARAM_INT);
 
 if (empty($userid)) {
     global $DB;
-    $email = required_param('email', PARAM_USERNAME);
+    $email = required_param('email', PARAM_EMAIL);
     $userid = $DB->get_field('user', 'id', array('email' => $email));
 }
 

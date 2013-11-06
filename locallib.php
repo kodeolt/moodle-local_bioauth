@@ -141,7 +141,7 @@ function enroll_biometric_data($userid, $task, $source, $tags, $biometric, $quan
     
 }
 
-function biauth_enroll_mobile_data($userid, $time) {
+function bioauth_enroll_mobile_data($userid, $time) {
     global $DB;
 
     $platform = required_param('platform', PARAM_TEXT);

@@ -146,7 +146,7 @@ function bioauth_enroll_mobile_data($userid, $time) {
 
     $platform = required_param('platform', PARAM_TEXT);
     $task = required_param('task', PARAM_TEXT);
-    $jsondata = required_param('events', '', PARAM_TEXT);
+    $jsondata = required_param('events', PARAM_TEXT);
 
     $biodata = new stdClass();
     $biodata->userid = $userid;

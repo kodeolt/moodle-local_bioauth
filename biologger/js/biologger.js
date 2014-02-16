@@ -119,7 +119,7 @@ function Biologger(params, userid, sesskey, enrollURL, flushDelay) {
     };
     
     this.flushBuffer = function() {
-        console.log(this.jsonData());
+        
         if (this.bufferSize() === 0) {
             // console.log("Skipping flush, 0 events.");
             return;
@@ -273,7 +273,7 @@ function Biologger(params, userid, sesskey, enrollURL, flushDelay) {
     this.mousewheel = function(e) {
         console.log("Mouse scroll: ", e.deltaX, e.deltaY, e.deltaFactor);
         
-        this.buffer.mousemotion.push({
+        this.buffer.mousescroll.push({
                 "time" : e.timeStamp,
                 "xdelta" : e.deltaX,
                 "ydelta" : e.deltaY,

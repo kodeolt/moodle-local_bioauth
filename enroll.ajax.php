@@ -38,7 +38,7 @@ if (empty($userid) && !empty($email)) {
 }
 
 if (bioauth_confirm_sesskey($userid)) {
-    // bioauth_enroll_data($userid, $timenow);
+    bioauth_enroll_data($userid, $timenow);
     echo 'Finished enrolling data for '.$userid;
 } else {
     echo 'Unable to authenticate '.$userid;

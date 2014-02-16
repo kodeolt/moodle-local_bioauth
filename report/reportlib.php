@@ -163,7 +163,7 @@ abstract class bioauth_report {
 
         $retval = null;
 
-        if (!isset($this) OR get_class($this) != 'grade_report') {
+        if (!isset($this) OR get_class($this) != 'bioauth_report') {
             if (!empty($objectid)) {
                 $retval = get_user_preferences($fullprefname . $objectid, grade_report::get_pref($pref));
             } else if (isset($CFG->$fullprefname)) {

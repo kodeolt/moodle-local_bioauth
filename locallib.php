@@ -120,7 +120,7 @@ function bioauth_enroll_data($userid, $time) {
     $task = required_param('task', PARAM_URL);
     $tags = optional_param('tags', '', PARAM_TEXT);
     
-    $biodata = json_decode(required_param('biodata', PARAM_TEXT));
+    $biodata = json_decode(required_param('biodata', PARAM_RAW)); // PARAM_RAW?
     
     foreach ($biodata as $biotype => $data) {
         // Skip empty arrays
@@ -128,14 +128,14 @@ function bioauth_enroll_data($userid, $time) {
             continue;
         }
         // check for existing record
-        $unique = array('userid' => $userid, 'session' => $session);
+        $unique = array('userid' => $userid, 'session' => $session, 'biometric' => $biotype);
         if ($DB->record_exists('bioauth_biodata', $unique)) {
             // update end time with time received
-            $record = $DB->get_row('bioauth_biodata', $unique);
+            $record = $DB->get_record('bioauth_biodata', $unique);
             
             $record->jsondata = json_encode(array_merge(json_decode($record->jsondata), $data));
             $record->quantity += count($data);
-            $record->timeend = $timeend;
+            $record->timeend = $time;
             $record->timemodified = $time;
             
             $DB->update_record('bioauth_biodata', $record);
@@ -143,18 +143,19 @@ function bioauth_enroll_data($userid, $time) {
             // for new record, create start time
             $record = new stdClass();
             $record->userid = $userid;
+            $record->ipaddress = ip2long($ipaddress);
             $record->session = $session;
             $record->useragant = $useragent;
             $record->appversion = $appversion;
-            $record->task = $url;
+            $record->task = $task;
             $record->tags = $tags;
             $record->biometric = $biotype;
             $record->quantity = count($data);
             $record->jsondata = json_encode($data);
             $record->timemodified = $time;
-            $record->timestart = $timestart;
-            $record->timeend = $timeend;
-            $DB->insert_record('bioauth_biodata', $biodata);
+            $record->timestart = $time;
+            $record->timeend = $time;
+            $DB->insert_record('bioauth_biodata', $record);
         }
     }
 }

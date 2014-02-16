@@ -133,7 +133,7 @@ function bioauth_enroll_data($userid, $time) {
             // update end time with time received
             $record = $DB->get_row('bioauth_biodata', $unique);
             
-            $record->jsondata = json_encode(json_decode($record->jsondata) + $data);
+            $record->jsondata = json_encode(array_merge(json_decode($record->jsondata), $data));
             $record->quantity += count($data);
             $record->timeend = $timeend;
             $record->timemodified = $time;

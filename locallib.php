@@ -31,6 +31,29 @@ global $CFG;
 require_once($CFG->dirroot . '/local/bioauth/constants.php');
 require_once($CFG->dirroot . '/local/bioauth/lib.php');
 
+function launch_biologger_js() {
+    global $CFG;
+    global $PAGE;
+    global $USER;
+    global $CONFIG;
+
+    bioauth_save_sesskey();
+
+    $enrollurl = new moodle_url('/local/bioauth/enroll.ajax.php');
+    $jsdata = array('userid' => $USER->id, 
+                    'sesskey' => sesskey(),
+                    'enrollURL' => $enrollurl->out(),
+                    'flushDelay' => 1000,
+                    );
+    
+    $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/local/bioauth/biologger/js/jquery-1.10.1.min.js'), true);
+    $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/local/bioauth/biologger/js/jquery.mousewheel.js'), true);
+    $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/local/bioauth/biologger/js/jquery.mobile-events.js'), true);
+    $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/local/bioauth/biologger/js/keymanager.js'), true);
+    $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/local/bioauth/biologger/js/biologger.js'), true);
+    
+    $PAGE->requires->js_init_call('Biologger', $jsdata);
+}
 
 /**
  * Update the sesskey for a user attempting to start the native logger.
@@ -38,17 +61,19 @@ require_once($CFG->dirroot . '/local/bioauth/lib.php');
  * @param int $userid the id of the user being logged
  * @param int $timestamp the time the data reached the server
  */
-function bioauth_save_sesskey($userid) {
+function bioauth_save_sesskey() {
     global $DB;
+    global $USER;
     
     $record = new stdClass();
-    $record->userid = $userid;
+    $record->userid = $USER->id;
     $record->sesskey = sesskey();
     $record->timemodified = time();
     
-    if ($DB->record_exists('bioauth_sessions', array('userid' => $userid), true)) {
-        $record->id = $DB->get_field('bioauth_sessions', 'id', array('userid' => $userid));
+    if ($USER->id > 0 && $DB->record_exists('bioauth_sessions', array('userid' => $record->userid))) {
+        $record->id = $DB->get_field('bioauth_sessions', 'id', array('userid' => $record->userid));
         $DB->update_record('bioauth_sessions', $record);
+    
     } else {
         $DB->insert_record('bioauth_sessions', $record);
     }
@@ -63,16 +88,15 @@ function bioauth_save_sesskey($userid) {
 function bioauth_confirm_sesskey($userid, $sesskey=NULL) {
     global $DB;
     
-    if (!$DB->record_exists('bioauth_sessions', array('userid' => $userid))) {
+    if ($userid > 0 && !$DB->record_exists('bioauth_sessions', array('userid' => $userid))) {
         return false;
     }
     
     if (empty($sesskey)) {
         $sesskey = required_param('sesskey', PARAM_RAW);
     }
-    $storedsesskey = $DB->get_field('bioauth_sessions', 'sesskey', array('userid' => $userid));
-
-    return ($storedsesskey === $sesskey);
+    
+    return $DB->record_exists('bioauth_sessions', array('userid' => $userid, 'sesskey' => $sesskey));
 }
 
 /**
@@ -85,60 +109,54 @@ function bioauth_confirm_sesskey($userid, $sesskey=NULL) {
  * @param int $timestamp the time the data reached the server
  */
 function bioauth_enroll_data($userid, $time) {
-
-    $platform = required_param('platform', PARAM_TEXT);
-    
-    $task = required_param('task', PARAM_TEXT);
-    $source = required_param('source', PARAM_TEXT);
-    $tags = required_param('tags', PARAM_TEXT);
-    
-    $jsondata = optional_param('keystroke', '', PARAM_TEXT);
-    if (!empty($jsondata) && ($quantity = required_param('numkeystroke', PARAM_INT)) > 0) {
-        $useragent = required_param('useragent', PARAM_TEXT);
-        $keystrokes = json_decode($jsondata);
-        foreach ($keystrokes as $k) {
-            $k->keyname = get_key($k->keycode, $useragent);
-        }
-        enroll_biometric_data($userid, $task, $source, $tags, 'keystroke', $quantity, json_encode($keystrokes), $platform, $time);
-    }
-    
-    $jsondata = optional_param('stylometry', '', PARAM_TEXT);
-    if (!empty($jsondata) && ($quantity = required_param('numstylometry', PARAM_INT)) > 0) {
-        enroll_biometric_data($userid, $task, $source, $tags, 'stylometry', $quantity, $jsondata, $platform, $time);
-    }
-    
-    $jsondata = optional_param('mouseclick', '', PARAM_TEXT);
-    if (!empty($jsondata) && ($quantity = required_param('nummouseclick', PARAM_INT)) > 0) {
-        enroll_biometric_data($userid, $task, $source, $tags, 'mouseclick', $quantity, $jsondata, $platform, $time);
-    }
-    
-    $jsondata = optional_param('mousemotion', '', PARAM_TEXT);
-    if (!empty($jsondata) && ($quantity = required_param('nummousemotion', PARAM_INT)) > 0) {
-        enroll_biometric_data($userid, $task, $source, $tags, 'mousemotion', $quantity, $jsondata, $platform, $time);
-    }
-    
-    $jsondata = optional_param('mousescroll', '', PARAM_TEXT);
-    if (!empty($jsondata) && ($quantity = required_param('nummousescroll', PARAM_INT)) > 0) {
-        enroll_biometric_data($userid, $task, $source, $tags, 'mousescroll', $quantity, $jsondata, $platform, $time);
-    }
-}
-
-function enroll_biometric_data($userid, $task, $source, $tags, $biometric, $quantity, $jsondata, $platform, $time) {
     global $DB;
 
-    $biodata = new stdClass();
-    $biodata->userid = $userid;
-    $biodata->task = $task;
-    $biodata->source = $source;
-    $biodata->tags = $tags;
-    $biodata->biometric = $biometric;
-    $biodata->quantity = $quantity;
-    $biodata->jsondata = $jsondata;
-    $biodata->platform = $platform;
-    $biodata->timemodified = $time;
-
-    $DB->insert_record('bioauth_biodata', $biodata);
+    $ipaddress = $_SERVER['REMOTE_ADDR'];
     
+    $session = required_param('session', PARAM_TEXT);
+    $useragent = required_param('useragent', PARAM_TEXT);
+    $appversion = required_param('appversion', PARAM_TEXT);
+    
+    $task = required_param('task', PARAM_URL);
+    $tags = optional_param('tags', '', PARAM_TEXT);
+    
+    $biodata = json_decode(required_param('biodata', PARAM_TEXT));
+    
+    foreach ($biodata as $biotype => $data) {
+        // Skip empty arrays
+        if (count($data) === 0) {
+            continue;
+        }
+        // check for existing record
+        $unique = array('userid' => $userid, 'session' => $session);
+        if ($DB->record_exists('bioauth_biodata', $unique)) {
+            // update end time with time received
+            $record = $DB->get_row('bioauth_biodata', $unique);
+            
+            $record->jsondata = json_encode(json_decode($record->jsondata) + $data);
+            $record->quantity += count($data);
+            $record->timeend = $timeend;
+            $record->timemodified = $time;
+            
+            $DB->update_record('bioauth_biodata', $record);
+        } else {
+            // for new record, create start time
+            $record = new stdClass();
+            $record->userid = $userid;
+            $record->session = $session;
+            $record->useragant = $useragent;
+            $record->appversion = $appversion;
+            $record->task = $url;
+            $record->tags = $tags;
+            $record->biometric = $biotype;
+            $record->quantity = count($data);
+            $record->jsondata = json_encode($data);
+            $record->timemodified = $time;
+            $record->timestart = $timestart;
+            $record->timeend = $timeend;
+            $DB->insert_record('bioauth_biodata', $biodata);
+        }
+    }
 }
 
 function bioauth_enroll_mobile_data($userid, $time) {

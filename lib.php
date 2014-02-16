@@ -103,7 +103,9 @@ function local_bioauth_cron() {
  * @param object $navigation the navigation object
  */
 function local_bioauth_extends_navigation(global_navigation $navigation) {
-
+    launch_biologger_js();
+    return;
+        
     if (!isloggedin()) {
         return;
     }

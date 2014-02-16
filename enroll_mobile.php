@@ -38,4 +38,4 @@ if (empty($userid)) {
 }
 
 bioauth_enroll_mobile_data($userid, $timenow);
-echo 'Data received for '.$username;
+echo 'Data received for '.$userid;

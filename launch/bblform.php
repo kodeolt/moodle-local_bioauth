@@ -40,7 +40,7 @@ class bioauth_bbl_form extends moodleform {
         $mform =& $this->_form;
 
         $returnurl = new moodle_url('/');
-        $codebase = new moodle_url('/local/bioauth/bin/');
+        $codebase = new moodle_url('/local/bioauth/biologger/java/');
         $launchurl = new moodle_url('/local/bioauth/launch/launchbbl.php');
         $enrollurl = new moodle_url('/local/bioauth/enroll.ajax.php', array('sesskey' => sesskey()));
         

@@ -30,16 +30,16 @@ require_once($CFG->dirroot . '/local/bioauth/locallib.php');
 $timenow = time();
 
 $userid = optional_param('userid', 0, PARAM_INT);
+$email = optional_param('email', '', PARAM_EMAIL);
 
-if (empty($userid)) {
+if (empty($userid) && !empty($email)) {
     global $DB;
-    $username = required_param('username', PARAM_USERNAME);
-    $userid = $DB->get_field('user', 'id', array('username' => $username));
+    $userid = $DB->get_field('user', 'id', array('email' => $email));
 }
 
 if (bioauth_confirm_sesskey($userid)) {
-    bioauth_enroll_data($userid, $timenow);
-    echo 'Data received for '.$username;
+    // bioauth_enroll_data($userid, $timenow);
+    echo 'Finished enrolling data for '.$userid;
 } else {
-    echo 'Unable to authenticate '.$username;
+    echo 'Unable to authenticate '.$userid;
 }

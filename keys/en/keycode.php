@@ -23,6 +23,7 @@
  */
 
 
+$keycode['default'][0] = 'unknown';
 $keycode['default'][8] = 'backspace';
 $keycode['default'][9] = 'tab';
 $keycode['default'][13] = 'enter';
@@ -136,8 +137,26 @@ $keycode['native'][127] = 'delete';
 $keycode['native'][155] = 'insert';
 $keycode['native'][524] = 'windows';
 
-$keycode['opera'][59] = 'semicolon';
-$keycode['opera'][61] = 'equals';
+$keycode['native'][129] = 'back_quote';
+$keycode['native'][151] = '8';
+$keycode['native'][152] = 'quote';
+$keycode['native'][154] = 'print_screen';
+$keycode['native'][156] = 'help';
+$keycode['native'][157] = 'alt';
+$keycode['native'][160] = 'comma';
+$keycode['native'][161] = 'open_bracket';
+$keycode['native'][162] = 'close_bracket';
+$keycode['native'][512] = '2';
+$keycode['native'][513] = 'semicolon';
+$keycode['native'][515] = '4';
+$keycode['native'][517] = '1';
+$keycode['native'][519] = '9';
+$keycode['native'][520] = '3';
+$keycode['native'][521] = 'equals';
+$keycode['native'][522] = '0';
+$keycode['native'][523] = 'dash';
+$keycode['native'][525] = 'menu';
+
 $keycode['opera'][109] = 'dash';
 $keycode['opera'][219] = 'windows';
 $keycode['opera'][0] = 'menu';
@@ -148,7 +167,6 @@ $keycode['MSIE'][189] = 'dash';
 $keycode['MSIE'][91] = 'windows';
 $keycode['MSIE'][93] = 'menu';
 
-$keycode['firefox'][59] = 'semicolon';
 $keycode['firefox'][107] = 'equals';
 $keycode['firefox'][109] = 'dash';
 $keycode['firefox'][91] = 'windows';

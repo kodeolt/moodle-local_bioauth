@@ -33,37 +33,6 @@ defined('MOODLE_INTERNAL') || die();
 function xmldb_local_bioauth_upgrade($oldversion) {
     global $CFG, $DB;
 
-    $dbman = $DB->get_manager();
-
-    if ($oldversion < 2013091600) {
-        // Number of mouse events cached.
-        $table = new xmldb_table('bioauth_quiz_biodata');
-
-        $field = new xmldb_field('nummouseevents', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0);
-
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-        upgrade_plugin_savepoint(true, 2013091600, 'local', 'bioauth');
-    }
-    
-    if ($oldversion < 2013092603) {
-        // Add session management so that the plugin can log data from the native java application
-        $table = new xmldb_table('bioauth_sessions');
-
-        if (!$dbman->table_exists($table)) {
-            $table->addField(new xmldb_field('id', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, XMLDB_SEQUENCE));
-            $table->addField(new xmldb_field('userid', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0));
-            $table->addField(new xmldb_field('sesskey', XMLDB_TYPE_CHAR, '100'));
-            $table->addField(new xmldb_field('timemodified', XMLDB_TYPE_INTEGER, '10', XMLDB_UNSIGNED, XMLDB_NOTNULL, null, 0));
-            $table->addKey(new xmldb_key('primary', XMLDB_KEY_PRIMARY, array('id'), null, null));
-            $table->addIndex(new xmldb_index('userid', XMLDB_INDEX_UNIQUE, array('userid')));
-            $dbman->create_table($table);
-        }
-        
-        upgrade_plugin_savepoint(true, 2013092603, 'local', 'bioauth');
-    }
-
     // Moodle v2.5.0 release upgrade line.
     // Put any upgrade step following this.
 

@@ -70,8 +70,8 @@ function bioauth_save_sesskey() {
     $record->sesskey = sesskey();
     $record->timemodified = time();
     
-    if ($USER->id > 0 && $DB->record_exists('bioauth_sessions', array('userid' => $record->userid))) {
-        $record->id = $DB->get_field('bioauth_sessions', 'id', array('userid' => $record->userid));
+    if ($DB->record_exists('bioauth_sessions', array('userid' => $record->userid))) {
+        $record->id = $DB->get_field('bioauth_sessions', 'id', array('userid' => $record->userid, 'sesskey' => $record->sesskey));
         $DB->update_record('bioauth_sessions', $record);
     } else {
         $DB->insert_record('bioauth_sessions', $record);

@@ -139,7 +139,7 @@
                 <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id" />
             </KEYS>
             <INDEXES>
-                <INDEX NAME="userid" UNIQUE="true" FIELDS="userid" />
+                <INDEX NAME="userid-sesskey" UNIQUE="true" FIELDS="userid, sesskey" />
             </INDEXES>
         </TABLE>
         

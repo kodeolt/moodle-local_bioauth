@@ -59,6 +59,7 @@ function Biologger(params, userid, sesskey, enrollURL, flushDelay) {
             sesskey: this.sesskey,
             session: this.session,
             task: document.URL,
+            tags: document.title,
             useragent: navigator.userAgent,
             appversion: navigator.appVersion,
             biodata: JSON.stringify(bd),

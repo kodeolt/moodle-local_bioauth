@@ -37,9 +37,9 @@ if (empty($userid) && !empty($email)) {
     $userid = $DB->get_field('user', 'id', array('email' => $email));
 }
 
-if (bioauth_confirm_sesskey($userid)) {
+// if (bioauth_confirm_sesskey($userid)) {
     bioauth_enroll_data($userid, $timenow);
     echo 'Finished enrolling data for '.$userid;
-} else {
-    echo 'Unable to authenticate '.$userid;
-}
+// } else {
+    // echo 'Unable to authenticate '.$userid;
+// }

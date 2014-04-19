@@ -236,6 +236,7 @@ function Biologger(params, userid, sesskey, enrollURL, flushDelay) {
         this.buffer.mouseclick.push({
             "timepress" : this.buttonsdown[e.button]['timepress'],
             "timerelease" : e.timeStamp,
+            "button" : e.button,
             "xpress"    : this.buttonsdown[e.button]['xpress'],
             "ypress"    : this.buttonsdown[e.button]['ypress'],
             "xclientpress" : this.buttonsdown[e.button]['xclientpress'],
@@ -248,7 +249,7 @@ function Biologger(params, userid, sesskey, enrollURL, flushDelay) {
             "yclientrelease" : e.clientY,
             "xoffsetrelease" : e.offsetX,
             "yoffsetrelease" : e.offsetY,
-            "button" : e.button,
+            "targetpress" : this.buttonsdown[e.button]['targetpress'],
             "targetrelease" : e.target.cloneNode(false).outerHTML
         });
         

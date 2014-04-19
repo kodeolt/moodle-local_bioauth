@@ -75,16 +75,17 @@ class bioauth_biodata_overview {
      * @return an array
      */
     public function load_biodata() {
-         global $DB, $USER;
+        global $DB, $USER;
         
         $sort = 'id';
-        $fields = 'id,userid,task,tags,biometric,quantity,timemodified';
+        $fields = 'id,userid,biometric,quantity,timemodified';
         $rowsperpage = $this->get_rows_per_page();
 
         $this->numrows = $biodata = $DB->count_records('bioauth_biodata', array('userid' => $USER->id)); 
        
-        $biodata = $DB->get_records('bioauth_biodata', array('userid' => $USER->id), $sort, $fields, $rowsperpage * $this->page, $rowsperpage);
-       $this->biodata = $biodata;
+        // $biodata = $DB->get_records('bioauth_biodata', array('userid' => $USER->id), $sort, $fields, $rowsperpage * $this->page, $rowsperpage);
+        $biodata = $DB->get_records_list('bioauth_biodata','userid', array($USER->id), $sort, $fields, $rowsperpage * $this->page, $rowsperpage);
+        $this->biodata = $biodata;
       
         return $this->biodata;
     }
@@ -126,21 +127,21 @@ class bioauth_biodata_overview {
         $userheader->text = get_string('name');
         $headerrow->cells[] = $userheader;
 
-        $taskheader = new html_table_cell();
-        $taskheader->attributes['class'] = 'header';
-        $taskheader->scope = 'col';
-        $taskheader->header = true;
-        $taskheader->id = 'taskheader';
-        $taskheader->text = get_string('task', 'local_bioauth');
-        $headerrow->cells[] = $taskheader;
-
-        $tagsheader = new html_table_cell();
-        $tagsheader->attributes['class'] = 'header';
-        $tagsheader->scope = 'col';
-        $tagsheader->header = true;
-        $tagsheader->id = 'tagsheader';
-        $tagsheader->text = get_string('tags', 'local_bioauth');
-        $headerrow->cells[] = $tagsheader;
+        // $taskheader = new html_table_cell();
+        // $taskheader->attributes['class'] = 'header';
+        // $taskheader->scope = 'col';
+        // $taskheader->header = true;
+        // $taskheader->id = 'taskheader';
+        // $taskheader->text = get_string('task', 'local_bioauth');
+        // $headerrow->cells[] = $taskheader;
+// 
+        // $tagsheader = new html_table_cell();
+        // $tagsheader->attributes['class'] = 'header';
+        // $tagsheader->scope = 'col';
+        // $tagsheader->header = true;
+        // $tagsheader->id = 'tagsheader';
+        // $tagsheader->text = get_string('tags', 'local_bioauth');
+        // $headerrow->cells[] = $tagsheader;
 
         $biometricheader = new html_table_cell();
         $biometricheader->attributes['class'] = 'header';
@@ -198,19 +199,19 @@ class bioauth_biodata_overview {
 
             $row->cells[] = $usercell;
             
-            $taskcell = new html_table_cell();
-            $taskcell->attributes['class'] = 'task';
-            $taskcell->header = true;
-            $taskcell->scope = 'row';
-            $taskcell->text .= $biodata->task;
-            $row->cells[] = $taskcell;
-            
-            $tagscell = new html_table_cell();
-            $tagscell->attributes['class'] = 'tags';
-            $tagscell->header = true;
-            $tagscell->scope = 'row';
-            $tagscell->text .= strlen($biodata->tags) > 0 ? $biodata->tags : '-';
-            $row->cells[] = $tagscell;
+            // $taskcell = new html_table_cell();
+            // $taskcell->attributes['class'] = 'task';
+            // $taskcell->header = true;
+            // $taskcell->scope = 'row';
+            // $taskcell->text .= $biodata->task;
+            // $row->cells[] = $taskcell;
+//             
+            // $tagscell = new html_table_cell();
+            // $tagscell->attributes['class'] = 'tags';
+            // $tagscell->header = true;
+            // $tagscell->scope = 'row';
+            // $tagscell->text .= strlen($biodata->tags) > 0 ? $biodata->tags : '-';
+            // $row->cells[] = $tagscell;
             
             $biometriccell = new html_table_cell();
             $biometriccell->attributes['class'] = 'biometric';

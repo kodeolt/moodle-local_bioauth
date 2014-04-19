@@ -40,17 +40,18 @@ function launch_biologger_js() {
     bioauth_save_sesskey();
 
     $enrollurl = new moodle_url('/local/bioauth/enroll.ajax.php');
+    
     $jsdata = array('userid' => $USER->id, 
                     'sesskey' => sesskey(),
                     'enrollURL' => $enrollurl->out(),
                     'flushDelay' => 1000,
                     );
     
-    $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/local/bioauth/biologger/js/jquery-1.10.1.min.js'), true);
-    $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/local/bioauth/biologger/js/jquery.mousewheel.js'), true);
-    $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/local/bioauth/biologger/js/jquery.mobile-events.js'), true);
-    $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/local/bioauth/biologger/js/keymanager.js'), true);
-    $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/local/bioauth/biologger/js/biologger.js'), true);
+    $PAGE->requires->js(new moodle_url('/local/bioauth/biologger/js/jquery-1.10.1.min.js'), true);
+    $PAGE->requires->js(new moodle_url('/local/bioauth/biologger/js/jquery.mousewheel.js'), true);
+    $PAGE->requires->js(new moodle_url('/local/bioauth/biologger/js/jquery.mobile-events.js'), true);
+    $PAGE->requires->js(new moodle_url('/local/bioauth/biologger/js/keymanager.js'), true);
+    $PAGE->requires->js(new moodle_url('/local/bioauth/biologger/js/biologger.js'), true);
     
     $PAGE->requires->js_init_call('Biologger', $jsdata);
 }

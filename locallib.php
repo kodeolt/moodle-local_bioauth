@@ -212,8 +212,8 @@ function bioauth_enroll_data($userid, $time) {
             // update end time with time received
             $record = $DB->get_record('bioauth_biodata', $unique);
            
-           $record->jsondata .= "\n" . $biodata;
-           $record->quantity = substr_count($record->jsondata, "\n");
+           $record->csvdata .= "\n" . $biodata;
+           $record->quantity = substr_count($record->csvdata, "\n");
            $record->timeend = $time;
            $record->timemodified = $time;
             
@@ -229,8 +229,8 @@ function bioauth_enroll_data($userid, $time) {
             $record->task = $task;
             $record->tags = $tags;
             $record->biometric = $biometric;
-            $record->jsondata = $fields . "\n" . $biodata;
-            $record->quantity = substr_count($record->jsondata, "\n");
+            $record->csvdata = $fields . "\n" . $biodata;
+            $record->quantity = substr_count($record->csvdata, "\n");
             $record->timemodified = $time;
             $record->timestart = $time;
             $record->timeend = $time;
@@ -238,23 +238,6 @@ function bioauth_enroll_data($userid, $time) {
             $DB->insert_record('bioauth_biodata', $record);
         }
     }
-}
-
-function bioauth_enroll_mobile_data($userid, $time) {
-    global $DB;
-
-    $platform = required_param('platform', PARAM_TEXT);
-    $task = required_param('task', PARAM_TEXT);
-    $jsondata = required_param('events', PARAM_TEXT);
-
-    $biodata = new stdClass();
-    $biodata->userid = $userid;
-    $biodata->task = $task;
-    $biodata->jsondata = $jsondata;
-    $biodata->platform = $platform;
-    $biodata->timemodified = $time;
-
-    $DB->insert_record('bioauth_mobile_biodata', $biodata);
 }
 
 /**

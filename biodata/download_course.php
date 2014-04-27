@@ -57,6 +57,11 @@ foreach ($allbiodata as $row) {
     }
 }
 
+if (count($biodata) === 0) {
+    echo 'No data to download';
+    die();
+}
+
 $filename = $coursename.'_'.$biometric;
 
 $biofields = array();

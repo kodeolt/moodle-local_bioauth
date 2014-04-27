@@ -46,20 +46,4 @@ header("Pragma: no-cache");
 header("Expires: 0");
 $output = fopen('php://output', 'w');
 
-$data = json_decode($biodata->jsondata);
-$columns = array();
-
-foreach ($data[0] as $colname => $value) {
-    $columns[] = $colname;
-}
-
-fputcsv($output, $columns, ',', '"');
-    
-foreach ($data as $row) {
-    $values = array();
-    foreach ($columns as $c) {
-        $values[] = $row->$c;
-    }
-    
-    fputcsv($output, $values, ',', '"');
-}
+fputs($output, $biodata->csvdata);

@@ -38,7 +38,7 @@ require_capability('moodle/grade:viewall', $context);
 global $DB;
 
 $course = $DB->get_record('course',array('id' => $courseid));
-$coursename = ereg_replace("[^A-Za-z0-9]", "", $course->shortname);
+$coursename = preg_replace("/[^A-Za-z0-9]/", "", $course->shortname);
 
 # Only get users with student role. This could be an array of ints
 $users = get_role_users(5, $context);
@@ -62,23 +62,8 @@ $filename = $coursename.'_'.$biometric;
 $biofields = array();
 $columns = array();
 
-$columns[] = 'user';
-$columns[] = 'session';
-$columns[] = 'ipaddress';
-$columns[] = 'useragent';
-$columns[] = 'appversion';
-$columns[] = 'task';
-$columns[] = 'tags';
-
-foreach ($biodata as $idx => $session) {
-    $data = json_decode($session->jsondata);
-    foreach ($data[0] as $colname => $value) {
-        if (!array_key_exists($colname, $biofields)) {
-            $columns[] = $colname;
-            $biofields[$colname] = $colname;
-        }
-    }
-}
+$fixed_columns = 'user,session,ipaddress,useragent,appversion,task,tags';
+$data_columns = strtok($biodata[0]->csvdata, "\n");
 
 header("Content-type: text/csv");
 header("Content-Disposition: attachment; filename=$filename.csv");
@@ -86,26 +71,26 @@ header("Pragma: no-cache");
 header("Expires: 0");
 $output = fopen('php://output', 'w');
 
-fputcsv($output, $columns, ',', '"');
+fputs($output, $fixed_columns . "," . $data_columns . "\n");
 
 foreach ($biodata as $idx => $session) {
-    $data = json_decode($session->jsondata);
+    $data = $session->csvdata;
     
-    foreach ($data as $row) {
-        $values = array();
-        
-        $values[] = $session->userid;
-        $values[] = $session->session;
-        $values[] = $session->ipaddress;
-        $values[] = $session->useragent;
-        $values[] = $session->appversion;
-        $values[] = $session->task;
-        $values[] = $session->tags;
-        
-        foreach ($biofields as $c) {
-            $values[] = $row->$c;
+    $fixed = array();
+    $fixed[] = $session->userid;
+    $fixed[] = $session->session;
+    $fixed[] = $session->ipaddress;
+    $fixed[] = $session->useragent;
+    $fixed[] = $session->appversion;
+    $fixed[] = $session->task;
+    $fixed[] = $session->tags;
+    $fixed_str = csv_str($fixed);
+    
+    foreach (explode("\n", $data) as $row_idx => $row) {
+        if ($row_idx === 0) {
+            continue;
         }
-        
-        fputcsv($output, $values, ',', '"');
+        $values = array();
+       fputs($output, $fixed_str . "," . $row . "\n");
     }
 }

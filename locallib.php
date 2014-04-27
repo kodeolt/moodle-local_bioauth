@@ -162,13 +162,13 @@ function fputcsv4($handle, $row, $fd=',', $quot='"')
    return strlen($str); 
 }
 
-function concat_biodata($str, $data) {
+function csv_str($data) {
     $outstream = fopen("php://temp", 'r+');
-        fputcsv($outstream, $data, ',', '"');
-        rewind($outstream);
-        $csv = fgets($outstream);
-        fclose($outstream);
-        return $csv;
+    fputcsv($outstream, $data, ',', '"');
+    rewind($outstream);
+    $csv = fgets($outstream);
+    fclose($outstream);
+    return strtok($csv, "\n");
 }
 
 $BIOMETRICS = array('keystroke','mousemotion','mouseclick','mousescroll','stylometry');

@@ -26,32 +26,27 @@ function csv_string(values) {
             finalVal += ',';
         finalVal += result;
     }
-    
     return finalVal;
 }
 
+
 function merge(obj1, obj2) {
-
-  for (var p in obj2) {
-    try {
-      // Property in destination object set; update its value.
-      if ( obj2[p].constructor==Object ) {
-        obj1[p] = MergeRecursive(obj1[p], obj2[p]);
-
-      } else {
-        obj1[p] = obj2[p];
-
-      }
-
-    } catch(e) {
-      // Property in destination object not set; create it and set its value.
-      obj1[p] = obj2[p];
-
+    for (var p in obj2) {
+        try {
+            // Property in destination object set; update its value.
+            if (obj2[p].constructor == Object) {
+                obj1[p] = MergeRecursive(obj1[p], obj2[p]);
+            } else {
+                obj1[p] = obj2[p];
+            }
+        } catch(e) {
+            // Property in destination object not set; create it and set its value.
+            obj1[p] = obj2[p];
+        }
     }
-  }
-
-  return obj1;
+    return obj1;
 }
+
 
 function Biologger(params, userid, sesskey, enrollURL, flushDelay) {
     console.log("Biologger init");
@@ -135,13 +130,18 @@ function Biologger(params, userid, sesskey, enrollURL, flushDelay) {
         
         mousescroll : [
             "time",
+            "xdelta",
+            "ydelta",
+            "deltamode",
+            "deltafactor",
+            "x",
+            "y",
+            "xpage",
+            "ypage",
             "xtarget",
             "ytarget",
             "targetwidth",
             "targetheight",
-            "xdelta",
-            "ydelta",
-            "deltafactor",
             "target",
         ],
         
@@ -159,7 +159,6 @@ function Biologger(params, userid, sesskey, enrollURL, flushDelay) {
                 bd[b+'_fields'] = csv_string(this.fields[b]);
             }
         };
-        
         
         return merge(bd, {
             userid: this.userid,
@@ -385,13 +384,18 @@ function Biologger(params, userid, sesskey, enrollURL, flushDelay) {
         
         this.buffer.mousescroll.push(csv_string([
             e.timeStamp,
+            e.deltaX,
+            e.deltaY,
+            e.deltaMode,
+            e.deltaFactor,
+            e.screenX,
+            e.screenY,
+            e.pageX,
+            e.pageY,
             e.offsetX,
             e.offsetY,
             e.target.clientWidth,
             e.target.clientHeight,
-            e.deltaX,
-            e.deltaY,
-            e.deltaFactor,
             e.target.cloneNode(false).outerHTML
         ]));
     };
@@ -437,4 +441,3 @@ function Biologger(params, userid, sesskey, enrollURL, flushDelay) {
         that.stopLogging();
     });
 };
-

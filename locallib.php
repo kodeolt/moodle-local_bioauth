@@ -189,8 +189,8 @@ function bioauth_enroll_data($userid, $time) {
     $ipaddress = $_SERVER['REMOTE_ADDR'];
     
     $session = required_param('session', PARAM_TEXT);
-    $useragent = required_param('useragent', PARAM_TEXT);
-    $appversion = required_param('appversion', PARAM_TEXT);
+    $useragent = required_param('useragent', PARAM_RAW);
+    $appversion = required_param('appversion', PARAM_RAW);
     
     $task = required_param('task', PARAM_URL);
     $tags = optional_param('tags', '', PARAM_TEXT);
@@ -224,7 +224,7 @@ function bioauth_enroll_data($userid, $time) {
             $record->userid = $userid;
             $record->ipaddress = ip2long($ipaddress);
             $record->session = $session;
-            $record->useragant = $useragent;
+            $record->useragent = $useragent;
             $record->appversion = $appversion;
             $record->task = $task;
             $record->tags = $tags;
@@ -234,6 +234,7 @@ function bioauth_enroll_data($userid, $time) {
             $record->timemodified = $time;
             $record->timestart = $time;
             $record->timeend = $time;
+            
             $DB->insert_record('bioauth_biodata', $record);
         }
     }

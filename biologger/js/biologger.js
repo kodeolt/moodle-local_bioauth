@@ -14,6 +14,45 @@ function uuid() {
     });
 };
 
+function csv_string(values) {
+    var finalVal = '';
+
+    for (var j = 0; j < values.length; j++) {
+        var innerValue =  values[j]===null?'':values[j].toString();
+        var result = innerValue.replace(/"/g, '""');
+        if (result.search(/("|,|\n)/g) >= 0)
+            result = '"' + result + '"';
+        if (j > 0)
+            finalVal += ',';
+        finalVal += result;
+    }
+    
+    return finalVal;
+}
+
+function merge(obj1, obj2) {
+
+  for (var p in obj2) {
+    try {
+      // Property in destination object set; update its value.
+      if ( obj2[p].constructor==Object ) {
+        obj1[p] = MergeRecursive(obj1[p], obj2[p]);
+
+      } else {
+        obj1[p] = obj2[p];
+
+      }
+
+    } catch(e) {
+      // Property in destination object not set; create it and set its value.
+      obj1[p] = obj2[p];
+
+    }
+  }
+
+  return obj1;
+}
+
 function Biologger(params, userid, sesskey, enrollURL, flushDelay) {
     console.log("Biologger init");
     
@@ -45,16 +84,84 @@ function Biologger(params, userid, sesskey, enrollURL, flushDelay) {
         touch : [],
     };
     
-    // return an object containing the buffers encoded as json strings 
+    this.fields = {
+        keystroke : [
+            "timepress",
+            "timerelease",
+            "keyname",
+            "keycode",
+            "target"
+        ],
+        
+        stylometry : [
+            "timestart",
+            "timefinish",
+            "text"
+        ],
+        
+        mousemotion : [
+            "time",
+            "x",
+            "y",
+            "xpage",
+            "ypage",
+            "xtarget",
+            "ytarget",
+            "targetwidth",
+            "targetheight",
+            "dragged",
+            "target"
+        ],
+        
+        mouseclick : [
+            "timepress",
+            "timerelease",
+            "button",
+            "xpress",
+            "ypress",
+            "xoffsetpress",
+            "yoffsetpress",
+            "targetwidthpress",
+            "targetheightpress",
+            "targetpress",
+            "xrelease",
+            "yrelease",
+            "xoffsetrelease",
+            "yoffsetrelease",
+            "targetwidthrelease",
+            "targetheightrelease",
+            "targetrelease"
+        ],
+        
+        mousescroll : [
+            "time",
+            "xtarget",
+            "ytarget",
+            "targetwidth",
+            "targetheight",
+            "xdelta",
+            "ydelta",
+            "deltafactor",
+            "target",
+        ],
+        
+        touch : [
+            
+        ],
+    };
+    
+    // return an object containing the buffers encoded as csv strings 
     this.jsonData = function() {
         var bd = {};
         for (b in this.buffer) {
             if (this.buffer[b].length > 0) {
-                bd[b] = this.buffer[b];
+                bd[b] = this.buffer[b].join("\n");
+                bd[b+'_fields'] = csv_string(this.fields[b]);
             }
         };
         
-        return {
+        
+        return merge(bd, {
             userid: this.userid,
             sesskey: this.sesskey,
             session: this.session,
@@ -62,8 +169,7 @@ function Biologger(params, userid, sesskey, enrollURL, flushDelay) {
             tags: document.title,
             useragent: navigator.userAgent,
             appversion: navigator.appVersion,
-            biodata: JSON.stringify(bd),
-        };
+        });
     };
     
     this.startLogging = function() {
@@ -164,11 +270,11 @@ function Biologger(params, userid, sesskey, enrollURL, flushDelay) {
         
         console.log("Pushing stylometry event: " + this.stylometry);
         
-        this.buffer.stylometry.push({
-            "timestart" : this.stylometryBegin,
-            "timefinish" : Date.now(),
-            "text" : this.stylometry,
-        });
+        this.buffer.stylometry.push(csv_string([
+            this.stylometryBegin,
+            Date.now(),
+            this.stylometry,
+        ]));
         
         this.stylometry = "";
     };
@@ -190,13 +296,13 @@ function Biologger(params, userid, sesskey, enrollURL, flushDelay) {
         }
         console.log("Key up: " ,e.keyCode, e.timeStamp);
         
-        this.buffer.keystroke.push({
-            "keyname" : KeyManager.keyname(e.keyCode),
-            "keycode" : e.keyCode,
-            "timepress" : this.keysdown[e.keyCode],
-            "timerelease" : e.timeStamp,
-            "target" : e.target.cloneNode(false).outerHTML
-        });
+        this.buffer.keystroke.push(csv_string([
+            this.keysdown[e.keyCode],
+            e.timeStamp,
+            KeyManager.keyname(e.keyCode),
+            e.keyCode,
+            e.target.cloneNode(false).outerHTML
+        ]));
         
         this.keysdown[e.keyCode] = false;
         
@@ -208,17 +314,17 @@ function Biologger(params, userid, sesskey, enrollURL, flushDelay) {
     
     this.mousedown = function(e) {
         console.log("Mouse pressed: ", e.timeStamp);
-    
+        
         this.dragging = e.button;
         
         this.buttonsdown[e.button] = {
             "timepress" : e.timeStamp,
             "xpress" : e.screenX,
             "ypress" : e.screenY,
-            "xclientpress" : e.clientX,
-            "yclientpress" : e.clientY,
             "xoffsetpress" : e.offsetX,
             "yoffsetpress" : e.offsetY,
+            "targetwidthpress" : e.target.clientWidth,
+            "targetheightpress" : e.target.clientHeight,
             "targetpress" : e.target.cloneNode(false).outerHTML
         };
         
@@ -232,26 +338,26 @@ function Biologger(params, userid, sesskey, enrollURL, flushDelay) {
         }
         
         console.log("Mouse released: ", e.timeStamp);
-        
-        this.buffer.mouseclick.push({
-            "timepress" : this.buttonsdown[e.button]['timepress'],
-            "timerelease" : e.timeStamp,
-            "button" : e.button,
-            "xpress"    : this.buttonsdown[e.button]['xpress'],
-            "ypress"    : this.buttonsdown[e.button]['ypress'],
-            "xclientpress" : this.buttonsdown[e.button]['xclientpress'],
-            "yclientpress" : this.buttonsdown[e.button]['yclientpress'],
-            "xoffsetpress" : this.buttonsdown[e.button]['xoffsetpress'],
-            "yoffsetpress" : this.buttonsdown[e.button]['yoffsetpress'],
-            "xrelease" : e.screenX,
-            "yrelease" : e.screenY,
-            "xclientrelease" : e.clientX,
-            "yclientrelease" : e.clientY,
-            "xoffsetrelease" : e.offsetX,
-            "yoffsetrelease" : e.offsetY,
-            "targetpress" : this.buttonsdown[e.button]['targetpress'],
-            "targetrelease" : e.target.cloneNode(false).outerHTML
-        });
+
+        this.buffer.mouseclick.push(csv_string([
+            this.buttonsdown[e.button]['timepress'],
+            e.timeStamp,
+            e.button,
+            this.buttonsdown[e.button]['xpress'],
+            this.buttonsdown[e.button]['ypress'],
+            this.buttonsdown[e.button]['xoffsetpress'],
+            this.buttonsdown[e.button]['yoffsetpress'],
+            this.buttonsdown[e.button]['targetwidthpress'],
+            this.buttonsdown[e.button]['targetheightpress'],
+            this.buttonsdown[e.button]['targetpress'],
+            e.screenX,
+            e.screenY,
+            e.offsetX,
+            e.offsetY,
+            e.target.clientWidth,
+            e.target.clientHeight,
+            e.target.cloneNode(false).outerHTML
+        ]));
         
         this.buttonsdown[e.button] = false;
     };
@@ -259,29 +365,35 @@ function Biologger(params, userid, sesskey, enrollURL, flushDelay) {
     this.mousemove = function(e) {
         console.log("Mouse move: ", e.screenX, e.screenY, e.timeStamp);
         
-        this.buffer.mousemotion.push({
-            "time" : e.timeStamp,
-            "x" : e.screenX,
-            "y" : e.screenY,
-            "xpage" : e.pageX,
-            "ypage" : e.pageY,
-            "xclient" : e.clientX,
-            "yclient" : e.clientY,
-            "dragged" : this.dragging,
-            "target" : e.target.cloneNode(false).outerHTML
-        });
+        this.buffer.mousemotion.push(csv_string([
+            e.timeStamp,
+            e.screenX,
+            e.screenY,
+            e.pageX,
+            e.pageY,
+            e.offsetX,
+            e.offsetY,
+            e.target.clientWidth,
+            e.target.clientHeight,
+            this.dragging,
+            e.target.cloneNode(false).outerHTML
+        ]));
     };
     
     this.mousewheel = function(e) {
         console.log("Mouse scroll: ", e.deltaX, e.deltaY, e.deltaFactor);
         
-        this.buffer.mousescroll.push({
-                "time" : e.timeStamp,
-                "xdelta" : e.deltaX,
-                "ydelta" : e.deltaY,
-                "deltafactor" : e.deltaFactor,
-                "target" : e.target.cloneNode(false).outerHTML
-        });
+        this.buffer.mousescroll.push(csv_string([
+            e.timeStamp,
+            e.offsetX,
+            e.offsetY,
+            e.target.clientWidth,
+            e.target.clientHeight,
+            e.deltaX,
+            e.deltaY,
+            e.deltaFactor,
+            e.target.cloneNode(false).outerHTML
+        ]));
     };
     
     this.touchstart = function(e) {

@@ -99,6 +99,80 @@ function bioauth_confirm_sesskey($userid, $sesskey=NULL) {
     return $DB->record_exists('bioauth_sessions', array('userid' => $userid, 'sesskey' => $sesskey));
 }
 
+function fputcsv2($handle, $fields, $delimiter = ',', $enclosure = '"') {
+    # Check if $fields is an array
+    if (!is_array($fields)) {
+        return false;
+    }
+    # Walk through the data array
+    for ($i = 0, $n = count($fields); $i < $n; $i ++) {
+        # Only 'correct' non-numeric values
+        if (!is_numeric($fields[$i])) {
+            # Duplicate in-value $enclusure's and put the value in $enclosure's
+            $fields[$i] = $enclosure . str_replace($enclosure, $enclosure . $enclosure, $fields[$i]) . $enclosure;
+        }
+        # If $delimiter is a dot (.), also correct numeric values
+        if (($delimiter == '.') && (is_numeric($fields[$i]))) {
+            # Put the value in $enclosure's
+            $fields[$i] = $enclosure . $fields[$i] . $enclosure;
+        }
+    }
+    # Combine the data array with $delimiter and write it to the file
+    $line = implode($delimiter, $fields) . "\n";
+    fwrite($handle, $line);
+    # Return the length of the written data
+    return strlen($line);
+}
+
+function fputcsv3($fh, array $fields, $delimiter = ',', $enclosure = '"', $mysql_null = false) { 
+    $delimiter_esc = preg_quote($delimiter, '/'); 
+    $enclosure_esc = preg_quote($enclosure, '/'); 
+
+    $output = array(); 
+    foreach ($fields as $field) { 
+        if ($field === null && $mysql_null) { 
+            $output[] = 'NULL'; 
+            continue; 
+        } 
+
+        $output[] = preg_match("/(?:${delimiter_esc}|${enclosure_esc}|\s)/", $field) ? ( 
+            $enclosure . str_replace($enclosure, $enclosure . $enclosure, $field) . $enclosure 
+        ) : $field; 
+    } 
+
+    fwrite($fh, join($delimiter, $output) . "\n"); 
+} 
+
+function fputcsv4($handle, $row, $fd=',', $quot='"') 
+{ 
+   $str=''; 
+   foreach ($row as $cell) { 
+       $cell=str_replace(Array($quot,        "\n"), 
+                         Array($quot.$quot,  ''), 
+                         $cell); 
+       if (strchr($cell, $fd)!==FALSE || strchr($cell, $quot)!==FALSE) { 
+           $str.=$quot.$cell.$quot.$fd; 
+       } else { 
+           $str.=$cell.$fd; 
+       } 
+   } 
+
+   fputs($handle, substr($str, 0, -1)."\n"); 
+
+   return strlen($str); 
+}
+
+function concat_biodata($str, $data) {
+    $outstream = fopen("php://temp", 'r+');
+        fputcsv($outstream, $data, ',', '"');
+        rewind($outstream);
+        $csv = fgets($outstream);
+        fclose($outstream);
+        return $csv;
+}
+
+$BIOMETRICS = array('keystroke','mousemotion','mouseclick','mousescroll','stylometry');
+
 /**
  * Log data which has been collected from any source
  *
@@ -110,7 +184,8 @@ function bioauth_confirm_sesskey($userid, $sesskey=NULL) {
  */
 function bioauth_enroll_data($userid, $time) {
     global $DB;
-
+    global $BIOMETRICS;
+    
     $ipaddress = $_SERVER['REMOTE_ADDR'];
     
     $session = required_param('session', PARAM_TEXT);
@@ -120,25 +195,29 @@ function bioauth_enroll_data($userid, $time) {
     $task = required_param('task', PARAM_URL);
     $tags = optional_param('tags', '', PARAM_TEXT);
     
-    $biodata = json_decode(required_param('biodata', PARAM_RAW)); // PARAM_RAW?
-    
-    foreach ($biodata as $biotype => $data) {
-        // Skip empty arrays
-        if (count($data) === 0) {
+    foreach ($BIOMETRICS as $biometric) {
+        
+        $biodata = optional_param($biometric, '', PARAM_RAW); // PARAM_RAW?
+        $fields = optional_param($biometric.'_fields', '', PARAM_RAW); // PARAM_RAW?
+        
+        // Skip missing data
+        if (strlen($biodata) === 0) {
             continue;
         }
+        
         // check for existing record
-        $unique = array('userid' => $userid, 'session' => $session, 'biometric' => $biotype);
+        $unique = array('userid' => $userid, 'session' => $session, 'biometric' => $biometric);
+
         if ($DB->record_exists('bioauth_biodata', $unique)) {
             // update end time with time received
             $record = $DB->get_record('bioauth_biodata', $unique);
+           
+           $record->jsondata .= "\n" . $biodata;
+           $record->quantity = substr_count($record->jsondata, "\n");
+           $record->timeend = $time;
+           $record->timemodified = $time;
             
-            $record->jsondata = json_encode(array_merge(json_decode($record->jsondata), $data));
-            $record->quantity += count($data);
-            $record->timeend = $time;
-            $record->timemodified = $time;
-            
-            $DB->update_record('bioauth_biodata', $record);
+           $DB->update_record('bioauth_biodata', $record);
         } else {
             // for new record, create start time
             $record = new stdClass();
@@ -149,9 +228,9 @@ function bioauth_enroll_data($userid, $time) {
             $record->appversion = $appversion;
             $record->task = $task;
             $record->tags = $tags;
-            $record->biometric = $biotype;
-            $record->quantity = count($data);
-            $record->jsondata = json_encode($data);
+            $record->biometric = $biometric;
+            $record->jsondata = $fields . "\n" . $biodata;
+            $record->quantity = substr_count($record->jsondata, "\n");
             $record->timemodified = $time;
             $record->timestart = $time;
             $record->timeend = $time;

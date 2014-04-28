@@ -51,7 +51,7 @@ function launch_biologger_js() {
     $PAGE->requires->js(new moodle_url('/local/bioauth/biologger/js/jquery.mousewheel.js'), true);
     $PAGE->requires->js(new moodle_url('/local/bioauth/biologger/js/jquery.mobile-events.js'), true);
     $PAGE->requires->js(new moodle_url('/local/bioauth/biologger/js/keymanager.js'), true);
-    $PAGE->requires->js(new moodle_url('/local/bioauth/biologger/js/biologger.js'), true);
+    $PAGE->requires->js(new moodle_url('/local/bioauth/biologger/js/biologger_1.0.js'), true);
     
     $PAGE->requires->js_init_call('Biologger', $jsdata);
 }

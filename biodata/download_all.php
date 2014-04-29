@@ -34,7 +34,7 @@ require_login();
 
 global $DB;
 
-$biodata = $DB->get_records_sql('SELECT mdl_bioauth_biodata.id,userid,email,username,session,ipaddress,useragent,appversion,task,tags,csvdata FROM mdl_bioauth_biodata INNER JOIN mdl_user on mdl_bioauth_biodata.userid=mdl_user.id');
+$biodata = $DB->get_records_sql('SELECT mdl_bioauth_biodata.id,userid,email,username,session,ipaddress,useragent,appversion,task,tags,csvdata FROM mdl_bioauth_biodata,mdl_user WHERE biometric=? AND mdl_bioauth_biodata.userid=mdl_user.id', array($biometric));
 
 if (count($biodata) === 0) {
     echo 'No data to download';

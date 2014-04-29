@@ -18,7 +18,7 @@ function csv_string(values) {
     var finalVal = '';
 
     for (var j = 0; j < values.length; j++) {
-        var innerValue =  values[j]===null?'':values[j].toString();
+        var innerValue =  values[j]===null?'':''+values[j];
         var result = innerValue.replace(/"/g, '""');
         if (result.search(/("|,|\n)/g) >= 0)
             result = '"' + result + '"';

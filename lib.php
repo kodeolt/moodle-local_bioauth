@@ -41,59 +41,7 @@ require_once($CFG->dirroot . '/local/bioauth/constants.php');
  * 
  */
 function local_bioauth_cron() {
-    global $DB;
-
-    // Calculate the amount of data ready for jobs waiting or monitoring
-    $jobs = $DB->get_records_list('bioauth_quiz_validations', 'state', array(BIOAUTH_JOB_WAITING, BIOAUTH_JOB_MONITOR));
-    foreach ($jobs as $idx => $job) {
-        $ready = get_percent_data_ready($job);
-        $DB->set_field('bioauth_quiz_validations', 'percentdataready', $ready, array('id' => $job->id));
-    }
-
-    // Place complete jobs which are still active into the monitor state.
-    $jobs = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_COMPLETE));
-    foreach ($jobs as $idx => $job) {
-        if (time() < $job->activeuntil) {
-            mtrace('Keeping job active: ' . $job->id);
-            $DB->set_field('bioauth_quiz_validations', 'state', BIOAUTH_JOB_MONITOR, array('id' => $job->id));
-        }
-    }
-
-    // If a job has enough data, mark it as ready.
-    $jobs = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_WAITING));
-    foreach ($jobs as $idx => $job) {
-        if ($job->percentdataready >= $job->percentdataneeded) {
-            mtrace('Enough data collected for job ' . $job->id);
-            $DB->set_field('bioauth_quiz_validations', 'state', BIOAUTH_JOB_READY, array('id' => $job->id));
-        }
-    }
-
-    // If a job has enough NEW data, mark it as ready.
-    $jobs = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_MONITOR));
-    foreach ($jobs as $idx => $job) {
-        if ($job->percentdataready > $job->percentdataused) {
-            mtrace('Enough new data collected for job ' . $job->id);
-            $DB->set_field('bioauth_quiz_validations', 'state', BIOAUTH_JOB_READY, array('id' => $job->id));
-        }
-    }
-
-    // Start ready jobs without exceeding the allowable limit.
-    $maxconcurrentjobs = get_config('local_bioauth', 'maxconcurrentjobs');
-    $numjobsrunning = $DB->count_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_RUNNING));
-
-    $jobs = $DB->get_records('bioauth_quiz_validations', array('state' => BIOAUTH_JOB_READY));
-    shuffle($jobs);
-    // Ensure all queued jobs have a change of running.
-    foreach ($jobs as $idx => $job) {
-        if ($numjobsrunning < $maxconcurrentjobs) {
-            mtrace('Running quiz validation job ' . $job->id);
-            $percentdataused = get_percent_data_ready($job);
-            $DB->set_field('bioauth_quiz_validations', 'percentdataused', $percentdataused, array('id' => $job->id));
-            $DB->set_field('bioauth_quiz_validations', 'state', BIOAUTH_JOB_RUNNING, array('id' => $job->id));
-            run_quiz_validation($job);
-            $numjobsrunning += 1;
-        }
-    }
+    
 }
 
 /**
@@ -152,7 +100,7 @@ function bioauth_get_quiz_validation($course) {
  * @param int $courseid the id of the course
  */
 function bioauth_enable_course($courseid) {
-    create_quiz_validation_job($courseid);
+    // create_quiz_validation_job($courseid);
 }
 
 /**
@@ -161,7 +109,7 @@ function bioauth_enable_course($courseid) {
  * @param int $courseid the id of the course
  */
 function bioauth_disable_course($courseid) {
-    remove_quiz_validation_job($courseid);
+    // remove_quiz_validation_job($courseid);
 }
 
 /**

@@ -28,50 +28,9 @@ global $CFG;
 require_once($CFG->dirroot . '/local/bioauth/locallib.php');
 
 /**
- * Load all of the keystroke feature sets that came with the installation.
- *
- */
-function load_keystroke_features() {
-    global $CFG;
-    global $DB;
-
-    $featureit = new DirectoryIterator($CFG->dirroot . '/local/bioauth/features');
-    foreach ($featureit as $features) {
-        if ($features->isDot()) {
-            continue;
-        }
-
-        unset($keystrokefeatures);
-        unset($featuresetname);
-        include($features->getPathname());
-
-        $keystrokefeatureids = array();
-        $keystrokefallback = array();
-        $keystrokefeaturefields = array('fallback', 'type', 'group1', 'group2', 'measure', 'distance');
-        foreach ($keystrokefeatures as $featureid => $feature) {
-            $row = array_combine($keystrokefeaturefields, $feature);
-            $keystrokefeatureids[$featureid] = $DB->insert_record('bioauth_keystroke_features', $row, true);
-            $keystrokefallback[$featureid] = $row['fallback'];
-        }
-
-        foreach ($keystrokefallback as $node => $parent) {
-            if (null !== $parent) {
-                $DB->update_record('bioauth_keystroke_features',
-                                    array('id' => $keystrokefeatureids[$node], 'fallback' => $keystrokefeatureids[$parent]));
-            }
-        }
-
-        $DB->insert_record('bioauth_feature_sets', array('name' => $featuresetname, 'locale' => 'en',
-                            'keystrokefeatures' => implode(',', array_keys($keystrokefeatureids)), 'stylometryfeatures' => ''));
-    }
-}
-
-/**
  * Post-install script
  */
 function xmldb_local_bioauth_install() {
-
-    load_keystroke_features();
 
     return true;
 }

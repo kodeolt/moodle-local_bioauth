@@ -28,10 +28,5 @@ defined('MOODLE_INTERNAL') || die();
 
 
 $handlers = array(
-
-     'course_created' => array (
-        'handlerfile'     => '/local/bioauth/locallib.php',
-        'handlerfunction' => 'course_created_handler',
-        'schedule'        => 'instant',
-    ),
+    
 );

@@ -99,69 +99,6 @@ function bioauth_confirm_sesskey($userid, $sesskey=NULL) {
     return $DB->record_exists('bioauth_sessions', array('userid' => $userid, 'sesskey' => $sesskey));
 }
 
-function fputcsv2($handle, $fields, $delimiter = ',', $enclosure = '"') {
-    # Check if $fields is an array
-    if (!is_array($fields)) {
-        return false;
-    }
-    # Walk through the data array
-    for ($i = 0, $n = count($fields); $i < $n; $i ++) {
-        # Only 'correct' non-numeric values
-        if (!is_numeric($fields[$i])) {
-            # Duplicate in-value $enclusure's and put the value in $enclosure's
-            $fields[$i] = $enclosure . str_replace($enclosure, $enclosure . $enclosure, $fields[$i]) . $enclosure;
-        }
-        # If $delimiter is a dot (.), also correct numeric values
-        if (($delimiter == '.') && (is_numeric($fields[$i]))) {
-            # Put the value in $enclosure's
-            $fields[$i] = $enclosure . $fields[$i] . $enclosure;
-        }
-    }
-    # Combine the data array with $delimiter and write it to the file
-    $line = implode($delimiter, $fields) . "\n";
-    fwrite($handle, $line);
-    # Return the length of the written data
-    return strlen($line);
-}
-
-function fputcsv3($fh, array $fields, $delimiter = ',', $enclosure = '"', $mysql_null = false) { 
-    $delimiter_esc = preg_quote($delimiter, '/'); 
-    $enclosure_esc = preg_quote($enclosure, '/'); 
-
-    $output = array(); 
-    foreach ($fields as $field) { 
-        if ($field === null && $mysql_null) { 
-            $output[] = 'NULL'; 
-            continue; 
-        } 
-
-        $output[] = preg_match("/(?:${delimiter_esc}|${enclosure_esc}|\s)/", $field) ? ( 
-            $enclosure . str_replace($enclosure, $enclosure . $enclosure, $field) . $enclosure 
-        ) : $field; 
-    } 
-
-    fwrite($fh, join($delimiter, $output) . "\n"); 
-} 
-
-function fputcsv4($handle, $row, $fd=',', $quot='"') 
-{ 
-   $str=''; 
-   foreach ($row as $cell) { 
-       $cell=str_replace(Array($quot,        "\n"), 
-                         Array($quot.$quot,  ''), 
-                         $cell); 
-       if (strchr($cell, $fd)!==FALSE || strchr($cell, $quot)!==FALSE) { 
-           $str.=$quot.$cell.$quot.$fd; 
-       } else { 
-           $str.=$cell.$fd; 
-       } 
-   } 
-
-   fputs($handle, substr($str, 0, -1)."\n"); 
-
-   return strlen($str); 
-}
-
 function csv_str($data) {
     $outstream = fopen("php://temp", 'r+');
     fputcsv($outstream, $data, ',', '"');

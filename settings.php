@@ -40,35 +40,6 @@ $bioauthsettings->add(new admin_setting_configselect('local_bioauth/mode',
                         get_string('mode', 'local_bioauth'),
                         get_string('modedesc', 'local_bioauth'), BIOAUTH_MODE_ENABLED, $options));
 
-// TODO: Implement these features/settings.
-// $bioauthsettings->add(new admin_setting_configcheckbox('local_bioauth/usealldata',
-                        // get_string('usealldata', 'local_bioauth'),
-                        // get_string('usealldatadesc', 'local_bioauth'), 0));
-// 
-// $bioauthsettings->add(new admin_setting_configcheckbox('local_bioauth/dontuserejected',
-                        // get_string('dontuserejected', 'local_bioauth'),
-                        // get_string('dontuserejecteddesc', 'local_bioauth'), 0));
-
-$bioauthsettings->add(new admin_setting_configtext('local_bioauth/weekskeepactive',
-                        get_string('weekskeepactive', 'local_bioauth'),
-                        get_string('weekskeepactivedesc', 'local_bioauth'), 2, PARAM_INT));
-
-$bioauthsettings->add(new admin_setting_configtext('local_bioauth/minkeystrokesperquiz',
-                        get_string('minkeystrokesperquiz', 'local_bioauth'),
-                        get_string('minkeystrokesperquizdesc', 'local_bioauth'), 500, PARAM_INT));
-                        
-$bioauthsettings->add(new admin_setting_configtext('local_bioauth/percentdataneeded',
-                        get_string('percentdataneeded', 'local_bioauth'),
-                        get_string('percentdataneededdesc', 'local_bioauth'), 50, PARAM_INT));
-                        
-$bioauthsettings->add(new admin_setting_configtext('local_bioauth/maxconcurrentjobs',
-                        get_string('maxconcurrentjobs', 'local_bioauth'),
-                        get_string('maxconcurrentjobsdesc', 'local_bioauth'), 2, PARAM_INT));
-
-$bioauthsettings->add(new admin_setting_configcheckbox('local_bioauth/cachekeycodes',
-                        get_string('cachekeycodes', 'local_bioauth'),
-                        get_string('cachekeycodesdesc', 'local_bioauth'), 0));
-
 $bioauthsettings->add(new admin_setting_configtext('local_bioauth/autosaveperiod',
                         get_string('autosaveperiod', 'local_bioauth'),
                         get_string('autosaveperioddesc', 'local_bioauth'), 5, PARAM_INT));
@@ -76,34 +47,6 @@ $bioauthsettings->add(new admin_setting_configtext('local_bioauth/autosaveperiod
 $bioauthsettings->add(new admin_setting_configtext('local_bioauth/numbiodatarows',
                         get_string('numbiodatarows', 'local_bioauth'),
                         get_string('numbiodatarowsdesc', 'local_bioauth'), 50, PARAM_INT));
-
-/******************* Default course settings *********************/
-
-$bioauthsettings->add(new admin_setting_heading('defaultsettings',
-                        get_string('defaultsettings', 'local_bioauth'),
-                        get_string('defaultsettingsdesc', 'local_bioauth')));
-
-$bioauthsettings->add(new admin_setting_configtext('local_bioauth/knn',
-                        get_string('knn', 'local_bioauth'),
-                        get_string('knndesc', 'local_bioauth'), 11, PARAM_INT));
-
-$bioauthsettings->add(new admin_setting_configtext('local_bioauth/minkeyfrequency',
-                        get_string('minkeyfrequency', 'local_bioauth'),
-                        get_string('minkeyfrequencydesc', 'local_bioauth'), 5, PARAM_INT));
-
-$options = array(BIOAUTH_DECISION_NEUTRAL => get_string('neutral', 'local_bioauth'),
-                    BIOAUTH_DECISION_CONVENIENT => get_string('convenience', 'local_bioauth'),
-                    BIOAUTH_DECISION_SECURE => get_string('security', 'local_bioauth'), );
-
-$bioauthsettings->add(new admin_setting_configselect('local_bioauth/decisionmode',
-                        get_string('decisionmode', 'local_bioauth'),
-                        get_string('decisionmodedesc', 'local_bioauth'), BIOAUTH_DECISION_NEUTRAL, $options));
-
-$options = get_feature_sets(current_language());
-
-$bioauthsettings->add(new admin_setting_configselect('local_bioauth/featureset',
-                        get_string('featureset', 'local_bioauth'),
-                        get_string('featuresetdesc', 'local_bioauth'), 0, $options));
 
 if ($hassiteconfig) {
     $ADMIN->add('localplugins', $bioauthsettings);

@@ -29,7 +29,6 @@ require_once($CFG->libdir . '/formslib.php');
 require_once($CFG->libdir . '/tablelib.php');
 
 require_once($CFG->dirroot . '/local/bioauth/locallib.php');
-require_once($CFG->dirroot . '/local/bioauth/report/reportlib.php');
 
 /*
  * Overview report subclass for the bioauth overview report.

@@ -32,19 +32,6 @@ require_once($CFG->dirroot . '/local/bioauth/locallib.php');
 require_once($CFG->dirroot . '/local/bioauth/constants.php');
 
 /**
- * The cron function modifies the state of validation jobs, depending on whether
- * enough data was collected to run the job, new data is available, or a job is no
- * longer active.
- * 
- * When validation jobs are ready to be run, they are run asynchronously so that
- * the work is not done as part of the cron process.
- * 
- */
-function local_bioauth_cron() {
-    
-}
-
-/**
  * Create navigation links in the left sidebar for easy access to settings and
  * course reports. 
  *
@@ -54,84 +41,15 @@ function local_bioauth_extends_navigation(global_navigation $navigation) {
     if (BIOAUTH_MODE_ENABLED == get_config('local_bioauth', 'mode')) {
         launch_biologger_js();
     }
-        
-    if (!isloggedin()) {
-        return;
-    }
 
-    $enrolcourses = enrol_get_my_courses();
-    $viewgradecourses = array();
-    foreach ($enrolcourses as $course) {
-        $coursecontext = get_context_instance(CONTEXT_COURSE, $course->id);
-        if (has_capability('moodle/grade:viewall', $coursecontext)) {
-            $viewgradecourses[$course->id] = $course;
-        }
-    }
-    
-    if (count($viewgradecourses) == 0) {
-        return;
-    }
-
-    global $USER;
-    $context = context_user::instance($USER->id);
-    $bioauthnode = $navigation->add(get_string('pluginname', 'local_bioauth'));
-    $reportnode = $bioauthnode->add(get_string('report', 'local_bioauth'), new moodle_url('/local/bioauth/report/index.php'));
-    $launch = $bioauthnode->add(get_string('launch', 'local_bioauth'), new moodle_url('/local/bioauth/launch/bbl.php'));
-    $data = $bioauthnode->add(get_string('mydata', 'local_bioauth'), new moodle_url('/local/bioauth/biodata/index.php'));
+    // global $USER;
+    // $context = context_user::instance($USER->id);
+    // $bioauthnode = $navigation->add(get_string('pluginname', 'local_bioauth'));
+    // $reportnode = $bioauthnode->add(get_string('report', 'local_bioauth'), new moodle_url('/local/bioauth/report/index.php'));
+    // $launch = $bioauthnode->add(get_string('launch', 'local_bioauth'), new moodle_url('/local/bioauth/launch/bbl.php'));
+    // $data = $bioauthnode->add(get_string('mydata', 'local_bioauth'), new moodle_url('/local/bioauth/biodata/index.php'));
     // TODO: create settings for each individual course, accessable from the report overview page.
     // $settingsnode = $bioauthnode->add(get_string('settings', 'local_bioauth'), new moodle_url('/admin/settings.php', array('section' => 'local_bioauth')));
-}
-
-/**
- *  Look for a quiz validation job for a particular course.
- *
- * @param object $course the course to find a quiz validation for.
- * @return object the quiz validation object 
- */
-function bioauth_get_quiz_validation($course) {
-    global $DB;
-
-    return $DB->get_record('bioauth_quiz_validations', array('courseid' => $course->id));
-}
-
-/**
- * Enable biometric authentication for a course.
- *
- * @param int $courseid the id of the course
- */
-function bioauth_enable_course($courseid) {
-    // create_quiz_validation_job($courseid);
-}
-
-/**
- * Disable biometric authentication for a course
- *
- * @param int $courseid the id of the course
- */
-function bioauth_disable_course($courseid) {
-    // remove_quiz_validation_job($courseid);
-}
-
-/**
- * Return a textual summary of the number of attempts that have been made at a particular quiz,
- * returns '' if no attempts have been made yet, unless $returnzero is passed as true.
- *
- * @param object $quiz the quiz object. Only $quiz->id is used at the moment.
- * @param object $cm the cm object. Only $cm->course, $cm->groupmode and
- *      $cm->groupingid fields are used at the moment.
- * @param bool $returnzero if false (default), when no attempts have been
- *      made '' is returned instead of 'Attempts: 0'.
- * @param int $currentgroup if there is a concept of current group where this method is being called
- *         (e.g. a report) pass it in here. Default 0 which means no current group.
- * @return string a string like "Attempts: 123"
- */
-function bioauth_performance_summary($validation, $course) {
-    global $DB, $USER;
-
-    $a = new stdClass();
-    $a->performance = number_format(100 - $validation->eer, 2);
-    $a->numauths = $DB->count_records('bioauth_quiz_neighbors', array('courseid' => $course->id));
-    return get_string('performancesummary', 'local_bioauth', $a);
 }
 
 /**

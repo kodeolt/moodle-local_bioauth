@@ -34,7 +34,7 @@ require_login();
 
 global $DB;
 
-$biodata = $DB->get_records('bioauth_biodata', array('biometric' => $biometric));
+$biodata = $DB->get_records_sql('SELECT mdl_bioauth_biodata.id,userid,email,username,session,ipaddress,useragent,appversion,task,tags,csvdata FROM mdl_bioauth_biodata INNER JOIN mdl_user on mdl_bioauth_biodata.userid=mdl_user.id');
 
 if (count($biodata) === 0) {
     echo 'No data to download';
@@ -46,7 +46,7 @@ $filename = $biometric;
 $biofields = array();
 $columns = array();
 
-$fixed_columns = 'user,session,ipaddress,useragent,appversion,task,tags';
+$fixed_columns = 'userid,email,username,session,ipaddress,useragent,appversion,task,tags';
 $data_columns = strtok($biodata[array_keys($biodata)[0]]->csvdata, "\n");
 
 header("Content-type: text/csv");
@@ -62,6 +62,8 @@ foreach ($biodata as $idx => $session) {
     
     $fixed = array();
     $fixed[] = $session->userid;
+    $fixed[] = $session->email;
+    $fixed[] = $session->username;
     $fixed[] = $session->session;
     $fixed[] = $session->ipaddress;
     $fixed[] = $session->useragent;

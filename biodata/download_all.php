@@ -47,7 +47,8 @@ $biofields = array();
 $columns = array();
 
 $fixed_columns = 'userid,email,username,session,ipaddress,useragent,appversion,task,tags';
-$data_columns = strtok($biodata[array_keys($biodata)[0]]->csvdata, "\n");
+$biodata_idx = array_keys($biodata);
+$data_columns = strtok($biodata[$biodata_idx[0]]->csvdata, "\n");
 
 header("Content-type: text/csv");
 header("Content-Disposition: attachment; filename=$filename.csv");

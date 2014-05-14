@@ -5,17 +5,11 @@ Behavioral Biometric Authentication plugin for Moodle
 Created and maintained by Vinnie Monaco
 
 # Purpose
-The BioAuth Moodle Plugin utilizes behavioral biometrics recorded during quiz attempts in order to verify the identity of online test takers. Instructors are able to confirm or dismiss suspicions of cheating students and respond appropriately. The workflow of existing courses will not be affected, allowing a seamless integration for institutions who wish to adopt this technology and ensure academic integrity.
+The BioAuth Moodle Plugin records keyboard and mouse activity site-wide on Moodle. On every page which contains site navigation elements, a script is loaded on the client that periodically sends keystroke and mouse events back to the server. The data can then be downloaded and used for behavioral biometric authentication or identification.
 
 # Installation
-To install using git, type these commands in the root of your Moodle install
-    git clone git@github.com:vmonaco/moodle-local_bioauth.git local/bioauth
-    git clone git@github.com:vmonaco/moodle-quizaccess_biologger.git mod/quiz/accessrule/biologger
+To install using git, type these commands in the root of your Moodle installation
+    git clone https://vmonaco@bitbucket.org/vmonaco/moodle-local_bioauth.git local/bioauth
     
-Then add /local/bioauth and mod/quiz/accessrule/biologger to your git ignore.
-
-The local plugin contains everything needed to perform biometric authentication. The quiz access-rule plugin allows behavioral biometric data to be collected during quiz attempts.
-
-After you have installed the plugin, you will be able to view authentication reports in the sidebar under:
-Bioauth -> Report
+Remember to add /local/bioauth the .gitignore of your Moodle directory if it is version controlled.
 

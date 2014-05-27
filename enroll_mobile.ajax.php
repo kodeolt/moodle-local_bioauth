@@ -28,7 +28,7 @@ require_once(dirname(__FILE__) . '/../../config.php');
 require_once($CFG->dirroot . '/local/bioauth/locallib.php');
 
 $timenow = time();
-$email = required_param('email', PARAM_EMAIL);
+$email = required_param('email', PARAM_TEXT);
 
 bioauth_enroll_mobile_data($email, $timenow);
 echo 'Finished enrolling data for '.$email;

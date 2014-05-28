@@ -30,4 +30,4 @@ require_once($CFG->dirroot . '/local/bioauth/locallib.php');
 $timenow = time();
 
 bioauth_enroll_mobile_data($timenow);
-echo 'Finished enrolling data for ';
+echo 'Finished enrolling data';

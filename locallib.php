@@ -199,5 +199,5 @@ function bioauth_enroll_mobile_data($time) {
     $record->jsondata = $jsondata;
     $record->timemodified = $time;
 
-    $DB->insert_record('bioauth_mobile_biodata', $record);
+    $DB->insert_record('bioauth_mobiledata', $record);
 }

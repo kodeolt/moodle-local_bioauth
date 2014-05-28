@@ -52,7 +52,7 @@
             </INDEXES>
         </TABLE>
 		
-		<TABLE NAME="bioauth_mobile_biodata"
+		<TABLE NAME="bioauth_mobiledata"
             COMMENT="Biometric data">
             <FIELDS>
                 <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />

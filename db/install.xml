@@ -65,13 +65,8 @@
                 <FIELD NAME="jsondata" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="" />
                 <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Last modified time." />
             </FIELDS>
-            <KEYS>
-                <KEY NAME="primary" TYPE="primary" FIELDS="id" />
-                <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id" />
-            </KEYS>
             <INDEXES>
-                <INDEX NAME="session-biometric" UNIQUE="true" FIELDS="session, biometric" />
-                <INDEX NAME="task" UNIQUE="false" FIELDS="task" />
+                <INDEX NAME="identity-biometric" UNIQUE="true" FIELDS="identity, session" />
             </INDEXES>
         </TABLE>
 		

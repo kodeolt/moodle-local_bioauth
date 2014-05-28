@@ -177,22 +177,25 @@ function bioauth_enroll_data($userid, $time) {
     }
 }
 
-function bioauth_enroll_mobile_data($email, $time) {
+function bioauth_enroll_mobile_data($time) {
     global $DB;
     
     $ipaddress = $_SERVER['REMOTE_ADDR'];
     
+    $identity = required_param('identity', PARAM_TEXT);
     $session = required_param('session', PARAM_TEXT);
     $platform = required_param('platform', PARAM_TEXT);
     $task = required_param('task', PARAM_TEXT);
+    $quantity = required_param('quantity', PARAM_INT);
     $jsondata = required_param('events', PARAM_TEXT);
 
     $record = new stdClass();
-    $record->email = $email;
+    $record->identity = $identity;
     $record->session = $session;
     $record->ipaddress = ip2long($ipaddress);
     $record->platform = $platform;
     $record->task = $task;
+    $record->quantity = $quantity;
     $record->jsondata = $jsondata;
     $record->timemodified = $time;
 

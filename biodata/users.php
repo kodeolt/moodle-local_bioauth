@@ -51,5 +51,5 @@ foreach ($users as $idx => $user) {
     $fields[] = $user->email;
     $fields[] = $user->username;
     $fields_str = csv_str($fields);
-    fputs($output, $fields_str . "," . "\n");
+    fputs($output, $fields_str . "\n");
 }

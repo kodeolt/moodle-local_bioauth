@@ -63,5 +63,5 @@ foreach ($choices as $idx => $choice) {
     $fields[] = $choice->name;
     $fields[] = $choice->text;
     $fields_str = csv_str($fields);
-    fputs($output, $fields_str . "," . "\n");
+    fputs($output, $fields_str . "\n");
 }

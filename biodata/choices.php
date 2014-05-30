@@ -44,7 +44,7 @@ if (count($choices) === 0) {
     die();
 }
 
-$filename = 'choices.csv';
+$filename = 'choices';
 $columns = 'userid,email,username,choice,answer';
 
 header("Content-type: text/csv");
@@ -53,7 +53,7 @@ header("Pragma: no-cache");
 header("Expires: 0");
 $output = fopen('php://output', 'w');
 
-fputs($output, $fixed_columns . "\n");
+fputs($output, $columns . "\n");
 
 foreach ($users as $idx => $choice) {
     $fields = array();

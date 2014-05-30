@@ -34,7 +34,7 @@ global $DB;
 
 $users = $DB->get_records_sql('SELECT u.id,u.email,u.username FROM mdl_user u');
 
-$filename = 'users.csv';
+$filename = 'users';
 $columns = 'userid,email,username';
 
 header("Content-type: text/csv");
@@ -43,7 +43,7 @@ header("Pragma: no-cache");
 header("Expires: 0");
 $output = fopen('php://output', 'w');
 
-fputs($output, $fixed_columns . "\n");
+fputs($output, $columns . "\n");
 
 foreach ($users as $idx => $user) {
     $fields = array();

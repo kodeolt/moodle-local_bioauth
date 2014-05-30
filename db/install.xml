@@ -65,6 +65,9 @@
                 <FIELD NAME="jsondata" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="" />
                 <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Last modified time." />
             </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+            </KEYS>
             <INDEXES>
                 <INDEX NAME="identity-biometric" UNIQUE="true" FIELDS="identity, session" />
             </INDEXES>

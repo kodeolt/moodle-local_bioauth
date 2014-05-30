@@ -33,7 +33,7 @@ require_login();
 global $DB;
 
 $choices = $DB->get_records_sql(
-'SELECT u.id,u.email,u.username,c.name,o.text
+'SELECT a.id,u.id userid,u.email,u.username,c.name choice,o.text answer
 FROM mdl_user u, mdl_choice_answers a, mdl_choice_options o, mdl_choice c
 WHERE a.userid = u.id
 AND a.choiceid = c.id
@@ -57,11 +57,11 @@ fputs($output, $columns . "\n");
 
 foreach ($choices as $idx => $choice) {
     $fields = array();
-    $fields[] = $choice->id;
+    $fields[] = $choice->userid;
     $fields[] = $choice->email;
     $fields[] = $choice->username;
-    $fields[] = $choice->name;
-    $fields[] = $choice->text;
+    $fields[] = $choice->choice;
+    $fields[] = $choice->answer;
     $fields_str = csv_str($fields);
     fputs($output, $fields_str . "\n");
 }

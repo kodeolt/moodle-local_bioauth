@@ -38,8 +38,7 @@ FROM mdl_user u, mdl_choice_answers a, mdl_choice_options o, mdl_choice c
 WHERE a.userid = u.id
 AND a.choiceid = c.id
 AND a.optionid = o.id');
-var_dump($choices);
-die();
+
 if (count($choices) === 0) {
     echo 'No data to download';
     die();
@@ -58,7 +57,7 @@ fputs($output, $columns . "\n");
 
 foreach ($users as $idx => $choice) {
     $fields = array();
-    $fields[] = $choice->userid;
+    $fields[] = $choice->id;
     $fields[] = $choice->email;
     $fields[] = $choice->username;
     $fields[] = $choice->name;

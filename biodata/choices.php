@@ -55,7 +55,7 @@ $output = fopen('php://output', 'w');
 
 fputs($output, $columns . "\n");
 
-foreach ($users as $idx => $choice) {
+foreach ($choices as $idx => $choice) {
     $fields = array();
     $fields[] = $choice->id;
     $fields[] = $choice->email;

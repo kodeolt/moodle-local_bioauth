@@ -26,8 +26,6 @@
 require_once(dirname(__FILE__) . '/../../../config.php');
 require_once($CFG->dirroot . '/local/bioauth/locallib.php');
 
-$biometric = required_param('biometric', PARAM_TEXT);
-
 $PAGE->set_url(new moodle_url('/local/bioauth/biodata/choices.php'));
 
 require_login();

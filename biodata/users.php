@@ -26,8 +26,6 @@
 require_once(dirname(__FILE__) . '/../../../config.php');
 require_once($CFG->dirroot . '/local/bioauth/locallib.php');
 
-$biometric = required_param('biometric', PARAM_TEXT);
-
 $PAGE->set_url(new moodle_url('/local/bioauth/biodata/users.php'));
 
 require_login();
@@ -35,11 +33,6 @@ require_login();
 global $DB;
 
 $users = $DB->get_records_sql('SELECT u.id,u.email,u.username FROM mdl_user u');
-
-if (count($biodata) === 0) {
-    echo 'No data to download';
-    die();
-}
 
 $filename = 'users.csv';
 $columns = 'userid,email,username';

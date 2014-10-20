@@ -4,18 +4,16 @@ import mysql.connector
 from io import StringIO
 
 _HOST = 'localhost'
-_USER = 'moodleuser'
-_DB = 'moodle'
 
 global conn
 conn = None
 global cur
 cur = None
 
-def _open_db(database=_DB):
+def _open_db():
     global conn
     global cur
-    conn = mysql.connector.connect(host=_HOST, user=_USER, passwd=_PASSWD, db=database)
+    conn = mysql.connector.connect(host=_HOST, user=_USER, passwd=_PASSWD, db=_DB)
     cur = conn.cursor()
     return
 
@@ -53,13 +51,17 @@ def select_data(biometric):
 
 if __name__ == '__main__':
 
-    if len(sys.argv) < 2:
-        print('No password provided')
+    if len(sys.argv) < 5:
+        print('Usage: pulldata.py USER PASSWORD TABLE BIOMETRIC')
         sys.exit(1)
 
+    global _USER
     global _PASSWD
-    _PASSWD = sys.argv[1]
-    biometric = sys.argv[2]
-    out = sys.argv[3]
+    global _DB
+    _USER = sys.argv[1]
+    _PASSWD = sys.argv[2]
+    _DB = sys.argv[3]
+    biometric = sys.argv[4]
+    out = sys.argv[5]
     df = select_data(biometric)
     df.to_csv(out)
